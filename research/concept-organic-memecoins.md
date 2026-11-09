@@ -27,13 +27,42 @@ A NEP-141 token factory. Each coin created from it gets these rules, fixed at la
 
 | Rule | What it does | Problem it fights |
 |---|---|---|
-| **No mint authority** | Supply changes only through the coded rules below. Keys are deleted after deploy. | Rugs by minting |
+| **No *discretionary* mint** | Nobody can mint at will. Supply changes **only** through the coded rules below (organic-growth tranches, streak rewards, burns). Keys are deleted after deploy. | Rugs by minting |
 | **Creator earn-out** | The creator allocation (e.g. 5%) unlocks in steps *only* when the coin reaches milestones of **independent** holders who've held ≥ N days (e.g. 100 / 500 / 2,000). | Dev dumps; pays for community, not hype |
 | **Patience-weighted rewards** | A community pool pays out by **holding age × participation**. Someone who bought an hour ago gets ~nothing; a months-long holder who checks in gets the most. | Flippers, pump groups |
 | **Insider decay** | Wallets flagged as linked to the deployer or launch snipers can't earn rewards, and their *creator-side* or early allocation vests slowly. They can still sell what they bought (no honeypot). | Insider clusters |
 | **Rituals** | Daily check-in streak (gasless, can run from Telegram with a key that can only call `check_in`). The community hits the quorum → participants get a small reward; misses → a slice of the pool burns. | Turns "community" into something you do, not a slogan |
 | **Referrals that can't be farmed** | A referrer is paid only when the referred account is **independent** (not in the same cluster) **and** holds ≥ N days. | Reply-guy shilling, sybil referral farms |
 | **Official channel registry** | The contract stores the coin's official links and states that **the contract is the only distribution channel**. Any "drop your address for an airdrop" is fake by definition, and anyone can check that. | Fake-airdrop phishing |
+
+### How Part 1 maps to the track's four phrases
+
+The track asks for "supply that reacts to the community, treasuries with rules, onchain rituals and challenges." The unifying idea: **the coin's supply and treasury follow the size and loyalty of its *real* community.**
+
+**1. Supply that reacts to the community**
+- **Growth tranches:** most of the supply (e.g. 60%) isn't minted at launch. A tranche mints each time the coin crosses an **independent-holder milestone**. Supply literally grows with the real community, and fake holders don't count.
+- **Who gets each tranche:** split between the community pool (to holders who stayed), the creator earn-out, and new-holder welcome grants.
+- **Contraction:** if independent holders *fall* below a milestone, or a season challenge fails, a slice of the unminted reserve is permanently cancelled. The maximum possible supply shrinks.
+- **Streak mints:** small daily mints to participants when the check-in quorum is hit (the organizers' streak-coin example).
+- **Result:** the chart of total supply over time doubles as a chart of the community's real growth.
+
+**2. Treasury with rules (the community pool)**
+- **Funded by:** its share of each growth tranche, plus anything forfeited (insider rewards, the creator earn-out if milestones are never hit, unclaimed rewards).
+- **No owner and no votes by insiders.** It can only do the following, by formula:
+  - pay patience-weighted rewards each epoch;
+  - pay streak rewards;
+  - burn on a missed quorum or failed challenge;
+  - make the dead-man payout: if the whole community goes silent for N days, the pool pays the last people still showing up.
+- Everything it can ever do is readable in the contract.
+
+**3. On-chain rituals**
+- **Daily check-in (the heartbeat):** one tap, gasless, from the web or Telegram. It builds personal and community streaks, and the longest community streak is shown like a high score.
+- **Weekly bonfire:** holders may burn tokens into the week's fire. The biggest offerings earn an on-chain title, and a share of the pool's weekly reward goes back to everyone who took part. It's a voluntary deflation ritual that signals commitment rather than speculation.
+
+**4. Challenges (community-wide, per 30-day season)**
+- **Season goal:** e.g. "+150 independent holders who each hold ≥ 14 days." Hit it → a bonus tranche mints to participants. Miss it → that tranche is cancelled for good.
+- **Hold the line:** accounts whose balance didn't drop during the season get a bonus multiplier at season end. It's measured from on-chain balances alone, with no price oracle.
+- **Bring a real friend:** referral rewards count only for independent referrals who stay 14+ days. They're paid at season end, so spam referrals never pay.
 
 ### Part 2: the Organic Score (public trust page + on-chain attestations)
 
