@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grassroots</title>
+<style>
+  :root {
+    --bg: #f6f4ee; --card: #fffdf8; --ink: #1f2a1f; --muted: #6b7466; --line: #e3dfd3;
+    --green: #2f7d4a; --green-soft: #dcefe1; --red: #b5452f; --red-soft: #f6e0da; --amber: #b07a16;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141812; --card: #1c211a; --ink: #e9eee4; --muted: #9aa494; --line: #2c3429;
+            --green: #6cc28a; --green-soft: #22382a; --red: #e58a74; --red-soft: #3d2620; --amber: #e0b457; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 18px 60px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between; }
+  h1 { margin: 0; font-size: 28px; letter-spacing: -0.02em; }
+  h1 small { font-size: 15px; color: var(--muted); font-weight: 500; margin-left: 8px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
+  .tag { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--green-soft); color: var(--green); font-weight: 600; }
+  .lede { color: var(--muted); margin: 6px 0 22px; max-width: 70ch; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .big { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 10px 0 6px; }
+  .bar > i { display: block; height: 100%; background: var(--green); border-radius: 99px; transition: width .6s; }
+  .row { display: grid; gap: 14px; grid-template-columns: 1.3fr 1fr; margin-top: 14px; }
+  @media (max-width: 760px) { .row { grid-template-columns: 1fr; } }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+  .scroll { overflow-x: auto; max-height: 360px; overflow-y: auto; }
+  .hit { color: var(--green); font-weight: 600; } .miss { color: var(--red); font-weight: 600; }
+  .flag { font-size: 11px; padding: 1px 6px; border-radius: 6px; background: var(--red-soft); color: var(--red); }
+  .ok { font-size: 11px; padding: 1px 6px; border-radius: 6px; background: var(--green-soft); color: var(--green); }
+  input { font: inherit; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; }
+  .rules li { margin: 4px 0; } .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
+  .err { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="name">Grassroots<small id="sym"></small></h1>
+    <span class="tag" id="netTag">testnet</span>
+  </header>
+  <p class="lede">A memecoin that can only grow with its real community. Supply unlocks as independent
+    holders grow, a rule-bound pool pays the people who show up, and the contract has no admin.
+    Everything on this page is read live from the contract.</p>
+  <p id="err" class="err"></p>
+
+  <div class="grid">
+    <div class="card"><h2>Community streak</h2><div class="big" id="streak">–</div><div class="sub" id="best"></div></div>
+    <div class="card"><h2>Today's check-ins</h2><div class="big" id="today">–</div>
+      <div class="bar"><i id="todayBar" style="width:0"></i></div><div class="sub" id="quorum"></div></div>
+    <div class="card"><h2>Independent holders</h2><div class="big" id="indep">–</div>
+      <div class="bar"><i id="msBar" style="width:0"></i></div><div class="sub" id="ms"></div></div>
+    <div class="card"><h2>Supply</h2><div class="big" id="supply">–</div><div class="sub" id="supplySub"></div></div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h2>Daily log</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Day</th><th>Result</th><th>Unique / quorum</th><th>Check-ins</th><th>Paid</th><th>Burned</th></tr></thead>
+        <tbody id="days"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>Treasury & creator</h2>
+      <table><tbody id="treasury"></tbody></table>
+      <h2 style="margin-top:18px">Weekly bonfire</h2>
+      <div id="bonfire" class="sub">No offerings yet.</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h2>Holders and Organic Score flags</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Account</th><th>Balance</th><th>Held</th><th>Flag</th></tr></thead>
+        <tbody id="holders"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>Look up an account</h2>
+      <input id="lookup" placeholder="account id, e.g. alice.testnet" autocomplete="off">
+      <div id="member" class="sub" style="margin-top:10px"></div>
+      <h2 style="margin-top:18px">Rules (fixed at launch)</h2>
+      <ul class="rules sub" id="rules"></ul>
+      <h2 style="margin-top:18px">Official links</h2>
+      <div id="links" class="sub"></div>
+    </div>
+  </div>
+  <p class="sub" style="margin-top:18px">Contract <span class="mono" id="coinId"></span> · RPC <span class="mono" id="rpcId"></span></p>
+</div>
+<script>
+const q = new URLSearchParams(location.search);
+const COIN = q.get("coin") || "";
+const RPC = q.get("rpc") || (COIN.endsWith(".near") ? "https://free.rpc.fastnear.com" : "https://test.rpc.fastnear.com");
+const $ = (id) => document.getElementById(id);
+const D = 10n ** 18n;
+const tok = (v) => { const n = Number(BigInt(v) / 10n ** 14n) / 1e4; return n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n.toLocaleString("en-US", { maximumFractionDigits: 2 }); };
+const pct = (a, b) => (b ? Math.min(100, (100 * a) / b) : 0);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+async function view(method, args = {}) {
+  const r = await fetch(RPC, { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "call_function", finality: "optimistic",
+      account_id: COIN, method_name: method, args_base64: btoa(JSON.stringify(args)) } }) });
+  const j = await r.json();
+  if (j.error || j.result?.error) throw new Error(JSON.stringify(j.error || j.result.error));
+  return JSON.parse(new TextDecoder().decode(new Uint8Array(j.result.result)));
+}
+
+async function refresh() {
+  if (!COIN) { $("err").textContent = "Add ?coin=<contract id> to the URL."; return; }
+  $("coinId").textContent = COIN; $("rpcId").textContent = RPC;
+  $("netTag").textContent = COIN.endsWith(".near") ? "mainnet" : "testnet";
+  try {
+    const [meta, cfg, s, links, top] = await Promise.all([view("ft_metadata"), view("get_config"), view("get_state"), view("get_links"), view("get_week_top")]);
+    $("name").firstChild.textContent = meta.name; $("sym").textContent = "$" + meta.symbol;
+    const dayMs = Number(cfg.day_ms);
+    $("streak").textContent = s.community_streak + (s.community_streak === 1 ? " day" : " days");
+    $("best").textContent = `best ever: ${s.best_streak} · day ${s.current_day} · 1 day = ${dayMs >= 86400000 ? "24 h" : dayMs / 1000 + " s (demo)"}`;
+    const today = (await view("get_day", { day: s.current_day })) || { unique: 0, checkins: 0 };
+    const quorum = Math.max(cfg.quorum_min, Math.floor((s.independent_holders * cfg.quorum_bps) / 10000));
+    $("today").textContent = `${today.unique} / ${quorum}`;
+    $("todayBar").style.width = pct(today.unique, quorum) + "%";
+    $("quorum").textContent = `${today.checkins} check-ins, ${today.unique} independent. Quorum = max(${cfg.quorum_min}, ${cfg.quorum_bps / 100}% of independent holders).`;
+    const next = cfg.milestones[s.milestone_idx];
+    $("indep").textContent = s.independent_holders;
+    $("msBar").style.width = next ? pct(s.independent_holders, next) + "%" : "100%";
+    $("ms").textContent = next ? `next growth tranche at ${next} (milestone ${s.milestone_idx + 1} of ${cfg.milestones.length})` : "all milestones reached";
+    const max = BigInt(cfg.max_supply);
+    $("supply").textContent = tok(s.total_supply);
+    $("supplySub").textContent = `${Number((BigInt(s.total_supply) * 1000n) / max) / 10}% of max ${tok(cfg.max_supply)} · reserve ${tok(s.reserve)} unminted`;
+
+    $("treasury").innerHTML = [
+      ["Community pool (free)", tok(s.pool_free)], ["Committed to pending rewards", tok(s.pool_committed)],
+      ["Burned (rituals + bonfire)", tok(s.burned)], ["Cancelled forever (shrinkage, lost seasons)", tok(s.cancelled)],
+      ["Creator earn-out unlocked", tok(s.creator_unlocked)], ["Creator claimed", tok(s.creator_claimed)],
+      ["Seasons won / lost", `${s.seasons_won} / ${s.seasons_lost}`],
+    ].map(([k, v]) => `<tr><td>${k}</td><td style="text-align:right">${v}</td></tr>`).join("");
+
+    const rows = [];
+    for (let d = s.current_day; d >= Math.max(0, s.current_day - 40); d--) {
+      const x = await view("get_day", { day: d });
+      if (!x) { if (d < s.next_settle_day) rows.push(`<tr><td>${d}</td><td class="miss">—</td><td colspan="4" class="sub">nobody showed up</td></tr>`); continue; }
+      const res = !x.settled ? `<span class="sub">open</span>` : x.hit ? `<span class="hit">hit</span>` : `<span class="miss">missed</span>`;
+      rows.push(`<tr><td>${d}</td><td>${res}</td><td>${x.unique} / ${x.settled ? x.quorum : quorum}</td><td>${x.checkins}</td><td>${x.payout === "0" ? "" : tok(x.payout)}</td><td>${x.burned === "0" ? "" : tok(x.burned)}</td></tr>`);
+    }
+    $("days").innerHTML = rows.join("");
+
+    const holders = await view("get_holders", { from_index: 0, limit: 200 });
+    holders.sort((a, b) => (BigInt(b[1]) > BigInt(a[1]) ? 1 : -1));
+    const flags = await Promise.all(holders.map(([a]) => view("get_cluster", { account_id: a })));
+    $("holders").innerHTML = holders.map(([a, bal, since], i) => {
+      const f = flags[i];
+      const held = Number(since) ? ((Date.now() - Number(since)) / dayMs).toFixed(1) + " d" : "";
+      const flag = f ? `<span class="flag">${esc(f.id === "deployer" ? "creator side" : "cluster of " + f.size)}</span>` : `<span class="ok">independent</span>`;
+      return `<tr><td class="mono">${esc(a.length > 24 ? a.slice(0, 10) + "…" + a.slice(-8) : a)}</td><td>${tok(bal)}</td><td>${held}</td><td>${flag}</td></tr>`;
+    }).join("");
+
+    $("bonfire").innerHTML = top.length ? top.slice(-4).reverse().map(([w, a, amt]) => `week ${w}: <b class="mono">${esc(a)}</b> offered ${tok(amt)}`).join("<br>") : "No offerings yet.";
+    $("links").innerHTML = links.map((l) => `${esc(l.label)}: <span class="mono">${esc(l.url)}</span>`).join("<br>");
+    $("rules").innerHTML = [
+      `No discretionary mint: supply only from growth tranches at ${cfg.milestones.join(" / ")} independent holders`,
+      `${cfg.tranche_to_pool_bps / 100}% of each tranche to the community pool, the rest to the creator earn-out`,
+      `Hit the quorum: ${cfg.daily_payout_bps / 100}% of the pool paid to that day's check-ins. Miss: ${cfg.miss_burn_bps / 100}% burns`,
+      `Reward weight = independence × holding age (full at ${cfg.age_full_days} days) × streak (up to +${cfg.streak_max_bonus_bps / 100}%) × stake (capped)`,
+      `Creator challenges: at most ${cfg.challenge_daily_cap_bps / 100}% of the pool per day, all of them together`,
+      `Season every ${cfg.season_days} days: +${cfg.season_growth_bps / 100}% independent holders mints a bonus, missing it cancels the bonus`,
+      `Selling is never blocked: no transfer tax, no sell lock`,
+    ].map((r) => `<li>${r}</li>`).join("");
+    $("err").textContent = "";
+  } catch (e) { $("err").textContent = "Could not read the contract: " + e.message; }
+}
+
+$("lookup").addEventListener("change", async (e) => {
+  const id = e.target.value.trim(); if (!id) return;
+  try {
+    const [m, bal, w, c] = await Promise.all([view("get_member", { account_id: id }), view("ft_balance_of", { account_id: id }), view("preview_weight", { account_id: id }), view("get_cluster", { account_id: id })]);
+    $("member").innerHTML = `balance <b>${tok(bal)}</b> · weight if checking in now <b>${(Number(w) / 1e6).toFixed(4)}</b>` +
+      (c ? ` · <span class="flag">${esc(c.id)} (size ${c.size})</span>` : ` · <span class="ok">independent</span>`) +
+      (m ? `<br>streak ${m.streak} · last check-in day ${m.last_day ?? "–"} · rewards ${tok(m.rewards_total)} · burned ${tok(m.burned_total)}` : "<br>never checked in");
+  } catch (err) { $("member").textContent = err.message; }
+});
+
+refresh();
+setInterval(refresh, 15000);
+</script>
+</body>
+</html>
