@@ -444,3 +444,26 @@ fn holders_list_tracks_balances() {
     assert!(!h.contains(&"alice.near".to_string()));
     assert!(h.contains(&"bob.near".to_string()));
 }
+
+#[test]
+fn ledger_records_every_mint_burn_and_cancel() {
+    let mut t = T::new();
+    // launch + pool seed are the first two mints
+    let launch = t.c.get_ledger(0, 10);
+    assert_eq!(launch.len(), 2);
+    assert!(launch.iter().all(|e| e.kind == "mint"));
+    t.attest(120, vec![]); // two growth tranches
+    t.advance_days(3.0);
+    t.ctx(&acc("anyone.near"), 0);
+    t.c.settle(); // empty days burn
+    let all = t.c.get_ledger(0, 200);
+    assert_eq!(all.len() as u32, t.c.get_ledger_len());
+    let minted: u128 = all.iter().filter(|e| e.kind == "mint").map(|e| e.amount.0).sum();
+    let burned: u128 = all.iter().filter(|e| e.kind == "burn").map(|e| e.amount.0).sum();
+    assert_eq!(minted - burned, t.c.ft.total_supply, "ledger reconciles with total supply");
+    assert_eq!(all.iter().filter(|e| e.memo == "growth tranche").count(), 2);
+    assert!(all.iter().any(|e| e.memo == "missed quorum"));
+    // paging
+    assert_eq!(t.c.get_ledger(2, 2).len(), 2);
+    assert!(t.c.get_ledger(1_000, 5).is_empty());
+}

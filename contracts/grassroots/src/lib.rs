@@ -35,7 +35,7 @@ use near_contract_standards::storage_management::{
     StorageBalance, StorageBalanceBounds, StorageManagement,
 };
 use near_sdk::json_types::{Base64VecU8, U128, U64};
-use near_sdk::store::{IterableSet, LookupMap, LookupSet};
+use near_sdk::store::{IterableSet, LookupMap, LookupSet, Vector};
 use near_sdk::{
     env, ext_contract, near, require, AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault,
     Promise, PromiseError, PromiseOrValue, PublicKey,
@@ -59,6 +59,20 @@ enum Key {
     ChallengeLast,
     WeekBurns,
     Holders,
+    Ledger,
+}
+
+/// One line of the public supply ledger: every mint, burn, cancellation and pool payout.
+#[near(serializers = [json, borsh])]
+#[derive(Clone)]
+pub struct LedgerEntry {
+    pub day: u32,
+    pub ts_ms: U64,
+    /// "mint" | "burn" | "cancel" | "payout"
+    pub kind: String,
+    pub account: Option<AccountId>,
+    pub amount: U128,
+    pub memo: String,
 }
 
 /// Parameters fixed at launch. Readable by anyone through `get_config`.
@@ -222,6 +236,7 @@ pub struct Contract {
     challenge_last: LookupMap<String, u32>,
     week_burns: LookupMap<String, u128>,
     week_top: Vec<(u32, AccountId, U128)>,
+    ledger: Vector<LedgerEntry>,
 
     reserve: u128,
     pool_committed: u128,
@@ -313,6 +328,7 @@ impl Contract {
             challenge_last: LookupMap::new(Key::ChallengeLast),
             week_burns: LookupMap::new(Key::WeekBurns),
             week_top: Vec::new(),
+            ledger: Vector::new(Key::Ledger),
             reserve: max - bps(max, config.launch_bps) - bps(max, config.pool_seed_bps),
             pool_committed: 0,
             burned: 0,
@@ -643,6 +659,16 @@ impl Contract {
         self.challenges.clone()
     }
 
+    /// The public supply ledger, oldest first. Page with `from_index` / `limit` (max 200).
+    pub fn get_ledger(&self, from_index: u32, limit: u32) -> Vec<LedgerEntry> {
+        let end = (from_index.saturating_add(limit.min(200))).min(self.ledger.len());
+        (from_index..end).filter_map(|i| self.ledger.get(i).cloned()).collect()
+    }
+
+    pub fn get_ledger_len(&self) -> u32 {
+        self.ledger.len()
+    }
+
     pub fn get_week_top(&self) -> Vec<(u32, AccountId, U128)> {
         self.week_top.clone()
     }
@@ -663,12 +689,29 @@ impl Contract {
         self.pool_balance().saturating_sub(self.pool_committed)
     }
 
+    fn record(&mut self, kind: &str, account: Option<AccountId>, amount: u128, memo: &str) {
+        if amount == 0 {
+            return;
+        }
+        let day = self.current_day();
+        self.ledger.push(LedgerEntry {
+            day,
+            ts_ms: U64(env::block_timestamp_ms()),
+            kind: kind.to_string(),
+            account,
+            amount: U128(amount),
+            memo: memo.to_string(),
+        });
+        self.ledger.flush();
+    }
+
     fn mint(&mut self, to: &AccountId, amount: u128, memo: &str) {
         if amount == 0 {
             return;
         }
         self.ft.internal_deposit(to, amount);
         FtMint { owner_id: to, amount: U128(amount), memo: Some(memo) }.emit();
+        self.record("mint", Some(to.clone()), amount, memo);
     }
 
     fn burn(&mut self, from: &AccountId, amount: u128, memo: &str) {
@@ -678,6 +721,7 @@ impl Contract {
         self.ft.internal_withdraw(from, amount);
         self.burned += amount;
         FtBurn { owner_id: from, amount: U128(amount), memo: Some(memo) }.emit();
+        self.record("burn", Some(from.clone()), amount, memo);
     }
 
     /// Keep "holding since" in step with balances: set when an account starts holding, clear at zero.
@@ -730,6 +774,7 @@ impl Contract {
             let payout = bps(self.pool_free(), self.config.daily_payout_bps);
             day.payout = U128(payout);
             self.pool_committed += payout;
+            self.record("payout", None, payout, &format!("day {d} ritual: quorum hit, paid to that day's check-ins"));
             self.community_streak += 1;
             self.best_streak = self.best_streak.max(self.community_streak);
         } else {
@@ -758,6 +803,7 @@ impl Contract {
             self.seasons_won += 1;
         } else {
             self.cancelled += bonus;
+            self.record("cancel", None, bonus, "season missed: bonus cancelled from reserve");
             self.seasons_lost += 1;
             env::log_str(&format!("season missed: {} < {goal}, {bonus} cancelled", self.independent_holders));
         }
@@ -791,6 +837,7 @@ impl Contract {
                     let cut = bps(self.reserve, self.config.contraction_cut_bps);
                     self.reserve -= cut;
                     self.cancelled += cut;
+                    self.record("cancel", None, cut, "contraction: community shrank below last milestone");
                     self.below_since_ms = Some(now);
                     env::log_str(&format!("contraction: {cut} of reserve cancelled"));
                 }
@@ -881,6 +928,8 @@ impl Contract {
         self.challenge_last.insert(last_key, today);
         let me = env::current_account_id();
         self.ft.internal_transfer(&me, who, amount, Some(format!("challenge {id}")));
+        let name = self.challenges[id as usize].name.clone();
+        self.record("payout", Some(who.clone()), amount, &format!("challenge {id}: {name}"));
         self.touch(who);
         let mut m = self.members.get(who).cloned().unwrap_or_default();
         m.rewards_total = U128(m.rewards_total.0 + amount);

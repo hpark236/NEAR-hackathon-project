@@ -78,6 +78,14 @@
     </div>
   </div>
 
+  <div class="card" style="margin-top:16px">
+    <h2>Supply ledger: every mint, burn, cancellation and payout</h2>
+    <div class="sub" id="ledgerSub" style="margin-bottom:8px"></div>
+    <div class="scroll"><table>
+      <thead><tr><th>#</th><th>Day</th><th>Kind</th><th>Account</th><th style="text-align:right">Amount</th><th>Why</th></tr></thead>
+      <tbody id="ledger"></tbody></table></div>
+  </div>
+
   <div class="row">
     <div class="card">
       <h2>Holders and Organic Score flags</h2>
@@ -147,13 +155,30 @@ async function refresh() {
     ].map(([k, v]) => `<tr><td>${k}</td><td style="text-align:right">${v}</td></tr>`).join("");
 
     const rows = [];
-    for (let d = s.current_day; d >= Math.max(0, s.current_day - 40); d--) {
+    for (let d = s.current_day; d >= Math.max(0, s.current_day - 20); d--) {
       const x = await view("get_day", { day: d });
       if (!x) { if (d < s.next_settle_day) rows.push(`<tr><td>${d}</td><td class="miss">—</td><td colspan="4" class="sub">nobody showed up</td></tr>`); continue; }
       const res = !x.settled ? `<span class="sub">open</span>` : x.hit ? `<span class="hit">hit</span>` : `<span class="miss">missed</span>`;
       rows.push(`<tr><td>${d}</td><td>${res}</td><td>${x.unique} / ${x.settled ? x.quorum : quorum}</td><td>${x.checkins}</td><td>${x.payout === "0" ? "" : tok(x.payout)}</td><td>${x.burned === "0" ? "" : tok(x.burned)}</td></tr>`);
     }
     $("days").innerHTML = rows.join("");
+
+    // the ledger is stored in the contract itself, so no indexer is needed
+    const n = await view("get_ledger_len").catch(() => null);
+    if (n === null) { $("ledgerSub").textContent = "This coin was deployed before the on-chain ledger existed."; }
+    else {
+      const from = Math.max(0, n - 150);
+      const entries = await view("get_ledger", { from_index: from, limit: 150 });
+      let minted = 0n, burned = 0n;
+      const all = n <= 150 ? entries : await (async () => { const out = []; for (let i = 0; i < n; i += 200) out.push(...await view("get_ledger", { from_index: i, limit: 200 })); return out; })();
+      for (const e of all) { if (e.kind === "mint") minted += BigInt(e.amount); if (e.kind === "burn") burned += BigInt(e.amount); }
+      const ok = minted - burned === BigInt(s.total_supply);
+      $("ledgerSub").innerHTML = `${n} entries · minted ${tok(minted)} − burned ${tok(burned)} = ${tok(minted - burned)} ` +
+        (ok ? `<span class="hit">✓ matches total supply</span>` : `<span class="miss">≠ total supply ${tok(s.total_supply)}</span>`);
+      const cls = { mint: "hit", burn: "miss", cancel: "miss", payout: "" };
+      $("ledger").innerHTML = entries.map((e, i) => [from + i, e]).reverse().map(([i, e]) =>
+        `<tr><td>${i}</td><td>${e.day}</td><td class="${cls[e.kind] ?? ""}">${esc(e.kind)}</td><td class="mono">${e.account ? esc(e.account.length > 24 ? e.account.slice(0, 10) + "…" : e.account) : "—"}</td><td style="text-align:right">${tok(e.amount)}</td><td class="sub">${esc(e.memo)}</td></tr>`).join("");
+    }
 
     const holders = await view("get_holders", { from_index: 0, limit: 200 });
     holders.sort((a, b) => (BigInt(b[1]) > BigInt(a[1]) ? 1 : -1));
@@ -191,7 +216,7 @@ $("lookup").addEventListener("change", async (e) => {
 });
 
 refresh();
-setInterval(refresh, 15000);
+setInterval(refresh, 30000);
 </script>
 </body>
 </html>
