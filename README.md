@@ -84,7 +84,8 @@ uv venv .venv && uv pip install --python .venv/bin/python matplotlib
 cd contracts/grassroots && cargo near build non-reproducible-wasm
 cd ../../app && npm install
 node demo.js setup <your-name>.testnet   # creates accounts via the testnet faucet, deploys, distributes
-node demo.js run 8                       # 8 demo "days" (60 s each): oracle attests, actors check in
+node demo.js run 6                       # 6 demo "days" (4 min each): oracle attests, actors check in
+node demo.js challenge                   # creator plugs in a signed challenge; farm wallets get capped
 node demo.js report                      # rewards by group: organic vs farm (caught / hidden) vs insiders
 ```
 Open `web/index.html?coin=<coin id printed by setup>` to watch the streak, tranches, burns and flags live.
@@ -94,7 +95,7 @@ Open `web/index.html?coin=<coin id printed by setup>` to watch the streak, tranc
 - **Oracle trust.** Independent-holder counts and cluster flags come from a signed off-chain oracle. The contract trusts its key, but each flag's evidence is published (`app/data/score-*.json`), and a forged or replayed attestation is rejected.
 - **Clustering v1 is simple.** It catches wallets that share a parent account and the creator/launch side. It does **not** catch unrelated-looking accounts funded through exchanges; the demo includes 6 such "hidden" farm wallets to show the gap. Capped linear stake weighting still means those wallets earn no more than the same coins held in one account.
 - **Pump groups made of real people** can earn while they hold. The 14-day ramp and the 14-day milestone hold keep their share small and stop them from triggering supply.
-- **Demo parameters** (60-second days, small milestones) are for showing the full life of a coin in minutes. Production parameters are in `sim/README.md`.
+- **Demo parameters** (4-minute days, small milestones) are for showing the full life of a coin in minutes. Production parameters are in `sim/README.md`.
 - Testnet only. Not audited.
 
 ## Built with

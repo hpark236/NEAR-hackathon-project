@@ -2,6 +2,7 @@
 // alongside a sybil farm and deployer-side insiders, with the oracle attesting every "day".
 //
 //   node demo.js setup  <main.testnet> [--farmer <farmer.testnet>]   create actors, deploy, distribute
+//   node demo.js redeploy [day_ms]                                   fresh coin for the same actors
 //   node demo.js distribute                                          resume token distribution after a crash
 //   node demo.js fund [near]                                         top actors up so they can pay gas
 //   node demo.js run    [days]                                       run the ritual for N days
@@ -34,7 +35,7 @@ const N_FARM_CAUGHT = 24;     // sub-accounts of the farmer: caught by the share
 const N_FARM_HIDDEN = 6;      // implicit accounts funded by the farmer: NOT caught by v1
 const N_INSIDERS = 4;         // creator-side wallets
 
-// Demo-scale parameters: one "day" is 60 seconds and milestones are small, so the whole life
+// Demo-scale parameters: one "day" is 4 minutes and milestones are small, so the whole life
 // of a coin fits in a few minutes. Production values are in sim/README.md.
 const DEMO_CONFIG = {
   max_supply: (1_000_000_000n * 10n ** 18n).toString(),
@@ -58,7 +59,7 @@ const DEMO_CONFIG = {
   season_growth_bps: 5000,
   season_bonus_bps: 200,
   challenge_daily_cap_bps: 100,
-  day_ms: "60000",
+  day_ms: "240000",
 };
 
 async function implicitAccount(funder, label) {
@@ -83,26 +84,7 @@ async function setup(main, farmer) {
   if (!(await getKey("oracle.local"))) await keyStore.setKey(NETWORK, "oracle.local", KeyPair.fromRandom("ed25519"));
   const oraclePk = (await getKey("oracle.local")).getPublicKey().toString();
 
-  const coin = `gdog${Date.now().toString(36).slice(-4)}.${main}`;
-  const launch = await createSubAccount(main, `launch${coin.slice(4, 8)}`, "1");
-  log(`deploying ${coin}`);
-  await createSubAccount(main, coin.split(".")[0], "4.5");
-  const coinAcc = await account(coin);
-  await coinAcc.deployContract(fs.readFileSync(WASM));
-  await call(coin, coin, "new", {
-    name: "Grassroots Dog",
-    symbol: "GDOG",
-    icon: null,
-    config: DEMO_CONFIG,
-    creator: main,
-    launch_receiver: launch,
-    oracle_pk: oraclePk,
-    links: [
-      { label: "repo", url: "https://github.com/hpark236/NEAR-hackathon-project" },
-      { label: "only official distribution", url: `the ${coin} contract itself` },
-    ],
-  }, { gasTgas: 300 });
-  Object.assign(st, { main, farmer, coin, launch, organic: [], farmCaught: [], farmHidden: [], insiders: [] });
+  Object.assign(st, { main, farmer, organic: [], farmCaught: [], farmHidden: [], insiders: [] });
   save();
 
   log("creating actors");
@@ -114,8 +96,44 @@ async function setup(main, farmer) {
   for (let i = 0; i < N_INSIDERS; i++) st.insiders.push(await createSubAccount(main, `insider${i + 1}`, "0.05"));
   save();
 
+  // deploy last: the coin's clock (days, seasons) starts at `new`, so start the run right after
+  await deployCoin();
   await distribute();
   await fund();
+}
+
+/**
+ * Deploy a fresh coin for the existing actors. The coin gets its own faucet-funded top-level
+ * account (the wasm needs ~4.5 NEAR of storage); the launch account is a sub-account of main.
+ */
+async function deployCoin(dayMs = DEMO_CONFIG.day_ms) {
+  const { main } = st;
+  if (!(await getKey("oracle.local"))) await keyStore.setKey(NETWORK, "oracle.local", KeyPair.fromRandom("ed25519"));
+  const oraclePk = (await getKey("oracle.local")).getPublicKey().toString();
+  const tag = Date.now().toString(36).slice(-5);
+  const coin = `gdog-${tag}.testnet`;
+  const launch = await createSubAccount(main, `launch${tag}`, "0.5");
+  log(`creating ${coin} via testnet faucet and deploying`);
+  await createTestnetAccount(coin);
+  await sleep(3000);
+  await retry(async () => (await account(coin)).deployContract(fs.readFileSync(WASM)));
+  await retry(() => call(coin, coin, "new", {
+    name: "Grassroots Dog",
+    symbol: "GDOG",
+    icon: null,
+    config: { ...DEMO_CONFIG, day_ms: String(dayMs) },
+    creator: main,
+    launch_receiver: launch,
+    oracle_pk: oraclePk,
+    links: [
+      { label: "repo", url: "https://github.com/hpark236/NEAR-hackathon-project" },
+      { label: "only official distribution", url: `the ${coin} contract itself` },
+    ],
+  }, { gasTgas: 300 }));
+  Object.assign(st, { coin, launch });
+  delete st.challengeId;
+  save();
+  log(`deployed ${coin} (one day = ${Number(dayMs) / 1000}s)`);
 }
 
 /** Idempotent: tops each actor up to its target balance, so a crashed setup can be resumed. */
@@ -261,9 +279,13 @@ if (cmd === "setup") {
   const fi = args.indexOf("--farmer");
   await setup(args[0], fi >= 0 ? args[fi + 1] : undefined);
 } else if (cmd === "run") await run(Number(args[0] || 6));
-else if (cmd === "distribute") await distribute();
+else if (cmd === "redeploy") {
+  await deployCoin(args[0] || DEMO_CONFIG.day_ms);
+  await distribute();
+  await fund();
+} else if (cmd === "distribute") await distribute();
 else if (cmd === "fund") await fund(args[0]);
 else if (cmd === "report") await report();
 else if (cmd === "challenge") await challenge();
 else if (cmd === "lock") await lock();
-else console.log("usage: node demo.js setup <main.testnet> [--farmer x.testnet] | distribute | fund | run [days] | challenge | report | lock");
+else console.log("usage: node demo.js setup <main.testnet> [--farmer x.testnet] | redeploy [day_ms] | distribute | fund | run [days] | challenge | report | lock");
