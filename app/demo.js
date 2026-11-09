@@ -2,7 +2,10 @@
 // alongside a sybil farm and deployer-side insiders, with the oracle attesting every "day".
 //
 //   node demo.js setup  <main.testnet> [--farmer <farmer.testnet>]   create actors, deploy, distribute
+//   node demo.js distribute                                          resume token distribution after a crash
+//   node demo.js fund [near]                                         top actors up so they can pay gas
 //   node demo.js run    [days]                                       run the ritual for N days
+//   node demo.js challenge                                           creator plugs in a signed challenge; actors claim
 //   node demo.js report                                              who earned what
 //   node demo.js lock                                                delete the coin's full-access key
 //
@@ -13,9 +16,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   account, call, view, keyStore, NETWORK, createTestnetAccount, createSubAccount,
-  yocto, tokens, fmt, readJson, writeJson, getKey,
+  yocto, tokens, fmt, readJson, writeJson, getKey, retry,
 } from "./lib/near.js";
 import { submit } from "./oracle.js";
+import { register as registerChallenge, signCompletion } from "./challenge-server.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const STATE = path.join(here, "data", "demo.json");
@@ -110,11 +114,27 @@ async function setup(main, farmer) {
   for (let i = 0; i < N_INSIDERS; i++) st.insiders.push(await createSubAccount(main, `insider${i + 1}`, "0.05"));
   save();
 
+  await distribute();
+  await fund();
+}
+
+/** Idempotent: tops each actor up to its target balance, so a crashed setup can be resumed. */
+async function distribute() {
+  const { coin, launch } = st;
   log("registering storage and distributing tokens from the launch account");
   const deposit = (await view(coin, "storage_balance_bounds")).min;
   const give = async (to, amount) => {
-    await call(launch, coin, "storage_deposit", { account_id: to, registration_only: true }, { deposit });
-    await call(launch, coin, "ft_transfer", { receiver_id: to, amount: tokens(amount).toString() }, { deposit: "1" });
+    const want = tokens(amount);
+    const have = BigInt((await view(coin, "ft_balance_of", { account_id: to })) || "0");
+    if (have >= want) return;
+    if (!(await view(coin, "storage_balance_of", { account_id: to })))
+      await retry(() => call(launch, coin, "storage_deposit", { account_id: to, registration_only: true }, { deposit }));
+    // re-check before retrying a transfer so a lost response never pays twice
+    await retry(async () => {
+      const now = BigInt((await view(coin, "ft_balance_of", { account_id: to })) || "0");
+      if (now >= want) return;
+      await call(launch, coin, "ft_transfer", { receiver_id: to, amount: (want - now).toString() }, { deposit: "1" });
+    });
   };
   // organic: varied stacks; the farm splits ONE stack across 30 wallets; insiders hold big bags
   for (const [i, a] of st.organic.entries()) await give(a, 20_000 + i * 7_000);
@@ -125,11 +145,25 @@ async function setup(main, farmer) {
   log(`setup done. coin = ${coin}`);
 }
 
+/** Top every actor up to `target` NEAR so it can pay gas (prepaid gas is reserved up front). */
+async function fund(target = "0.2") {
+  const want = BigInt(yocto(target));
+  const groups = [[st.main, [...st.organic, ...st.insiders]], [st.farmer, [...st.farmCaught, ...st.farmHidden]]];
+  for (const [funder, ids] of groups) {
+    const f = await account(funder);
+    for (const id of ids) {
+      const bal = BigInt((await retry(async () => (await account(id)).getAccountBalance())).available);
+      if (bal < want) await retry(() => f.sendMoney(id, want - bal));
+    }
+  }
+  log(`actors funded to ${target} NEAR`);
+}
+
 async function day(dayIdx) {
   // organic people show up most days but not all; farm and insiders script a perfect streak
   const tryCheckIn = async (a) => {
     try {
-      await call(a, st.coin, "check_in", {}, { gasTgas: 100 });
+      await retry(() => call(a, st.coin, "check_in", {}, { gasTgas: 50 }));
       return true;
     } catch (e) {
       const m = String(e.message || e);
@@ -139,7 +173,12 @@ async function day(dayIdx) {
   };
   const organicToday = st.organic.filter(() => Math.random() < 0.8);
   const bots = [...st.farmCaught, ...st.farmHidden, ...st.insiders];
-  const res = await Promise.all([...organicToday, ...bots].map(tryCheckIn));
+  // a few at a time: the free public RPC rate-limits bursts
+  const queue = [...organicToday, ...bots];
+  const res = [];
+  await Promise.all(Array.from({ length: 2 }, async () => {
+    while (queue.length) res.push(await tryCheckIn(queue.shift()));
+  }));
   log(`day ${dayIdx}: ${res.filter(Boolean).length} check-ins (${organicToday.length} organic, ${bots.length} scripted)`);
 }
 
@@ -182,6 +221,29 @@ async function report() {
   writeJson(path.join(here, "data", "demo-report.json"), { coin: st.coin, at: new Date().toISOString(), groups: Object.fromEntries(Object.entries(out).map(([g, v]) => [g, { ...v, rewards: v.rewards.toString() }])), state });
 }
 
+/** Creator plugs in a challenge ("meme raid"), then a few people and farm wallets complete it. */
+async function challenge() {
+  if (st.challengeId === undefined) {
+    st.challengeId = await registerChallenge(st.coin, st.main, "Daily meme raid", 2_000, 50_000);
+    save();
+    log(`registered challenge ${st.challengeId}`);
+  }
+  const claim = async (who, label) => {
+    const { nonce, signature } = await signCompletion(st.coin, st.challengeId, who);
+    try {
+      const out = await call(who, st.coin, "claim_signed", { challenge_id: st.challengeId, nonce, signature }, { gasTgas: 50 });
+      const paid = JSON.parse(Buffer.from(out.status.SuccessValue, "base64").toString());
+      log(`  ${label.padEnd(14)} ${who.slice(0, 18).padEnd(19)} paid ${fmt(paid)}`);
+    } catch (e) {
+      log(`  ${label.padEnd(14)} ${who.slice(0, 18).padEnd(19)} refused: ${String(e.message || e).match(/Smart contract panicked: ([^"\\]+)/)?.[1] || e.message}`);
+    }
+  };
+  for (const a of st.organic.slice(0, 3)) await claim(a, "organic");
+  for (const a of st.farmCaught.slice(0, 3)) await claim(a, "farm (caught)");
+  for (const a of st.farmHidden.slice(0, 2)) await claim(a, "farm (hidden)");
+  for (const a of st.insiders.slice(0, 2)) await claim(a, "insider");
+}
+
 async function lock() {
   const acc = await account(st.coin);
   const keys = await acc.getAccessKeys();
@@ -199,6 +261,9 @@ if (cmd === "setup") {
   const fi = args.indexOf("--farmer");
   await setup(args[0], fi >= 0 ? args[fi + 1] : undefined);
 } else if (cmd === "run") await run(Number(args[0] || 6));
+else if (cmd === "distribute") await distribute();
+else if (cmd === "fund") await fund(args[0]);
 else if (cmd === "report") await report();
+else if (cmd === "challenge") await challenge();
 else if (cmd === "lock") await lock();
-else console.log("usage: node demo.js setup <main.testnet> [--farmer x.testnet] | run [days] | report | lock");
+else console.log("usage: node demo.js setup <main.testnet> [--farmer x.testnet] | distribute | fund | run [days] | challenge | report | lock");

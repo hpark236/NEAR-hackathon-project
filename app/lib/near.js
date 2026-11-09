@@ -22,7 +22,25 @@ export async function account(id) {
   return (await near()).account(id);
 }
 
+/** Retry transient network errors ("fetch failed", 5xx, timeouts) with backoff. */
+export async function retry(fn, tries = 8) {
+  for (let i = 0; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const m = String(e?.message || e) + String(e?.cause?.code || "");
+      const transient = /fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket|50[234]|429|Rate limit|Timeout/i.test(m);
+      if (!transient || i >= tries - 1) throw e;
+      await new Promise((r) => setTimeout(r, Math.min(20_000, 1500 * 2 ** i)));
+    }
+  }
+}
+
 export async function view(contractId, methodName, args = {}) {
+  return retry(() => viewOnce(contractId, methodName, args));
+}
+
+async function viewOnce(contractId, methodName, args) {
   const res = await fetch(RPC, {
     method: "POST",
     headers: { "content-type": "application/json" },

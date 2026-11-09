@@ -12,7 +12,7 @@
 // Not caught in v1: unrelated-looking top-level accounts funded through exchanges or bridges.
 //
 // usage: node oracle.js <coin-contract> <relayer-account> [--dry]
-import { view, call, getKey, KEY_DIR, readJson, writeJson } from "./lib/near.js";
+import { view, call, retry, getKey, KEY_DIR, readJson, writeJson } from "./lib/near.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -129,7 +129,9 @@ export async function submit(coin, relayer, { dry = false } = {}) {
   if (!kp) throw new Error(`no oracle key in ${KEY_DIR}; run setup first`);
   const { signature } = kp.sign(Buffer.from(payload));
   if (!dry) {
-    await call(relayer, coin, "attest", { payload, signature: Buffer.from(signature).toString("base64") }, { gasTgas: 300 });
+    // retrying is safe: if a lost response actually landed, the contract rejects the replay
+    await retry(() => call(relayer, coin, "attest", { payload, signature: Buffer.from(signature).toString("base64") }, { gasTgas: 300 }))
+      .catch((e) => { if (!/replay|stale|not newer/i.test(String(e.message || e))) throw e; });
   }
   return report;
 }
