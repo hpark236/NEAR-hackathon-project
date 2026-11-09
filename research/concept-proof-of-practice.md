@@ -2,6 +2,8 @@
 
 Drafted 2026-11-09. Builds on `concept-organic-memecoins.md` (Grassroots).
 
+> **Status (2026-11-09): learning / math-question / study rewards DROPPED by decision.** Kept for the record. The verification analysis (issuer-signed claims, proof of time, anti-farm rules) may still apply elsewhere.
+
 ## The idea
 
 Coins are earned by **showing up and getting better**, not by being early or shilling:
