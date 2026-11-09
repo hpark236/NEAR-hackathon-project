@@ -1,2 +1,111 @@
-# NEAR-hackathon-project
-NEAR hackathon project
+# Grassroots
+
+**Memecoins that can only grow with their real community.** Built at NEAR HACKATHON (Nov 2026).
+Tracks: Memecoins With Mechanics (primary), Social Money, AI Security & Defense.
+
+## The problem
+
+Memecoins started as community: Dogecoin was a tipping currency, and its holders crowdfunded the Jamaican bobsled team's trip to the 2014 Olympics. Today most launches are built to be dumped on the next buyer:
+- insiders and snipers buy in the first block;
+- "drop ur address for 100 [coin]" engagement farming;
+- Telegram pump groups;
+- rugs.
+
+Launchpads (pump.fun on Solana, meme.cooking on NEAR) make *launching* easy, but the coin they produce is a plain fixed-supply token with no rules after launch.
+
+## What Grassroots is
+
+A NEP-141 token contract with the community rules **inside the token**. After deployment the account's full-access keys are deleted, so nobody, including us, can change them.
+
+| Track phrase | Grassroots rule |
+|---|---|
+| Supply that reacts to the community | 60% of max supply starts **unminted**. A tranche mints only when **independent** holders (wallet clusters counted once, held ≥ N days) cross a milestone. If the community shrinks below the last milestone for a while, part of the reserve is **cancelled forever**. |
+| Treasury with rules | A community pool with **no owner**. It can only pay the daily ritual, pay capped creator challenges, burn on a missed day, or receive season bonuses. |
+| On-chain ritual | **Daily check-in.** If unique independent check-ins reach the quorum, a slice of the pool goes to that day's check-ins; if not, a slice burns and the community streak resets. Plus a voluntary **weekly bonfire** (burn) with an on-chain title. |
+| Challenges | **Seasons:** grow independent holders by a target or the season bonus is cancelled. **Creator challenges:** any game or activity can plug in, proven by an ed25519 signature from the creator's server or by a NEAR verifier contract. |
+
+**Anti-farm, applied to every payout:**
+
+`weight = independence share × holding-age ramp × streak bonus (≤1.5×) × stake (linear up to a cap)`
+
+- Capped linear stake means **splitting a stack across many wallets earns nothing extra**.
+- A detected cluster of k wallets shares one weight.
+- New holders ramp in over `age_full_days`, so pump-and-leave buyers earn little.
+- The creator's allocation (20% of each tranche) unlocks **only** through real holder growth.
+
+**Never a honeypot:** there is no transfer tax and no sell lock. Plain NEP-141 transfers always work, and pools on Rhea/Ref work normally.
+
+## How NEAR is used
+
+| Need | NEAR feature |
+|---|---|
+| The rules live in the coin | Each NEP-141 token is its own contract (on Solana, standard SPL tokens share one program) |
+| Nobody can change them | Delete the account's full-access keys after deploy (`node app/demo.js lock`) |
+| Verify creator challenge proofs on-chain | `env::ed25519_verify` |
+| Plug-in verifier contracts | Async cross-contract call + callback (`claim_verified` → `on_verified`) |
+| Auditable history | NEP-297 `ft_mint` / `ft_burn` / `ft_transfer` events for every reward, tranche and burn |
+| Readable identity, clustering evidence | Named accounts and sub-accounts |
+| Oracle reads holders without an indexer | `get_holders` view over any public RPC |
+
+## Repository
+
+| Path | What |
+|---|---|
+| `contracts/grassroots/` | Rust contract (`src/lib.rs`) and 22 unit tests (`src/tests.rs`) |
+| `sim/` | 60-day community simulation used to choose parameters, with results and charts |
+| `app/oracle.js` | Organic Score oracle v1: reads holders, clusters wallets, signs and submits attestations, writes evidence JSON |
+| `app/demo.js` | Testnet demo: deploys a coin and runs organic users, a 30-wallet sybil farm and creator-side insiders through it |
+| `web/index.html` | Coin page (static, reads the contract live over RPC) |
+| `research/` | Hackathon landscape research (336 projects) and design notes |
+
+## Try it
+
+**Unit tests** (Rust ≥ 1.80):
+```sh
+cd contracts/grassroots && cargo test
+```
+Do X → see Y:
+- `splitting_a_stack_earns_nothing_extra`: 3 wallets holding 1,000 each weigh the same as 1 wallet holding 3,000.
+- `detected_cluster_shares_one_weight`: a flagged 3-wallet farm weighs like one account and counts once toward quorum.
+- `creator_gets_nothing_without_real_growth`: `claim_creator` panics before any milestone.
+- `challenges_cannot_drain_the_pool`: a creator challenge with reward = max supply pays at most 1% of the pool per day.
+- `flagged_insiders_can_always_sell`: a flagged wallet can transfer its whole balance (no honeypot).
+- `rejects_forged_attestation` / `rejects_replayed_attestation`: the oracle can't be impersonated or replayed.
+
+**Simulation:**
+```sh
+uv venv .venv && uv pip install --python .venv/bin/python matplotlib
+.venv/bin/python sim/grassroots_sim.py
+```
+→ `sim/results/summary.csv`: a 300-account sybil farm captures 54% of rewards on a naive streak coin vs 14% on Grassroots, and earns about the same per token held as an honest holder.
+
+**Testnet demo** (Node ≥ 18, `cargo-near`):
+```sh
+cd contracts/grassroots && cargo near build non-reproducible-wasm
+cd ../../app && npm install
+node demo.js setup <your-name>.testnet   # creates accounts via the testnet faucet, deploys, distributes
+node demo.js run 8                       # 8 demo "days" (60 s each): oracle attests, actors check in
+node demo.js report                      # rewards by group: organic vs farm (caught / hidden) vs insiders
+```
+Open `web/index.html?coin=<coin id printed by setup>` to watch the streak, tranches, burns and flags live.
+
+## Limits (stated plainly)
+
+- **Oracle trust.** Independent-holder counts and cluster flags come from a signed off-chain oracle. The contract trusts its key, but each flag's evidence is published (`app/data/score-*.json`), and a forged or replayed attestation is rejected.
+- **Clustering v1 is simple.** It catches wallets that share a parent account and the creator/launch side. It does **not** catch unrelated-looking accounts funded through exchanges; the demo includes 6 such "hidden" farm wallets to show the gap. Capped linear stake weighting still means those wallets earn no more than the same coins held in one account.
+- **Pump groups made of real people** can earn while they hold. The 14-day ramp and the 14-day milestone hold keep their share small and stop them from triggering supply.
+- **Demo parameters** (60-second days, small milestones) are for showing the full life of a coin in minutes. Production parameters are in `sim/README.md`.
+- Testnet only. Not audited.
+
+## Built with
+
+- `near-sdk` 5 and `near-contract-standards` (NEP-141, NEP-145)
+- `near-api-js` 5
+- `matplotlib` (simulation charts only)
+- AI coding assistance (Claude Code)
+
+No pre-hackathon code.
+
+## License
+
+MIT

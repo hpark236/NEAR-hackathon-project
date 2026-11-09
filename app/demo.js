@@ -1,0 +1,204 @@
+// End-to-end testnet demo: deploy a Grassroots coin, then run a small community through it
+// alongside a sybil farm and deployer-side insiders, with the oracle attesting every "day".
+//
+//   node demo.js setup  <main.testnet> [--farmer <farmer.testnet>]   create actors, deploy, distribute
+//   node demo.js run    [days]                                       run the ritual for N days
+//   node demo.js report                                              who earned what
+//   node demo.js lock                                                delete the coin's full-access key
+//
+// State lives in app/data/demo.json (account ids only; keys stay in app/.keys/).
+import { KeyPair } from "near-api-js";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  account, call, view, keyStore, NETWORK, createTestnetAccount, createSubAccount,
+  yocto, tokens, fmt, readJson, writeJson, getKey,
+} from "./lib/near.js";
+import { submit } from "./oracle.js";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const STATE = path.join(here, "data", "demo.json");
+const WASM = path.join(here, "..", "contracts", "grassroots", "target", "near", "grassroots.wasm");
+const st = readJson(STATE, {});
+const save = () => writeJson(STATE, st);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
+
+const N_ORGANIC = 12;
+const N_FARM_CAUGHT = 24;     // sub-accounts of the farmer: caught by the shared-parent rule
+const N_FARM_HIDDEN = 6;      // implicit accounts funded by the farmer: NOT caught by v1
+const N_INSIDERS = 4;         // creator-side wallets
+
+// Demo-scale parameters: one "day" is 60 seconds and milestones are small, so the whole life
+// of a coin fits in a few minutes. Production values are in sim/README.md.
+const DEMO_CONFIG = {
+  max_supply: (1_000_000_000n * 10n ** 18n).toString(),
+  launch_bps: 3500,
+  pool_seed_bps: 500,
+  milestones: [5, 10, 15, 25],
+  tranche_bps: [500, 700, 900, 1100],
+  tranche_to_pool_bps: 8000,
+  contraction_days: 3,
+  contraction_cut_bps: 1000,
+  quorum_min: 3,
+  quorum_bps: 5000,
+  daily_payout_bps: 300,
+  miss_burn_bps: 100,
+  age_full_days: 2,
+  streak_cap: 7,
+  streak_max_bonus_bps: 5000,
+  balance_cap_bps: 5,
+  min_balance_to_check_in: tokens(1).toString(),
+  season_days: 7,
+  season_growth_bps: 5000,
+  season_bonus_bps: 200,
+  challenge_daily_cap_bps: 100,
+  day_ms: "60000",
+};
+
+async function implicitAccount(funder, label) {
+  const kp = KeyPair.fromRandom("ed25519");
+  const id = Buffer.from(kp.getPublicKey().data).toString("hex");
+  await keyStore.setKey(NETWORK, id, kp);
+  await (await account(funder)).sendMoney(id, yocto("0.05"));
+  log(`  ${label} -> ${id.slice(0, 10)}… (implicit)`);
+  return id;
+}
+
+async function setup(main, farmer) {
+  if (!(await getKey(main))) {
+    log(`creating ${main} via testnet faucet`);
+    await createTestnetAccount(main);
+  }
+  if (!farmer) farmer = `grfarm-${Date.now().toString(36)}.testnet`;
+  if (!(await getKey(farmer))) {
+    log(`creating farmer ${farmer} via testnet faucet`);
+    await createTestnetAccount(farmer);
+  }
+  if (!(await getKey("oracle.local"))) await keyStore.setKey(NETWORK, "oracle.local", KeyPair.fromRandom("ed25519"));
+  const oraclePk = (await getKey("oracle.local")).getPublicKey().toString();
+
+  const coin = `gdog${Date.now().toString(36).slice(-4)}.${main}`;
+  const launch = await createSubAccount(main, `launch${coin.slice(4, 8)}`, "1");
+  log(`deploying ${coin}`);
+  await createSubAccount(main, coin.split(".")[0], "4.5");
+  const coinAcc = await account(coin);
+  await coinAcc.deployContract(fs.readFileSync(WASM));
+  await call(coin, coin, "new", {
+    name: "Grassroots Dog",
+    symbol: "GDOG",
+    icon: null,
+    config: DEMO_CONFIG,
+    creator: main,
+    launch_receiver: launch,
+    oracle_pk: oraclePk,
+    links: [
+      { label: "repo", url: "https://github.com/hpark236/NEAR-hackathon-project" },
+      { label: "only official distribution", url: `the ${coin} contract itself` },
+    ],
+  }, { gasTgas: 300 });
+  Object.assign(st, { main, farmer, coin, launch, organic: [], farmCaught: [], farmHidden: [], insiders: [] });
+  save();
+
+  log("creating actors");
+  for (let i = 0; i < N_ORGANIC; i++) st.organic.push(await implicitAccount(main, `organic ${i + 1}`));
+  save();
+  for (let i = 0; i < N_FARM_CAUGHT; i++) st.farmCaught.push(await createSubAccount(farmer, `f${i + 1}`, "0.05"));
+  for (let i = 0; i < N_FARM_HIDDEN; i++) st.farmHidden.push(await implicitAccount(farmer, `hidden farm ${i + 1}`));
+  save();
+  for (let i = 0; i < N_INSIDERS; i++) st.insiders.push(await createSubAccount(main, `insider${i + 1}`, "0.05"));
+  save();
+
+  log("registering storage and distributing tokens from the launch account");
+  const deposit = (await view(coin, "storage_balance_bounds")).min;
+  const give = async (to, amount) => {
+    await call(launch, coin, "storage_deposit", { account_id: to, registration_only: true }, { deposit });
+    await call(launch, coin, "ft_transfer", { receiver_id: to, amount: tokens(amount).toString() }, { deposit: "1" });
+  };
+  // organic: varied stacks; the farm splits ONE stack across 30 wallets; insiders hold big bags
+  for (const [i, a] of st.organic.entries()) await give(a, 20_000 + i * 7_000);
+  const farmStack = 600_000;
+  for (const a of [...st.farmCaught, ...st.farmHidden]) await give(a, farmStack / (N_FARM_CAUGHT + N_FARM_HIDDEN));
+  for (const a of st.insiders) await give(a, 400_000);
+  save();
+  log(`setup done. coin = ${coin}`);
+}
+
+async function day(dayIdx) {
+  // organic people show up most days but not all; farm and insiders script a perfect streak
+  const tryCheckIn = async (a) => {
+    try {
+      await call(a, st.coin, "check_in", {}, { gasTgas: 100 });
+      return true;
+    } catch (e) {
+      const m = String(e.message || e);
+      if (!m.includes("already checked in")) log(`  check_in ${a.slice(0, 14)} failed: ${m.slice(0, 120)}`);
+      return false;
+    }
+  };
+  const organicToday = st.organic.filter(() => Math.random() < 0.8);
+  const bots = [...st.farmCaught, ...st.farmHidden, ...st.insiders];
+  const res = await Promise.all([...organicToday, ...bots].map(tryCheckIn));
+  log(`day ${dayIdx}: ${res.filter(Boolean).length} check-ins (${organicToday.length} organic, ${bots.length} scripted)`);
+}
+
+async function run(days) {
+  const cfg = await view(st.coin, "get_config");
+  const dayMs = Number(cfg.day_ms);
+  for (let d = 0; d < days; d++) {
+    const r = await submit(st.coin, st.main);
+    log(`oracle: ${r.independent_holders} independent of ${r.holders} holders; ${Object.keys(r.clusters).length} flagged`);
+    const s0 = await view(st.coin, "get_state");
+    await day(s0.current_day);
+    const s = await view(st.coin, "get_state");
+    log(`  supply ${fmt(s.total_supply)} | pool ${fmt(s.pool_free)} | reserve ${fmt(s.reserve)} | streak ${s.community_streak} | milestone ${s.milestone_idx}`);
+    // wait for the contract's next day boundary
+    while ((await view(st.coin, "get_state")).current_day <= s0.current_day) await sleep(Math.min(5_000, dayMs / 6));
+  }
+}
+
+async function report() {
+  const groups = { organic: st.organic, "farm (caught)": st.farmCaught, "farm (hidden)": st.farmHidden, insiders: st.insiders };
+  const out = {};
+  let total = 0n;
+  for (const [g, ids] of Object.entries(groups)) {
+    let r = 0n;
+    for (const id of ids) {
+      const m = await view(st.coin, "get_member", { account_id: id });
+      if (m) r += BigInt(m.rewards_total);
+    }
+    out[g] = { accounts: ids.length, rewards: r };
+    total += r;
+  }
+  const state = await view(st.coin, "get_state");
+  console.log(`\ncoin ${st.coin}\n`);
+  console.log("group            accounts   rewards           share");
+  for (const [g, v] of Object.entries(out)) {
+    const share = total ? Number((v.rewards * 10000n) / total) / 100 : 0;
+    console.log(`${g.padEnd(17)}${String(v.accounts).padEnd(11)}${fmt(v.rewards).padEnd(18)}${share}%`);
+  }
+  console.log("\nstate", { ...state, total_supply: fmt(state.total_supply), reserve: fmt(state.reserve), pool_free: fmt(state.pool_free), burned: fmt(state.burned), cancelled: fmt(state.cancelled) });
+  writeJson(path.join(here, "data", "demo-report.json"), { coin: st.coin, at: new Date().toISOString(), groups: Object.fromEntries(Object.entries(out).map(([g, v]) => [g, { ...v, rewards: v.rewards.toString() }])), state });
+}
+
+async function lock() {
+  const acc = await account(st.coin);
+  const keys = await acc.getAccessKeys();
+  for (const k of keys) {
+    if (k.access_key.permission === "FullAccess") {
+      await acc.deleteKey(k.public_key);
+      log(`deleted full-access key ${k.public_key} from ${st.coin}`);
+    }
+  }
+  log("contract is now frozen: no key can redeploy or change it");
+}
+
+const [cmd, ...args] = process.argv.slice(2);
+if (cmd === "setup") {
+  const fi = args.indexOf("--farmer");
+  await setup(args[0], fi >= 0 ? args[fi + 1] : undefined);
+} else if (cmd === "run") await run(Number(args[0] || 6));
+else if (cmd === "report") await report();
+else if (cmd === "lock") await lock();
+else console.log("usage: node demo.js setup <main.testnet> [--farmer x.testnet] | run [days] | report | lock");

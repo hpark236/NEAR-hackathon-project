@@ -431,3 +431,16 @@ fn bonfire_burns_and_tracks_weekly_top() {
     let top = t.c.get_week_top();
     assert_eq!(top[0].1, acc("bob.near"));
 }
+
+#[test]
+fn holders_list_tracks_balances() {
+    let mut t = T::new();
+    t.give("alice.near", 5 * ONE);
+    t.give("bob.near", 5 * ONE);
+    assert_eq!(t.c.get_holder_count(), 3); // launch.near, alice, bob (the pool is excluded)
+    t.ctx(&acc("alice.near"), 1);
+    t.c.ft_transfer(acc("bob.near"), U128(5 * ONE), None);
+    let h: Vec<String> = t.c.get_holders(0, 10).into_iter().map(|(a, _, _)| a.to_string()).collect();
+    assert!(!h.contains(&"alice.near".to_string()));
+    assert!(h.contains(&"bob.near".to_string()));
+}

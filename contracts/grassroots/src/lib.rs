@@ -35,7 +35,7 @@ use near_contract_standards::storage_management::{
     StorageBalance, StorageBalanceBounds, StorageManagement,
 };
 use near_sdk::json_types::{Base64VecU8, U128, U64};
-use near_sdk::store::{LookupMap, LookupSet};
+use near_sdk::store::{IterableSet, LookupMap, LookupSet};
 use near_sdk::{
     env, ext_contract, near, require, AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault,
     Promise, PromiseError, PromiseOrValue, PublicKey,
@@ -58,6 +58,7 @@ enum Key {
     UsedNonces,
     ChallengeLast,
     WeekBurns,
+    Holders,
 }
 
 /// Parameters fixed at launch. Readable by anyone through `get_config`.
@@ -205,11 +206,13 @@ pub struct Contract {
     metadata: FungibleTokenMetadata,
     config: Config,
     creator: AccountId,
+    launch_receiver: AccountId,
     oracle_pk: PublicKey,
     links: Vec<Link>,
     genesis_ms: u64,
 
     since: LookupMap<AccountId, u64>,
+    holders: IterableSet<AccountId>,
     members: LookupMap<AccountId, Member>,
     days: LookupMap<u32, Day>,
     day_clusters: LookupSet<String>,
@@ -295,10 +298,12 @@ impl Contract {
             },
             config: config.clone(),
             creator: creator.clone(),
+            launch_receiver: launch_receiver.clone(),
             oracle_pk,
             links,
             genesis_ms: env::block_timestamp_ms(),
             since: LookupMap::new(Key::Since),
+            holders: IterableSet::new(Key::Holders),
             members: LookupMap::new(Key::Members),
             days: LookupMap::new(Key::Days),
             day_clusters: LookupSet::new(Key::DayClusters),
@@ -336,6 +341,7 @@ impl Contract {
         }
         this.mint(&launch_receiver, bps(max, config.launch_bps), "launch");
         this.mint(&me, bps(max, config.pool_seed_bps), "pool seed");
+        this.touch(&launch_receiver);
         this
     }
 
@@ -551,6 +557,10 @@ impl Contract {
         self.creator.clone()
     }
 
+    pub fn get_launch_receiver(&self) -> AccountId {
+        self.launch_receiver.clone()
+    }
+
     pub fn get_oracle_pk(&self) -> PublicKey {
         self.oracle_pk.clone()
     }
@@ -608,6 +618,27 @@ impl Contract {
         U128(self.weight_of(&account_id, bal, streak))
     }
 
+    /// Paginated holders with balance and holding-since time: everything the Organic Score
+    /// oracle needs, readable from any public RPC.
+    pub fn get_holders(&self, from_index: u32, limit: u32) -> Vec<(AccountId, U128, U64)> {
+        self.holders
+            .iter()
+            .skip(from_index as usize)
+            .take(limit.min(200) as usize)
+            .map(|a| {
+                (
+                    a.clone(),
+                    U128(self.ft.internal_unwrap_balance_of(a)),
+                    U64(self.since.get(a).copied().unwrap_or(0)),
+                )
+            })
+            .collect()
+    }
+
+    pub fn get_holder_count(&self) -> u32 {
+        self.holders.len()
+    }
+
     pub fn get_challenges(&self) -> Vec<Challenge> {
         self.challenges.clone()
     }
@@ -651,11 +682,18 @@ impl Contract {
 
     /// Keep "holding since" in step with balances: set when an account starts holding, clear at zero.
     fn touch(&mut self, account: &AccountId) {
+        if *account == env::current_account_id() {
+            return; // the pool is not a holder
+        }
         let bal = self.ft.accounts.get(account).unwrap_or(0);
         if bal == 0 {
             self.since.remove(account);
-        } else if !self.since.contains_key(account) {
-            self.since.insert(account.clone(), env::block_timestamp_ms());
+            self.holders.remove(account);
+        } else {
+            if !self.since.contains_key(account) {
+                self.since.insert(account.clone(), env::block_timestamp_ms());
+            }
+            self.holders.insert(account.clone());
         }
     }
 

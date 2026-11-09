@@ -3,3 +3,6 @@ out/
 node_modules/
 .venv/
 target/
+node_modules/
+.keys/
+.env
