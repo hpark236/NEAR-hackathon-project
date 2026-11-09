@@ -1,0 +1,41 @@
+{
+  "coin": "gdog-exi1u.testnet",
+  "at": "2026-11-09T16:00:05.051Z",
+  "groups": {
+    "organic": {
+      "accounts": 12,
+      "rewards": "21115531048581805786852493"
+    },
+    "farm (caught)": {
+      "accounts": 24,
+      "rewards": "384674091629095817566664"
+    },
+    "farm (hidden)": {
+      "accounts": 6,
+      "rewards": "5377079224245864987350044"
+    },
+    "insiders": {
+      "accounts": 4,
+      "rewards": "24255179347745005000415"
+    }
+  },
+  "state": {
+    "total_supply": "587005000000000000000000000",
+    "reserve": "370000000000000000000000000",
+    "pool_free": "208251555720628500000000000",
+    "pool_committed": "1851904735566988403230384",
+    "burned": "995000000000000000000000",
+    "cancelled": "0",
+    "creator_unlocked": "42000000000000000000000000",
+    "creator_claimed": "0",
+    "milestone_idx": 3,
+    "independent_holders": 19,
+    "community_streak": 5,
+    "best_streak": 5,
+    "current_day": 8,
+    "next_settle_day": 7,
+    "season_start_holders": 19,
+    "seasons_won": 1,
+    "seasons_lost": 0
+  }
+}

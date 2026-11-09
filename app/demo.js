@@ -249,7 +249,7 @@ async function challenge() {
   const claim = async (who, label) => {
     const { nonce, signature } = await signCompletion(st.coin, st.challengeId, who);
     try {
-      const out = await call(who, st.coin, "claim_signed", { challenge_id: st.challengeId, nonce, signature }, { gasTgas: 50 });
+      const out = await retry(() => call(who, st.coin, "claim_signed", { challenge_id: st.challengeId, nonce, signature }, { gasTgas: 50 }));
       const paid = JSON.parse(Buffer.from(out.status.SuccessValue, "base64").toString());
       log(`  ${label.padEnd(14)} ${who.slice(0, 18).padEnd(19)} paid ${fmt(paid)}`);
     } catch (e) {

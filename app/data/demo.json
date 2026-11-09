@@ -1,0 +1,61 @@
+{
+  "main": "grassroots-mw8tisuv.testnet",
+  "farmer": "grfarm-mw8vpdjm.testnet",
+  "coin": "gdog-exi1u.testnet",
+  "launch": "launchexi1u.grassroots-mw8tisuv.testnet",
+  "organic": [
+    "82420ad169f6d808e0f60bea848facc6879949f862316165f3e52d42e99c56d9",
+    "c21354e56b64e7a6707335577657dd30e89f5195de832212b10791394186e1c1",
+    "66dcb14750d296976762ca75f816cd72765b56e79b936808f09a1d1e53c072d5",
+    "34c84738cda4ac7cdf3a3cec07f6ce53184be17eadefd2a43910961c312126ce",
+    "4980745d37b186b37abde18d5c39eff0775bff1a5bf4f44213dad63d42d7bb8e",
+    "95de8b3b9a1671734c47560652ec0256e750a09243e89f2db3ca6810ed650993",
+    "45ea0d9fdb92e7c05e8c2f1b0f499e4e1ab80b304f2d6db9b0d9734b083995da",
+    "4ccb74c53accf1c7439aa4cf12c31dac56f7f1658fce84a58ee49449136f65bf",
+    "eacf2745d99ba5927d757f9e5c5ca9782c2960b46a52a1e972ed00b06ab552d7",
+    "2f88d1475622c812f1cfbecf7c97634e9866daf5039d20e9a11fef5e7e5c3a13",
+    "40da0bbd709167fd656ca64777ac50ed4e456915434c5d96a960ab1d106c837d",
+    "e39e70e44d79d1af9c60b909bf03707635f4ec558b0be3fd74dce515a5fe067a"
+  ],
+  "farmCaught": [
+    "f1.grfarm-mw8vpdjm.testnet",
+    "f2.grfarm-mw8vpdjm.testnet",
+    "f3.grfarm-mw8vpdjm.testnet",
+    "f4.grfarm-mw8vpdjm.testnet",
+    "f5.grfarm-mw8vpdjm.testnet",
+    "f6.grfarm-mw8vpdjm.testnet",
+    "f7.grfarm-mw8vpdjm.testnet",
+    "f8.grfarm-mw8vpdjm.testnet",
+    "f9.grfarm-mw8vpdjm.testnet",
+    "f10.grfarm-mw8vpdjm.testnet",
+    "f11.grfarm-mw8vpdjm.testnet",
+    "f12.grfarm-mw8vpdjm.testnet",
+    "f13.grfarm-mw8vpdjm.testnet",
+    "f14.grfarm-mw8vpdjm.testnet",
+    "f15.grfarm-mw8vpdjm.testnet",
+    "f16.grfarm-mw8vpdjm.testnet",
+    "f17.grfarm-mw8vpdjm.testnet",
+    "f18.grfarm-mw8vpdjm.testnet",
+    "f19.grfarm-mw8vpdjm.testnet",
+    "f20.grfarm-mw8vpdjm.testnet",
+    "f21.grfarm-mw8vpdjm.testnet",
+    "f22.grfarm-mw8vpdjm.testnet",
+    "f23.grfarm-mw8vpdjm.testnet",
+    "f24.grfarm-mw8vpdjm.testnet"
+  ],
+  "farmHidden": [
+    "69a1dfc5c31601cfb60a9af290a5af9617ec11103dfa685c39b429d8a2faae39",
+    "ac555069c0890e20cda219c0053b8913b228714616b5de49dd13d0995d21197c",
+    "42717dce3a8e27e0d251d1869b5f0aae0fd6f6a5d9339491de2f1c2eed2e97ce",
+    "0f4f3780c2890117d151c2a507f6e84c54ecbf17af60ba5a812d8774003f5516",
+    "ff6cefe8b09f3d103597b9f9ac7d1e130c7902f5003a49284732053e6fc20c36",
+    "889df16870a863d0efff3eeca306102faa47a246c5a8fcb1a0508b615e16f996"
+  ],
+  "insiders": [
+    "insider1.grassroots-mw8tisuv.testnet",
+    "insider2.grassroots-mw8tisuv.testnet",
+    "insider3.grassroots-mw8tisuv.testnet",
+    "insider4.grassroots-mw8tisuv.testnet"
+  ],
+  "challengeId": 0
+}
