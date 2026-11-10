@@ -833,17 +833,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 
 [[package]]
-name = "grassroots"
-version = "0.1.0"
-dependencies = [
- "bs58 0.5.1",
- "ed25519-dalek",
- "near-contract-standards",
- "near-sdk",
- "serde_json",
-]
-
-[[package]]
 name = "group"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1001,6 +990,17 @@ dependencies = [
  "hashbrown 0.17.1",
  "serde",
  "serde_core",
+]
+
+[[package]]
+name = "insydr"
+version = "0.1.0"
+dependencies = [
+ "bs58 0.5.1",
+ "ed25519-dalek",
+ "near-contract-standards",
+ "near-sdk",
+ "serde_json",
 ]
 
 [[package]]

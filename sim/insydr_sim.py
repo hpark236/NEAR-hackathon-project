@@ -1,5 +1,5 @@
 """
-Grassroots 60-day community simulation.
+INSYDR 60-day community simulation.
 
 Purpose: choose contract parameters before writing the contract (the memecoins
 track prompt asks for exactly this), and show how the anti-farm rules change who
@@ -287,7 +287,7 @@ def main():
     for sc in scenarios:
         for naive in (True, False):
             w, rows = run(sc, naive)
-            mode = "naive" if naive else "grassroots"
+            mode = "naive" if naive else "insydr"
             series[(sc, mode)] = rows
             with open(os.path.join(res, f"{sc}_{mode}.csv"), "w", newline="") as f:
                 wr = csv.DictWriter(f, fieldnames=sorted({k for r in rows for k in r}, key=lambda k: (k != "day", k)))
@@ -328,7 +328,7 @@ def main():
 
     fig, axes = plt.subplots(1, len(scenarios), figsize=(18, 4.2), sharey=True)
     for ax, sc in zip(axes, scenarios):
-        rows = series[(sc, "grassroots")]
+        rows = series[(sc, "insydr")]
         d = [r["day"] for r in rows]
         ax.plot(d, [r["supply"] / 1e6 for r in rows], label="circulating+pool supply (M)")
         ax2 = ax.twinx()
@@ -340,7 +340,7 @@ def main():
         if sc == scenarios[-1]:
             ax2.set_ylabel("independent holders")
     axes[0].legend(loc="upper left", fontsize=8)
-    fig.suptitle("Grassroots: supply follows the real community")
+    fig.suptitle("INSYDR: supply follows the real community")
     fig.tight_layout()
     fig.savefig(os.path.join(res, "supply_vs_community.png"), dpi=120)
 
@@ -351,14 +351,14 @@ def main():
                                 if r["scenario"] == sc and r["mode"] == mode and r["actor"] == actor)
         labels.append(f"{actor}\n({sc.replace('_', ' + ')})")
         naive_v.append(get("naive") * 100)
-        grass_v.append(get("grassroots") * 100)
+        grass_v.append(get("insydr") * 100)
     x = range(len(labels))
     ax.bar([i - 0.2 for i in x], naive_v, 0.4, label="naive streak coin")
-    ax.bar([i + 0.2 for i in x], grass_v, 0.4, label="Grassroots")
+    ax.bar([i + 0.2 for i in x], grass_v, 0.4, label="INSYDR")
     ax.set_xticks(list(x))
     ax.set_xticklabels(labels)
     ax.set_ylabel("% of all rewards captured")
-    ax.set_title("Who captures the rewards: bad actors, naive vs Grassroots")
+    ax.set_title("Who captures the rewards: bad actors, naive vs INSYDR")
     ax.legend()
     fig.tight_layout()
     fig.savefig(os.path.join(res, "farmer_capture.png"), dpi=120)

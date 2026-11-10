@@ -1,4 +1,4 @@
-//! Grassroots: a NEP-141 memecoin whose supply, treasury and rewards follow its *real* community.
+//! INSYDR: a NEP-141 memecoin whose supply, treasury and rewards follow its *real* community.
 //!
 //! Every rule below is fixed at `new()` and there are no admin methods that change it. After
 //! deploying, delete the account's full-access keys and the code is frozen too.

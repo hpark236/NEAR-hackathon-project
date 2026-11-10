@@ -1,4 +1,6 @@
-# Grassroots
+# INSYDR
+
+> **Everyone's an insider. Except the insiders.**
 
 **Memecoins that can only grow with their real community.** Built at NEAR HACKATHON (Nov 2026).
 Tracks: Memecoins With Mechanics (primary), Social Money, AI Security & Defense.
@@ -9,11 +11,11 @@ Tracks: Memecoins With Mechanics (primary), Social Money, AI Security & Defense.
 
 | The brief asks for | Where it is |
 |---|---|
-| NEP-141 token with the mechanic in the contract, not a backend somebody could switch off | `contracts/grassroots/src/lib.rs`. Check-in, quorum, payout, burn, streak, seasons and challenges all run on-chain. The only off-chain piece is the holder-count oracle: if it stops, the daily ritual keeps working; only new growth tranches and new farm flags pause. |
+| NEP-141 token with the mechanic in the contract, not a backend somebody could switch off | `contracts/insydr/src/lib.rs`. Check-in, quorum, payout, burn, streak, seasons and challenges all run on-chain. The only off-chain piece is the holder-count oracle: if it stops, the daily ritual keeps working; only new growth tranches and new farm flags pause. |
 | Parameters (target, mint size, burn size) set at launch, readable by anyone, no admin key | `Config` is passed to `new` and has no setter; read it with `get_config`. `node app/demo.js lock` deletes the coin account's full-access keys. |
 | Sybil resistance good enough for a demo, limits written plainly | Anti-farm weighting below; [Limits](#limits-stated-plainly); the testnet run includes a farm we deliberately *don't* catch. |
 | Page with the current streak, today's progress and a log of every mint and burn | `web/index.html`: streak with best-ever "high score", today's quorum bar, daily log, and the **on-chain supply ledger** (`get_ledger`), which the page checks against total supply. |
-| Simulate 60 days under a few scenarios, then pick parameters | `sim/`: 4 scenarios × naive vs Grassroots, 60 days, supply-over-time chart, parameters chosen from the results. |
+| Simulate 60 days under a few scenarios, then pick parameters | `sim/`: 4 scenarios × naive vs INSYDR, 60 days, supply-over-time chart, parameters chosen from the results. |
 
 ## The problem
 
@@ -25,11 +27,11 @@ Memecoins started as community: Dogecoin was a tipping currency, and its holders
 
 Launchpads (pump.fun on Solana, meme.cooking on NEAR) make *launching* easy, but the coin they produce is a plain fixed-supply token with no rules after launch.
 
-## What Grassroots is
+## What INSYDR is
 
 A NEP-141 token contract with the community rules **inside the token**. After deployment the account's full-access keys are deleted, so nobody, including us, can change them.
 
-| Track phrase | Grassroots rule |
+| Track phrase | INSYDR rule |
 |---|---|
 | Supply that reacts to the community | 60% of max supply starts **unminted**. A tranche mints only when **independent** holders (wallet clusters counted once, held ≥ N days) cross a milestone. If the community shrinks below the last milestone for a while, part of the reserve is **cancelled forever**. |
 | Treasury with rules | A community pool with **no owner**. It can only pay the daily ritual, pay capped creator challenges, burn on a missed day, or receive season bonuses. |
@@ -65,7 +67,7 @@ A NEP-141 token contract with the community rules **inside the token**. After de
 
 | Path | What |
 |---|---|
-| `contracts/grassroots/` | Rust contract (`src/lib.rs`) and 25 unit tests (`src/tests.rs`) |
+| `contracts/insydr/` | Rust contract (`src/lib.rs`) and 25 unit tests (`src/tests.rs`) |
 | `sim/` | 60-day community simulation used to choose parameters, with results and charts |
 | `app/oracle.js` | Organic Score oracle v1: reads holders, clusters wallets, signs and submits attestations, writes evidence JSON |
 | `app/demo.js` | Testnet demo: deploys a coin and runs organic users, a 30-wallet sybil farm and creator-side insiders through it |
@@ -76,7 +78,7 @@ A NEP-141 token contract with the community rules **inside the token**. After de
 
 **Unit tests** (Rust ≥ 1.80):
 ```sh
-cd contracts/grassroots && cargo test
+cd contracts/insydr && cargo test
 ```
 Do X → see Y:
 - `splitting_a_stack_earns_nothing_extra`: 3 wallets holding 1,000 each weigh the same as 1 wallet holding 3,000.
@@ -89,13 +91,13 @@ Do X → see Y:
 **Simulation:**
 ```sh
 uv venv .venv && uv pip install --python .venv/bin/python matplotlib
-.venv/bin/python sim/grassroots_sim.py
+.venv/bin/python sim/insydr_sim.py
 ```
-→ `sim/results/summary.csv`: a 300-account sybil farm captures 54% of rewards on a naive streak coin vs 14% on Grassroots, and earns about the same per token held as an honest holder.
+→ `sim/results/summary.csv`: a 300-account sybil farm captures 54% of rewards on a naive streak coin vs 14% on INSYDR, and earns about the same per token held as an honest holder.
 
 **Testnet demo** (Node ≥ 18, `cargo-near`):
 ```sh
-cd contracts/grassroots && cargo near build non-reproducible-wasm
+cd contracts/insydr && cargo near build non-reproducible-wasm
 cd ../../app && npm install
 node demo.js setup <your-name>.testnet   # creates accounts via the testnet faucet, deploys, distributes
 node demo.js run 6                       # 6 demo "days" (4 min each): oracle attests, actors check in
@@ -106,7 +108,7 @@ Open `web/index.html?coin=<coin id printed by setup>` to watch the streak, tranc
 
 ## Testnet results
 
-Live coin: [`gdog-1huvn.testnet`](https://testnet.nearblocks.io/address/gdog-1huvn.testnet). Its full-access keys are deleted, so the contract can no longer change. The run: 7 demo days of 4 minutes each, then a creator challenge. Raw output is in `app/data/demo-report.json`.
+Live coin: [`gdog-1huvn.testnet`](https://testnet.nearblocks.io/address/gdog-1huvn.testnet) (deployed as "Grassroots Dog" before the project was renamed INSYDR; a locked contract keeps its name). Its full-access keys are deleted, so the contract can no longer change. The run: 7 demo days of 4 minutes each, then a creator challenge. Raw output is in `app/data/demo-report.json`.
 
 | Group | Wallets | Tokens held | Share of rewards |
 |---|---|---|---|
@@ -126,8 +128,8 @@ Live coin: [`gdog-1huvn.testnet`](https://testnet.nearblocks.io/address/gdog-1hu
 - **Clustering v1 is simple.** It catches wallets that share a parent account and the creator/launch side. It does **not** catch unrelated-looking accounts funded through exchanges; the demo includes 6 such "hidden" farm wallets to show the gap. Capped linear stake weighting still means those wallets earn no more than the same coins held in one account.
 - **Pump groups made of real people** can earn while they hold. The 14-day ramp and the 14-day milestone hold keep their share small and stop them from triggering supply.
 - **Demo parameters** (4-minute days, small milestones) are for showing the full life of a coin in minutes. Production parameters are in `sim/README.md`.
-- **The pool pays rewards instead of minting per check-in** (the brief's example mints). A per-check-in mint is exactly what a wallet farm targets, so Grassroots funds the pool only from growth tranches and season bonuses, which are themselves gated on independent holders.
-- **Not yet integrated with meme.cooking.** Next step: a meme.cooking-launched coin could graduate into Grassroots rules by migrating into a wrapper contract.
+- **The pool pays rewards instead of minting per check-in** (the brief's example mints). A per-check-in mint is exactly what a wallet farm targets, so INSYDR funds the pool only from growth tranches and season bonuses, which are themselves gated on independent holders.
+- **Not yet integrated with meme.cooking.** Next step: a meme.cooking-launched coin could graduate into INSYDR rules by migrating into a wrapper contract.
 - Testnet only. Not audited.
 
 ## Built with

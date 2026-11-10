@@ -2,223 +2,603 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grassroots</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>INSYDR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f6f4ee; --card: #fffdf8; --ink: #1f2a1f; --muted: #6b7466; --line: #e3dfd3;
-    --green: #2f7d4a; --green-soft: #dcefe1; --red: #b5452f; --red-soft: #f6e0da; --amber: #b07a16;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #141812; --card: #1c211a; --ink: #e9eee4; --muted: #9aa494; --line: #2c3429;
-            --green: #6cc28a; --green-soft: #22382a; --red: #e58a74; --red-soft: #3d2620; --amber: #e0b457; }
+    color-scheme: dark;
+    --bg: #08070d;
+    --surface: #15121f;
+    --surface-2: #1c1829;
+    --line: rgba(255, 255, 255, 0.08);
+    --line-2: rgba(255, 255, 255, 0.14);
+    --ink: #f4f2fa;
+    --ink-2: #c9c4d9;
+    --muted: #8f89a3;
+    --violet: #7c3aed;
+    --violet-2: #a855f7;
+    --lime: #d7f25c;          /* highlight accent (UI only, never data) */
+    --mint: #2ea374;          /* data: independent / supply */
+    --orange: #e5602c;        /* data: flagged / burn */
+    --mint-soft: rgba(46, 163, 116, 0.16);
+    --orange-soft: rgba(229, 96, 44, 0.16);
+    --violet-soft: rgba(124, 58, 237, 0.18);
+    --r-xl: 32px; --r-lg: 24px; --r-md: 16px;
+    --num: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-         font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 18px 60px; }
-  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between; }
-  h1 { margin: 0; font-size: 28px; letter-spacing: -0.02em; }
-  h1 small { font-size: 15px; color: var(--muted); font-weight: 500; margin-left: 8px; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
-  .tag { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--green-soft); color: var(--green); font-weight: 600; }
-  .lede { color: var(--muted); margin: 6px 0 22px; max-width: 70ch; }
-  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
-  .big { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-  .sub { color: var(--muted); font-size: 13px; }
-  .bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 10px 0 6px; }
-  .bar > i { display: block; height: 100%; background: var(--green); border-radius: 99px; transition: width .6s; }
-  .row { display: grid; gap: 14px; grid-template-columns: 1.3fr 1fr; margin-top: 14px; }
-  @media (max-width: 760px) { .row { grid-template-columns: 1fr; } }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
-  th { color: var(--muted); font-weight: 600; }
-  .scroll { overflow-x: auto; max-height: 360px; overflow-y: auto; }
-  .hit { color: var(--green); font-weight: 600; } .miss { color: var(--red); font-weight: 600; }
-  .flag { font-size: 11px; padding: 1px 6px; border-radius: 6px; background: var(--red-soft); color: var(--red); }
-  .ok { font-size: 11px; padding: 1px 6px; border-radius: 6px; background: var(--green-soft); color: var(--green); }
-  input { font: inherit; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; }
-  .rules li { margin: 4px 0; } .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
-  .err { color: var(--red); }
+  html, body { background: var(--bg); }
+  body {
+    margin: 0; color: var(--ink);
+    font: 14px/1.5 "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 520px at 8% -10%, rgba(124, 58, 237, 0.35), transparent 60%),
+      radial-gradient(700px 500px at 100% 0%, rgba(168, 85, 247, 0.18), transparent 60%),
+      radial-gradient(800px 600px at 90% 100%, rgba(229, 96, 44, 0.10), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 20px 64px; padding-top: calc(20px + env(safe-area-inset-top, 0px)); }
+
+  /* nav */
+  nav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .logo { display: flex; align-items: center; gap: 10px; font: 700 20px/1 var(--num); letter-spacing: 0.04em; }
+  .mark { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center;
+          background: linear-gradient(135deg, var(--violet), var(--violet-2)); box-shadow: 0 6px 24px rgba(124, 58, 237, 0.45); }
+  .search { flex: 1 1 260px; display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px;
+            border-radius: 999px; background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line); color: var(--muted); }
+  .search input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--ink); font: inherit; }
+  .search input::placeholder { color: var(--muted); }
+  .iconbtn { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line);
+             background: rgba(255, 255, 255, 0.07); color: var(--ink); text-decoration: none; cursor: pointer; }
+  .iconbtn:hover { background: rgba(255, 255, 255, 0.12); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px;
+          font-size: 12.5px; font-weight: 600; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; }
+  .pill.light { background: #f4f2fa; color: #15121f; border-color: transparent; }
+  .pill.lime { background: var(--lime); color: #15121f; border-color: transparent; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 10px var(--lime); }
+
+  /* hero */
+  .hero { position: relative; overflow: hidden; margin-top: 18px; border-radius: var(--r-xl); padding: 34px 34px 30px;
+          background: linear-gradient(160deg, #3b10c9 0%, #5b21f6 38%, #7c3aed 70%, #9d4ced 100%);
+          box-shadow: 0 30px 80px -30px rgba(91, 33, 246, 0.7); }
+  .hero::before { content: ""; position: absolute; inset: -40% -10% auto 35%; height: 160%;
+                  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.22), transparent 70%); transform: rotate(-18deg); pointer-events: none; }
+  .hero::after { content: ""; position: absolute; left: -10%; right: -10%; bottom: -55%; height: 90%; border-radius: 50%;
+                 border-top: 1px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.04); pointer-events: none; }
+  .hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: center; }
+  @media (max-width: 820px) { .hero-grid { grid-template-columns: 1fr; } }
+  .eyebrow { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.78); letter-spacing: 0.02em; }
+  .coinname { font: 600 15px/1.2 var(--num); color: #fff; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .streak { font: 700 clamp(56px, 10vw, 104px)/0.95 var(--num); letter-spacing: -0.04em; margin: 12px 0 6px; color: #fff; }
+  .streak small { font-size: 0.32em; font-weight: 600; letter-spacing: -0.01em; margin-left: 10px; color: rgba(255, 255, 255, 0.8); }
+  .tagline { color: rgba(255, 255, 255, 0.82); font-size: 15px; max-width: 46ch; margin: 4px 0 18px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chips .pill { background: rgba(255, 255, 255, 0.16); color: #fff; border-color: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); }
+  .ringbox { justify-self: end; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  @media (max-width: 820px) { .ringbox { justify-self: start; flex-direction: row; text-align: left; } }
+  .ring { width: 172px; height: 172px; position: relative; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring .val { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .ring .val b { font: 700 38px/1 var(--num); color: #fff; }
+  .ring .val span { font-size: 12px; color: rgba(255, 255, 255, 0.75); margin-top: 4px; }
+  .ringcap { font-size: 12.5px; color: rgba(255, 255, 255, 0.8); max-width: 26ch; }
+
+  /* stat strip */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px; }
+  @media (max-width: 900px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .stats { grid-template-columns: 1fr; } }
+  .stat { display: flex; gap: 14px; align-items: flex-start; padding: 18px; border-radius: var(--r-lg);
+          background: var(--surface); border: 1px solid var(--line); }
+  .stat .ico { flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, 0.06); color: var(--ink-2); }
+  .stat .k { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+  .stat .v { font: 600 24px/1.15 var(--num); letter-spacing: -0.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .stat .s { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .meter { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin-top: 10px; }
+  .meter > i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--violet), var(--violet-2)); transition: width 0.6s; }
+
+  /* panels */
+  .grid2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; margin-top: 14px; }
+  .grid2.even { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 900px) { .grid2, .grid2.even { grid-template-columns: 1fr; } }
+  .panel { min-width: 0; padding: 22px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); }
+  .ph { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .ph h2 { margin: 0; font: 600 17px/1.2 var(--num); letter-spacing: -0.01em; }
+  .ph .count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; margin-left: 8px; border-radius: 99px;
+               background: rgba(255, 255, 255, 0.08); font: 600 12px/1 "Inter"; color: var(--ink-2); vertical-align: 2px; }
+  .muted { color: var(--muted); } .small { font-size: 12.5px; }
+  .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); }
+  .seg button { border: 0; background: none; color: var(--muted); font: 600 12px/1 "Inter"; height: 26px; padding: 0 11px; border-radius: 999px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: #f4f2fa; color: #15121f; }
+
+  /* chart */
+  .chart { position: relative; height: 240px; }
+  .chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .tip { position: absolute; pointer-events: none; padding: 8px 10px; border-radius: 12px; background: #f4f2fa; color: #15121f;
+         font-size: 12px; line-height: 1.3; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); transform: translate(-50%, -110%); white-space: nowrap; }
+  .tip b { display: block; font: 700 14px/1.2 var(--num); }
+  .tip .key { display: inline-block; width: 12px; height: 2px; background: var(--mint); vertical-align: middle; margin-right: 6px; }
+
+  /* streak calendar */
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .day { aspect-ratio: 1; border-radius: 14px; display: grid; place-content: center; text-align: center; gap: 2px;
+         background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); font-size: 11px; color: var(--muted); position: relative; }
+  .day b { font: 600 15px/1 var(--num); color: var(--ink); }
+  .day.hit { background: var(--lime); border-color: transparent; color: #3a4410; }
+  .day.hit b { color: #15121f; }
+  .day.miss { background: var(--orange-soft); border-color: rgba(229, 96, 44, 0.5); color: #f3a27f; }
+  .day.open { border: 1px dashed var(--line-2); }
+  .day.pending { border-style: dashed; opacity: 0.75; }
+  .day.hit.pending { background: rgba(215, 242, 92, 0.25); color: var(--lime); }
+  .day.hit.pending b { color: var(--lime); }
+  .day.open::after { content: ""; position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px var(--lime); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* activity */
+  .list { display: flex; flex-direction: column; gap: 8px; max-height: 470px; overflow-y: auto; padding-right: 4px; }
+  .tx { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: var(--r-md);
+        background: var(--surface-2); border: 1px solid var(--line); }
+  .tx .ti { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font: 700 16px/1 var(--num); }
+  .tx .tt { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx .ts { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx .ta { text-align: right; font: 600 14px/1.2 var(--num); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tx .ta small { display: block; font: 500 11.5px/1.3 "Inter"; color: var(--muted); }
+  .k-mint .ti { background: var(--mint-soft); color: #5fd3a2; }
+  .k-burn .ti, .k-cancel .ti { background: var(--orange-soft); color: #f3a27f; }
+  .k-payout .ti { background: var(--violet-soft); color: #c4a5ff; }
+  .k-burn { background: linear-gradient(90deg, rgba(229, 96, 44, 0.10), var(--surface-2) 45%); }
+  .k-mint { background: linear-gradient(90deg, rgba(46, 163, 116, 0.10), var(--surface-2) 45%); }
+  .okline { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
+  .okline .badge { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--lime); color: #15121f; font-size: 11px; font-weight: 800; }
+  .okline .badge.bad { background: var(--orange); color: #fff; }
+
+  /* holders */
+  .avatars { display: flex; align-items: center; margin-bottom: 16px; }
+  .av { width: 42px; height: 42px; border-radius: 50%; border: 3px solid var(--surface); margin-left: -10px; display: grid; place-items: center;
+        font: 700 13px/1 var(--num); color: #fff; }
+  .av:first-child { margin-left: 0; }
+  .av.more { background: #2a2538; color: var(--ink-2); }
+  .split { margin: 4px 0 6px; }
+  .split .bar { display: flex; height: 12px; border-radius: 99px; overflow: hidden; gap: 2px; background: transparent; }
+  .split .bar i { display: block; height: 100%; border-radius: 4px; }
+  .split .rowlab { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; margin-top: 10px; }
+  .split .rowlab span { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+  .split .rowlab i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .split .rowlab b { font: 600 13px/1 var(--num); color: var(--ink); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 9px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .tscroll { max-height: 300px; overflow: auto; margin-top: 14px; }
+  .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
+  .tag.ok { background: var(--mint-soft); color: #5fd3a2; }
+  .tag.bad { background: var(--orange-soft); color: #f3a27f; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+
+  /* rules / treasury */
+  .kv { display: grid; grid-template-columns: 1fr auto; gap: 10px 14px; font-size: 13px; }
+  .kv dt { color: var(--muted); } .kv dd { margin: 0; text-align: right; font: 600 13.5px/1.4 var(--num); font-variant-numeric: tabular-nums; }
+  .rules { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .rules li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; font-size: 13px; color: var(--ink-2); }
+  .rules li span { width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.06); font: 600 12px/1 var(--num); color: var(--ink); }
+  .member { margin-top: 12px; padding: 14px; border-radius: var(--r-md); background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; }
+  .member[hidden] { display: none; }
+  .err { margin: 14px 0 0; padding: 12px 16px; border-radius: var(--r-md); background: var(--orange-soft); color: #f3a27f; border: 1px solid rgba(229, 96, 44, 0.4); }
+  .err:empty { display: none; }
+  footer { margin-top: 22px; font-size: 12px; color: var(--muted); display: flex; gap: 8px 18px; flex-wrap: wrap; }
+  .loading { opacity: 0.6; transition: opacity 0.3s; }
+  :focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1 id="name">Grassroots<small id="sym"></small></h1>
-    <span class="tag" id="netTag">testnet</span>
-  </header>
-  <p class="lede">A memecoin that can only grow with its real community. Supply unlocks as independent
-    holders grow, a rule-bound pool pays the people who show up, and the contract has no admin.
-    Everything on this page is read live from the contract.</p>
-  <p id="err" class="err"></p>
-
-  <div class="grid">
-    <div class="card"><h2>Community streak</h2><div class="big" id="streak">–</div><div class="sub" id="best"></div></div>
-    <div class="card"><h2>Today's check-ins</h2><div class="big" id="today">–</div>
-      <div class="bar"><i id="todayBar" style="width:0"></i></div><div class="sub" id="quorum"></div></div>
-    <div class="card"><h2>Independent holders</h2><div class="big" id="indep">–</div>
-      <div class="bar"><i id="msBar" style="width:0"></i></div><div class="sub" id="ms"></div></div>
-    <div class="card"><h2>Supply</h2><div class="big" id="supply">–</div><div class="sub" id="supplySub"></div></div>
-  </div>
-
-  <div class="row">
-    <div class="card">
-      <h2>Daily log</h2>
-      <div class="scroll"><table>
-        <thead><tr><th>Day</th><th>Result</th><th>Unique / quorum</th><th>Check-ins</th><th>Paid</th><th>Burned</th></tr></thead>
-        <tbody id="days"></tbody></table></div>
+  <nav>
+    <div class="logo">
+      <span class="mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 4v16M7 4h10M7 20h10"/></svg>
+      </span>
+      INSYDR
     </div>
-    <div class="card">
-      <h2>Treasury & creator</h2>
-      <table><tbody id="treasury"></tbody></table>
-      <h2 style="margin-top:18px">Weekly bonfire</h2>
-      <div id="bonfire" class="sub">No offerings yet.</div>
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="lookup" placeholder="Look up any account, e.g. alice.testnet" autocomplete="off" aria-label="Look up an account">
+    </label>
+    <span class="pill"><span class="dot"></span><span id="netTag">testnet</span></span>
+    <a class="iconbtn" href="https://github.com/hpark236/NEAR-hackathon-project" target="_blank" rel="noopener" title="Source code" aria-label="Source code">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>
+    </a>
+    <button class="iconbtn" id="reload" title="Refresh now" aria-label="Refresh now">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
+    </button>
+  </nav>
+  <div class="member" id="member" hidden></div>
+  <p class="err" id="err"></p>
+
+  <section class="hero" id="main">
+    <div class="hero-grid">
+      <div>
+        <div class="coinname"><span id="coinName">Loading…</span><span class="pill light" id="sym">$—</span></div>
+        <div class="eyebrow" style="margin-top:18px">Community streak</div>
+        <div class="streak" id="streak">–<small>days</small></div>
+        <p class="tagline">Everyone's an insider. Except the insiders. Supply grows only with real holders, the pool pays whoever shows up, and nobody can change the rules.</p>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="ringbox">
+        <div class="ring" role="img" id="ringImg" aria-label="Today's check-ins">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="12"/>
+            <circle id="ringArc" cx="60" cy="60" r="50" fill="none" stroke="#d7f25c" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 314.16"/>
+          </svg>
+          <div class="val"><b id="todayN">–</b><span id="todayQ">of – needed</span></div>
+        </div>
+        <div class="ringcap" id="ringCap">Today's independent check-ins</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-2-4.7"/></svg></span>
+      <div style="flex:1;min-width:0"><div class="k">Independent holders</div><div class="v" id="indep">–</div>
+        <div class="meter"><i id="msBar" style="width:0"></i></div><div class="s" id="ms"></div></div>
+    </div>
+    <div class="stat">
+      <span class="ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span>
+      <div style="flex:1;min-width:0"><div class="k">Supply</div><div class="v" id="supply">–</div>
+        <div class="meter"><i id="supplyBar" style="width:0"></i></div><div class="s" id="supplySub"></div></div>
+    </div>
+    <div class="stat">
+      <span class="ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10h18M5 10V8l7-4 7 4v2M6 10v8M10 10v8M14 10v8M18 10v8M3 20h18"/></svg></span>
+      <div style="flex:1;min-width:0"><div class="k">Community pool</div><div class="v" id="pool">–</div><div class="s" id="poolSub"></div></div>
+    </div>
+    <div class="stat">
+      <span class="ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4 0 7-2.7 7-6.6 0-3.8-3-6.2-4.4-9.4-.8 2.3-2 3.4-3.3 3.9C11 7 10.4 4.4 8 2c.3 3.6-3 6.4-3 11.4C5 19.3 8 22 12 22Z"/></svg></span>
+      <div style="flex:1;min-width:0"><div class="k">Burned · cancelled forever</div><div class="v" id="burned">–</div><div class="s" id="burnSub"></div></div>
     </div>
   </div>
 
-  <div class="card" style="margin-top:16px">
-    <h2>Supply ledger: every mint, burn, cancellation and payout</h2>
-    <div class="sub" id="ledgerSub" style="margin-bottom:8px"></div>
-    <div class="scroll"><table>
-      <thead><tr><th>#</th><th>Day</th><th>Kind</th><th>Account</th><th style="text-align:right">Amount</th><th>Why</th></tr></thead>
-      <tbody id="ledger"></tbody></table></div>
+  <div class="grid2">
+    <section class="panel" aria-labelledby="supplyH">
+      <div class="ph"><h2 id="supplyH">Supply over time</h2>
+        <div class="seg" role="group" aria-label="Range"><button data-range="14" aria-pressed="false">14 days</button><button data-range="all" aria-pressed="true">All</button></div></div>
+      <div class="chart" id="chart"><svg id="chartSvg" role="img" aria-label="Total supply by day"></svg><div class="tip" id="tip" hidden></div></div>
+      <div class="muted small" id="chartNote" style="margin-top:8px">Built from the contract's own ledger. Steps up = growth tranches and season bonuses; steps down = burns.</div>
+    </section>
+    <section class="panel" aria-labelledby="calH">
+      <div class="ph"><h2 id="calH">Streak calendar</h2><span class="pill" id="seasonPill">season –</span></div>
+      <div class="days" id="days"></div>
+      <div class="legend"><span><i style="background:var(--lime)"></i>Quorum hit, pool paid</span><span><i style="background:var(--orange-soft);border:1px solid var(--orange)"></i>Missed, slice burned</span><span><i style="border:1px dashed var(--line-2)"></i>Today (open)</span><span><i style="background:var(--orange-soft);border:1px dashed var(--orange)"></i>Waiting to settle</span></div>
+      <div class="muted small" id="calNote" style="margin-top:10px"></div>
+    </section>
   </div>
 
-  <div class="row">
-    <div class="card">
-      <h2>Holders and Organic Score flags</h2>
-      <div class="scroll"><table>
-        <thead><tr><th>Account</th><th>Balance</th><th>Held</th><th>Flag</th></tr></thead>
+  <div class="grid2 even">
+    <section class="panel" aria-labelledby="actH">
+      <div class="ph"><h2 id="actH">Activity<span class="count" id="ledgerN">0</span></h2><span id="ledgerOk" class="okline"></span></div>
+      <div class="list" id="ledger"></div>
+    </section>
+    <section class="panel" aria-labelledby="holdH">
+      <div class="ph"><h2 id="holdH">Holders<span class="count" id="holderN">0</span></h2><span class="muted small">flags from the Organic Score oracle</span></div>
+      <div class="avatars" id="avatars"></div>
+      <div class="split" id="split"></div>
+      <div class="tscroll"><table>
+        <thead><tr><th>Account</th><th style="text-align:right">Balance</th><th style="text-align:right">Held</th><th>Status</th></tr></thead>
         <tbody id="holders"></tbody></table></div>
-    </div>
-    <div class="card">
-      <h2>Look up an account</h2>
-      <input id="lookup" placeholder="account id, e.g. alice.testnet" autocomplete="off">
-      <div id="member" class="sub" style="margin-top:10px"></div>
-      <h2 style="margin-top:18px">Rules (fixed at launch)</h2>
-      <ul class="rules sub" id="rules"></ul>
-      <h2 style="margin-top:18px">Official links</h2>
-      <div id="links" class="sub"></div>
-    </div>
+    </section>
   </div>
-  <p class="sub" style="margin-top:18px">Contract <span class="mono" id="coinId"></span> · RPC <span class="mono" id="rpcId"></span></p>
+
+  <div class="grid2 even">
+    <section class="panel" aria-labelledby="rulesH">
+      <div class="ph"><h2 id="rulesH">Rules, fixed at launch</h2><span class="pill lime">no admin key</span></div>
+      <ul class="rules" id="rules"></ul>
+    </section>
+    <section class="panel" aria-labelledby="treH">
+      <div class="ph"><h2 id="treH">Treasury & creator</h2></div>
+      <dl class="kv" id="treasury"></dl>
+      <div class="ph" style="margin:20px 0 10px"><h2>Weekly bonfire</h2></div>
+      <div id="bonfire" class="muted small">No offerings yet.</div>
+      <div class="ph" style="margin:20px 0 10px"><h2>Official links</h2></div>
+      <div id="links" class="small"></div>
+    </section>
+  </div>
+
+  <footer><span>Contract <span class="mono" id="coinId"></span></span><span>RPC <span class="mono" id="rpcId"></span></span><span id="updated"></span></footer>
 </div>
+
 <script>
 const q = new URLSearchParams(location.search);
 const COIN = q.get("coin") || "";
-const RPC = q.get("rpc") || (COIN.endsWith(".near") ? "https://free.rpc.fastnear.com" : "https://test.rpc.fastnear.com");
+// several free public RPCs; on a rate limit or network error the page rotates to the next one
+const RPCS = q.get("rpc") ? [q.get("rpc")] : COIN.endsWith(".near")
+  ? ["https://free.rpc.fastnear.com", "https://near.drpc.org", "https://rpc.mainnet.near.org"]
+  : ["https://test.rpc.fastnear.com", "https://near-testnet.drpc.org", "https://rpc.testnet.near.org"];
+let rpcIdx = 0;
+const rpc = () => RPCS[rpcIdx % RPCS.length];
 const $ = (id) => document.getElementById(id);
-const D = 10n ** 18n;
-const tok = (v) => { const n = Number(BigInt(v) / 10n ** 14n) / 1e4; return n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n.toLocaleString("en-US", { maximumFractionDigits: 2 }); };
+const tokN = (v) => Number(BigInt(v) / 10n ** 14n) / 1e4;
+const short = (n) => n >= 1e9 ? (n / 1e9).toFixed(2) + "B" : n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "k" : n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+const tok = (v) => short(tokN(v));
 const pct = (a, b) => (b ? Math.min(100, (100 * a) / b) : 0);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shortAcc = (a) => a.length > 22 ? a.slice(0, 8) + "…" + a.slice(-6) : a;
 
+// at most 4 requests in flight; free public RPCs rate-limit bursts (and a 429 can surface as a CORS "Failed to fetch")
+let inflight = 0; const waiters = [];
+const acquire = () => inflight < 4 ? (inflight++, Promise.resolve()) : new Promise((r) => waiters.push(r));
+const release = () => { const w = waiters.shift(); if (w) w(); else inflight--; };
 async function view(method, args = {}) {
-  const r = await fetch(RPC, { method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "call_function", finality: "optimistic",
-      account_id: COIN, method_name: method, args_base64: btoa(JSON.stringify(args)) } }) });
-  const j = await r.json();
-  if (j.error || j.result?.error) throw new Error(JSON.stringify(j.error || j.result.error));
-  return JSON.parse(new TextDecoder().decode(new Uint8Array(j.result.result)));
+  await acquire();
+  try {
+    for (let i = 0; ; i++) {
+      let r;
+      try {
+        r = await fetch(rpc(), { method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "call_function", finality: "optimistic",
+            account_id: COIN, method_name: method, args_base64: btoa(JSON.stringify(args)) } }) });
+      } catch (e) { if (i < 6) { rpcIdx++; await new Promise((ok) => setTimeout(ok, 500 * 2 ** i)); continue; } throw e; }
+      if ((r.status === 429 || r.status >= 500) && i < 6) { rpcIdx++; await new Promise((ok) => setTimeout(ok, 500 * 2 ** i)); continue; }
+      const j = await r.json();
+      if (j.error || j.result?.error) throw new Error(JSON.stringify(j.error || j.result.error));
+      return JSON.parse(new TextDecoder().decode(new Uint8Array(j.result.result)));
+    }
+  } finally { release(); }
+}
+const MISSING_METHOD = /MethodNotFound|wasm execution failed.*not found/i;
+
+// deterministic avatar gradient per account
+function hue(a) { let h = 0; for (const c of a) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
+function avatar(a, extra = "") {
+  const h = hue(a);
+  const label = /^[0-9a-f]{64}$/.test(a) ? a.slice(0, 2).toUpperCase() : a.replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase();
+  return `<span class="av" title="${esc(a)}" style="background:linear-gradient(135deg,hsl(${h} 70% 55%),hsl(${(h + 50) % 360} 70% 40%));${extra}">${esc(label)}</span>`;
+}
+
+let supplySeries = [], range = "all", clusterCache = new Map();
+
+function drawChart() {
+  const svg = $("chartSvg"), box = $("chart");
+  const W = box.clientWidth, H = box.clientHeight, padL = 52, padR = 12, padT = 12, padB = 26;
+  let pts = supplySeries;
+  if (range !== "all") pts = pts.slice(-Number(range));
+  if (pts.length < 2) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" fill="#8f89a3" text-anchor="middle" font-size="13">Not enough history yet</text>`; return; }
+  const xs = pts.map((p) => p.day), ys = pts.map((p) => p.supply);
+  const x0 = xs[0], x1 = xs[xs.length - 1];
+  const yMax = Math.max(...ys) * 1.08, yMin = 0;
+  const X = (d) => padL + ((d - x0) / Math.max(1, x1 - x0)) * (W - padL - padR);
+  const Y = (v) => padT + (1 - (v - yMin) / (yMax - yMin)) * (H - padT - padB);
+  // step-after path
+  let line = `M${X(xs[0])},${Y(ys[0])}`;
+  for (let i = 1; i < pts.length; i++) line += ` H${X(xs[i])} V${Y(ys[i])}`;
+  const area = `${line} V${Y(0)} H${X(xs[0])} Z`;
+  const ticks = 4, grid = [];
+  for (let t = 0; t <= ticks; t++) {
+    const v = (yMax / ticks) * t, y = Y(v);
+    grid.push(`<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,0.06)"/>` +
+      `<text x="${padL - 8}" y="${y + 4}" fill="#8f89a3" font-size="11" text-anchor="end">${short(v)}</text>`);
+  }
+  const xt = [];
+  const step = Math.max(1, Math.ceil((x1 - x0) / 6));
+  for (let d = x0; d <= x1; d += step) xt.push(`<text x="${X(d)}" y="${H - 6}" fill="#8f89a3" font-size="11" text-anchor="middle">day ${d}</text>`);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = `<defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2ea374" stop-opacity="0.45"/><stop offset="1" stop-color="#2ea374" stop-opacity="0"/></linearGradient></defs>
+    ${grid.join("")}${xt.join("")}
+    <path d="${area}" fill="url(#ga)"/>
+    <path d="${line}" fill="none" stroke="#2ea374" stroke-width="2" stroke-linejoin="round"/>
+    <line id="cross" y1="${padT}" y2="${H - padB}" stroke="rgba(255,255,255,0.35)" stroke-dasharray="3 3" visibility="hidden"/>
+    <circle id="crossDot" r="5" fill="#2ea374" stroke="#15121f" stroke-width="2" visibility="hidden"/>
+    <rect x="${padL}" y="0" width="${W - padL - padR}" height="${H}" fill="transparent" id="hit" tabindex="0"/>`;
+  const tip = $("tip"), cross = svg.querySelector("#cross"), dot = svg.querySelector("#crossDot"), hit = svg.querySelector("#hit");
+  let focusIdx = pts.length - 1;
+  const show = (i) => {
+    const p = pts[i]; focusIdx = i;
+    const x = X(p.day), y = Y(p.supply);
+    cross.setAttribute("x1", x); cross.setAttribute("x2", x); cross.setAttribute("visibility", "visible");
+    dot.setAttribute("cx", x); dot.setAttribute("cy", y); dot.setAttribute("visibility", "visible");
+    tip.replaceChildren();
+    const b = document.createElement("b"); b.textContent = short(p.supply);
+    const l = document.createElement("div"); const k = document.createElement("span"); k.className = "key";
+    l.append(k, document.createTextNode(`Supply · day ${p.day}`));
+    tip.append(b, l); tip.hidden = false;
+    tip.style.left = Math.min(W - 60, Math.max(60, x)) + "px"; tip.style.top = y + "px";
+  };
+  const hide = () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); };
+  hit.addEventListener("pointermove", (e) => {
+    const r = svg.getBoundingClientRect(); const mx = ((e.clientX - r.left) / r.width) * W;
+    let best = 0; for (let i = 0; i < pts.length; i++) if (Math.abs(X(pts[i].day) - mx) < Math.abs(X(pts[best].day) - mx)) best = i;
+    show(best);
+  });
+  hit.addEventListener("pointerleave", hide);
+  hit.addEventListener("focus", () => show(focusIdx)); hit.addEventListener("blur", hide);
+  hit.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") show(Math.max(0, focusIdx - 1));
+    if (e.key === "ArrowRight") show(Math.min(pts.length - 1, focusIdx + 1));
+  });
+}
+document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+  range = b.dataset.range;
+  document.querySelectorAll(".seg button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+  drawChart();
+}));
+addEventListener("resize", drawChart);
+
+const KIND = {
+  mint: { cls: "k-mint", icon: "+", sign: "+" },
+  burn: { cls: "k-burn", icon: "−", sign: "−" },
+  cancel: { cls: "k-cancel", icon: "×", sign: "×" },
+  payout: { cls: "k-payout", icon: "↗", sign: "" },
+};
+function title(e) {
+  const m = e.memo;
+  if (e.kind === "mint" && m === "growth tranche") return "Growth tranche minted";
+  if (e.kind === "mint" && m === "season bonus") return "Season bonus minted";
+  if (e.kind === "mint" && m === "launch") return "Launch allocation";
+  if (e.kind === "mint" && m === "pool seed") return "Community pool seeded";
+  if (e.kind === "mint" && m === "creator earn-out") return "Creator earn-out";
+  if (e.kind === "burn" && m === "missed quorum") return "Missed quorum: pool slice burned";
+  if (e.kind === "burn" && m === "bonfire") return "Bonfire offering";
+  if (e.kind === "payout" && m.startsWith("challenge")) return m.replace(/^challenge \d+: /, "Challenge: ");
+  if (e.kind === "payout") return "Daily ritual paid out";
+  if (e.kind === "cancel") return m.split(":")[0].replace(/^./, (c) => c.toUpperCase()) + ": reserve cancelled";
+  return m;
 }
 
 async function refresh() {
   if (!COIN) { $("err").textContent = "Add ?coin=<contract id> to the URL."; return; }
-  $("coinId").textContent = COIN; $("rpcId").textContent = RPC;
+  document.body.classList.add("loading");
+  $("coinId").textContent = COIN; $("rpcId").textContent = rpc();
   $("netTag").textContent = COIN.endsWith(".near") ? "mainnet" : "testnet";
   try {
     const [meta, cfg, s, links, top] = await Promise.all([view("ft_metadata"), view("get_config"), view("get_state"), view("get_links"), view("get_week_top")]);
-    $("name").firstChild.textContent = meta.name; $("sym").textContent = "$" + meta.symbol;
+    $("coinName").textContent = meta.name; $("sym").textContent = "$" + meta.symbol;
     const dayMs = Number(cfg.day_ms);
-    $("streak").textContent = s.community_streak + (s.community_streak === 1 ? " day" : " days");
-    $("best").textContent = s.ritual_started_ms === null
-      ? `ritual starts when ${cfg.quorum_min} independent holders exist · 1 day = ${dayMs >= 86400000 ? "24 h" : dayMs / 1000 + " s (demo)"}`
-      : `best ever: ${s.best_streak} · day ${s.current_day} · 1 day = ${dayMs >= 86400000 ? "24 h" : dayMs / 1000 + " s (demo)"}`;
-    const today = (await view("get_day", { day: s.current_day })) || { unique: 0, checkins: 0 };
+    const dayLabel = dayMs >= 86400000 ? "1 day = 24 h" : `1 day = ${dayMs / 60000 >= 1 ? dayMs / 60000 + " min" : dayMs / 1000 + " s"} (demo)`;
+    const started = s.ritual_started_ms !== null;
+    $("streak").innerHTML = `${s.community_streak}<small>${s.community_streak === 1 ? "day" : "days"}</small>`;
+    $("chips").innerHTML = [
+      `🏆 best ${s.best_streak}`, started ? `day ${s.current_day}` : `starts at ${cfg.quorum_min} holders`, dayLabel,
+      `seasons ${s.seasons_won}W · ${s.seasons_lost}L`,
+    ].map((c) => `<span class="pill">${esc(c)}</span>`).join("");
+
+    const today = (started && (await view("get_day", { day: s.current_day }))) || { unique: 0, checkins: 0 };
     const quorum = Math.max(cfg.quorum_min, Math.floor((s.independent_holders * cfg.quorum_bps) / 10000));
-    $("today").textContent = `${today.unique} / ${quorum}`;
-    $("todayBar").style.width = pct(today.unique, quorum) + "%";
-    $("quorum").textContent = `${today.checkins} check-ins, ${today.unique} independent. Quorum = max(${cfg.quorum_min}, ${cfg.quorum_bps / 100}% of independent holders).`;
+    const frac = Math.min(1, quorum ? today.unique / quorum : 0);
+    $("ringArc").setAttribute("stroke-dasharray", `${(frac * 314.16).toFixed(1)} 314.16`);
+    $("ringArc").style.visibility = frac > 0 ? "visible" : "hidden";
+    $("todayN").textContent = today.unique; $("todayQ").textContent = `of ${quorum} needed`;
+    $("ringImg").setAttribute("aria-label", `${today.unique} of ${quorum} independent check-ins today`);
+    $("ringCap").textContent = !started ? "The ritual hasn't started yet" : today.unique >= quorum
+      ? `Quorum reached · ${today.checkins} check-ins today` : `${quorum - today.unique} more independent check-ins to keep the streak`;
+
     const next = cfg.milestones[s.milestone_idx];
     $("indep").textContent = s.independent_holders;
     $("msBar").style.width = next ? pct(s.independent_holders, next) + "%" : "100%";
-    $("ms").textContent = next ? `next growth tranche at ${next} (milestone ${s.milestone_idx + 1} of ${cfg.milestones.length})` : "all milestones reached";
+    $("ms").textContent = next ? `next tranche at ${next} · milestone ${s.milestone_idx + 1}/${cfg.milestones.length}` : "all milestones reached";
     const max = BigInt(cfg.max_supply);
     $("supply").textContent = tok(s.total_supply);
-    $("supplySub").textContent = `${Number((BigInt(s.total_supply) * 1000n) / max) / 10}% of max ${tok(cfg.max_supply)} · reserve ${tok(s.reserve)} unminted`;
+    $("supplyBar").style.width = Number((BigInt(s.total_supply) * 1000n) / max) / 10 + "%";
+    $("supplySub").textContent = `${Number((BigInt(s.total_supply) * 1000n) / max) / 10}% of ${tok(cfg.max_supply)} max · ${tok(s.reserve)} locked`;
+    $("pool").textContent = tok(s.pool_free);
+    $("poolSub").textContent = `${cfg.daily_payout_bps / 100}% paid per hit day · ${tok(s.pool_committed)} pending`;
+    $("burned").textContent = tok(s.burned);
+    $("burnSub").textContent = `${tok(s.cancelled)} cancelled from reserve`;
+    $("seasonPill").textContent = `season ${Math.floor(s.current_day / cfg.season_days) + 1} · ${cfg.season_days}-day`;
 
-    $("treasury").innerHTML = [
-      ["Community pool (free)", tok(s.pool_free)], ["Committed to pending rewards", tok(s.pool_committed)],
-      ["Burned (rituals + bonfire)", tok(s.burned)], ["Cancelled forever (shrinkage, lost seasons)", tok(s.cancelled)],
-      ["Creator earn-out unlocked", tok(s.creator_unlocked)], ["Creator claimed", tok(s.creator_claimed)],
-      ["Seasons won / lost", `${s.seasons_won} / ${s.seasons_lost}`],
-    ].map(([k, v]) => `<tr><td>${k}</td><td style="text-align:right">${v}</td></tr>`).join("");
+    // streak calendar: last 21 days
+    const first = Math.max(0, s.current_day - 20);
+    const dayRows = await Promise.all(Array.from({ length: s.current_day - first + 1 }, (_, i) => view("get_day", { day: first + i })));
+    const waiting = Math.max(0, s.current_day - s.next_settle_day);
+    $("days").innerHTML = started ? dayRows.map((x, i) => {
+      const d = first + i;
+      let cls, sub, label;
+      if (d === s.current_day) { cls = "open"; sub = `${x?.unique ?? 0}/${quorum}`; label = "today, open"; }
+      else if (x?.settled) { cls = x.hit ? "hit" : "miss"; sub = x.hit ? "paid" : "burn"; label = x.hit ? "quorum hit" : "missed"; }
+      else if (x && x.unique >= quorum) { cls = "hit pending"; sub = "hit"; label = "quorum hit, not yet settled"; }
+      else { cls = "miss pending"; sub = x ? `${x.unique}/${quorum}` : "empty"; label = "quorum missed, burns when settled"; }
+      return `<div class="day ${cls}" title="Day ${d}: ${label}" aria-label="Day ${d}: ${label}"><b>${d}</b>${sub}</div>`;
+    }).join("") : `<div class="muted small" style="grid-column:1/-1">Day 0 begins when the oracle reports ${cfg.quorum_min} independent holders.</div>`;
+    $("calNote").textContent = waiting ? `${waiting} past day${waiting === 1 ? "" : "s"} not settled yet. The next check-in (or anyone calling settle) processes them: hit days pay, empty days burn and reset the streak.` : "";
 
-    const rows = [];
-    for (let d = s.current_day; d >= Math.max(0, s.current_day - 20); d--) {
-      const x = await view("get_day", { day: d });
-      if (!x) { if (d < s.next_settle_day) rows.push(`<tr><td>${d}</td><td class="miss">—</td><td colspan="4" class="sub">nobody showed up</td></tr>`); continue; }
-      const res = !x.settled ? `<span class="sub">open</span>` : x.hit ? `<span class="hit">hit</span>` : `<span class="miss">missed</span>`;
-      rows.push(`<tr><td>${d}</td><td>${res}</td><td>${x.unique} / ${x.settled ? x.quorum : quorum}</td><td>${x.checkins}</td><td>${x.payout === "0" ? "" : tok(x.payout)}</td><td>${x.burned === "0" ? "" : tok(x.burned)}</td></tr>`);
-    }
-    $("days").innerHTML = rows.join("");
-
-    // the ledger is stored in the contract itself, so no indexer is needed
-    const n = await view("get_ledger_len").catch(() => null);
-    if (n === null) { $("ledgerSub").textContent = "This coin was deployed before the on-chain ledger existed."; }
+    // ledger
+    const n = await view("get_ledger_len").catch((e) => { if (MISSING_METHOD.test(e.message)) return null; throw e; });
+    if (n === null) { $("ledger").innerHTML = `<div class="muted small">This coin predates the on-chain ledger.</div>`; supplySeries = []; }
     else {
-      const from = Math.max(0, n - 150);
-      const entries = await view("get_ledger", { from_index: from, limit: 150 });
+      const all = [];
+      for (let i = 0; i < n; i += 200) all.push(...await view("get_ledger", { from_index: i, limit: 200 }));
       let minted = 0n, burned = 0n;
-      const all = n <= 150 ? entries : await (async () => { const out = []; for (let i = 0; i < n; i += 200) out.push(...await view("get_ledger", { from_index: i, limit: 200 })); return out; })();
-      for (const e of all) { if (e.kind === "mint") minted += BigInt(e.amount); if (e.kind === "burn") burned += BigInt(e.amount); }
+      const byDay = new Map();
+      for (const e of all) {
+        if (e.kind === "mint") minted += BigInt(e.amount);
+        if (e.kind === "burn") burned += BigInt(e.amount);
+        byDay.set(e.day, minted - burned);
+      }
       const ok = minted - burned === BigInt(s.total_supply);
-      $("ledgerSub").innerHTML = `${n} entries · minted ${tok(minted)} − burned ${tok(burned)} = ${tok(minted - burned)} ` +
-        (ok ? `<span class="hit">✓ matches total supply</span>` : `<span class="miss">≠ total supply ${tok(s.total_supply)}</span>`);
-      const cls = { mint: "hit", burn: "miss", cancel: "miss", payout: "" };
-      $("ledger").innerHTML = entries.map((e, i) => [from + i, e]).reverse().map(([i, e]) =>
-        `<tr><td>${i}</td><td>${e.day}</td><td class="${cls[e.kind] ?? ""}">${esc(e.kind)}</td><td class="mono">${e.account ? esc(e.account.length > 24 ? e.account.slice(0, 10) + "…" : e.account) : "—"}</td><td style="text-align:right">${tok(e.amount)}</td><td class="sub">${esc(e.memo)}</td></tr>`).join("");
+      $("ledgerN").textContent = n;
+      $("ledgerOk").innerHTML = ok ? `<span class="badge">✓</span>reconciles with total supply` : `<span class="badge bad">!</span>does not match supply`;
+      // supply at the end of every day, carried forward
+      supplySeries = []; let last = 0n;
+      const lastDay = Math.max(s.current_day, ...byDay.keys());
+      for (let d = 0; d <= lastDay; d++) { if (byDay.has(d)) last = byDay.get(d); supplySeries.push({ day: d, supply: tokN(last) }); }
+      $("ledger").innerHTML = all.slice(-80).reverse().map((e) => {
+        const k = KIND[e.kind] || KIND.payout;
+        const who = e.account ? shortAcc(e.account) : e.kind === "payout" ? "split across that day's check-ins" : "reserve";
+        return `<div class="tx ${k.cls}"><span class="ti" aria-hidden="true">${k.icon}</span>
+          <div style="min-width:0"><div class="tt">${esc(title(e))}</div><div class="ts">day ${e.day} · ${esc(who)}</div></div>
+          <div class="ta">${k.sign}${tok(e.amount)}<small>${esc(e.kind)}</small></div></div>`;
+      }).join("");
     }
+    drawChart();
 
+    // holders
     const holders = await view("get_holders", { from_index: 0, limit: 200 });
     holders.sort((a, b) => (BigInt(b[1]) > BigInt(a[1]) ? 1 : -1));
-    const flags = await Promise.all(holders.map(([a]) => view("get_cluster", { account_id: a })));
+    const flags = await Promise.all(holders.map(async ([a]) => {
+      const c = clusterCache.get(a);
+      if (c && Date.now() - c.t < 120000) return c.v;
+      const v = await view("get_cluster", { account_id: a }); clusterCache.set(a, { v, t: Date.now() }); return v;
+    }));
+    $("holderN").textContent = holders.length;
+    const indepList = holders.filter((_, i) => !flags[i]);
+    $("avatars").innerHTML = indepList.slice(0, 6).map(([a]) => avatar(a)).join("") +
+      (indepList.length > 6 ? `<span class="av more">+${indepList.length - 6}</span>` : "") +
+      `<span class="muted small" style="margin-left:12px">${indepList.length} independent</span>`;
+    const launchAcc = await view("get_launch_receiver").catch(() => null);
+    let bi = 0n, bf = 0n;
+    holders.forEach(([a, bal], i) => { if (a === launchAcc) return; if (flags[i]) bf += BigInt(bal); else bi += BigInt(bal); });
+    const tot = bi + bf || 1n, pi = Number((bi * 1000n) / tot) / 10, pf = Math.round((100 - pi) * 10) / 10;
+    $("split").innerHTML = `<div class="muted small">Share of circulating holdings <span title="The unsold launch allocation sits in the launch account and is left out">(excl. unsold launch allocation)</span></div>
+      <div class="bar" style="margin-top:8px" role="img" aria-label="Independent ${pi}%, flagged ${pf}%">
+        <i style="width:${pi}%;background:var(--mint)"></i><i style="width:${pf}%;background:var(--orange)"></i></div>
+      <div class="rowlab"><span><i style="background:var(--mint)"></i>Independent <b>${pi}%</b></span><span><i style="background:var(--orange)"></i>Flagged (clusters, creator side) <b>${pf}%</b></span></div>`;
     $("holders").innerHTML = holders.map(([a, bal, since], i) => {
       const f = flags[i];
       const held = Number(since) ? ((Date.now() - Number(since)) / dayMs).toFixed(1) + " d" : "";
-      const flag = f ? `<span class="flag">${esc(f.id === "deployer" ? "creator side" : "cluster of " + f.size)}</span>` : `<span class="ok">independent</span>`;
-      return `<tr><td class="mono">${esc(a.length > 24 ? a.slice(0, 10) + "…" + a.slice(-8) : a)}</td><td>${tok(bal)}</td><td>${held}</td><td>${flag}</td></tr>`;
+      const tag = f ? `<span class="tag bad">${esc(f.id === "deployer" ? "creator side" : "cluster of " + f.size)}</span>` : `<span class="tag ok">independent</span>`;
+      return `<tr><td class="mono" title="${esc(a)}">${esc(shortAcc(a))}</td><td style="text-align:right">${tok(bal)}</td><td style="text-align:right">${held}</td><td>${tag}</td></tr>`;
     }).join("");
 
-    $("bonfire").innerHTML = top.length ? top.slice(-4).reverse().map(([w, a, amt]) => `week ${w}: <b class="mono">${esc(a)}</b> offered ${tok(amt)}`).join("<br>") : "No offerings yet.";
-    $("links").innerHTML = links.map((l) => `${esc(l.label)}: <span class="mono">${esc(l.url)}</span>`).join("<br>");
+    $("treasury").innerHTML = [
+      ["Pool, free", tok(s.pool_free)], ["Pool, pending rewards", tok(s.pool_committed)],
+      ["Burned", tok(s.burned)], ["Cancelled forever", tok(s.cancelled)],
+      ["Creator earn-out unlocked", tok(s.creator_unlocked)], ["Creator claimed", tok(s.creator_claimed)],
+    ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+    $("bonfire").innerHTML = top.length ? top.slice(-4).reverse().map(([w, a, amt]) => `Week ${w}: <b class="mono">${esc(shortAcc(a))}</b> offered ${tok(amt)}`).join("<br>") : "No offerings yet.";
+    $("links").innerHTML = links.map((l) => `<div><span class="muted">${esc(l.label)}</span> · <span class="mono">${esc(l.url)}</span></div>`).join("");
     $("rules").innerHTML = [
-      `No discretionary mint: supply only from growth tranches at ${cfg.milestones.join(" / ")} independent holders`,
-      `${cfg.tranche_to_pool_bps / 100}% of each tranche to the community pool, the rest to the creator earn-out`,
-      `Hit the quorum: ${cfg.daily_payout_bps / 100}% of the pool paid to that day's check-ins. Miss: ${cfg.miss_burn_bps / 100}% burns`,
-      `Reward weight = independence × holding age (full at ${cfg.age_full_days} days) × streak (up to +${cfg.streak_max_bonus_bps / 100}%) × stake (capped)`,
-      `Creator challenges: at most ${cfg.challenge_daily_cap_bps / 100}% of the pool per day, all of them together`,
-      `Season every ${cfg.season_days} days: +${cfg.season_growth_bps / 100}% independent holders mints a bonus, missing it cancels the bonus`,
-      `Selling is never blocked: no transfer tax, no sell lock`,
-    ].map((r) => `<li>${r}</li>`).join("");
+      `Supply mints only at ${cfg.milestones.join(" / ")} independent holders. No other mint exists.`,
+      `${cfg.tranche_to_pool_bps / 100}% of each tranche goes to the community pool; the creator's cut unlocks only through that growth.`,
+      `Quorum hit: ${cfg.daily_payout_bps / 100}% of the pool is paid to that day's check-ins. Missed: ${cfg.miss_burn_bps / 100}% burns and the streak resets.`,
+      `Reward weight = independence × holding age (full at ${cfg.age_full_days} days) × streak (up to +${cfg.streak_max_bonus_bps / 100}%) × stake (capped). Splitting a stack earns nothing.`,
+      `Creator challenges together pay at most ${cfg.challenge_daily_cap_bps / 100}% of the pool per day.`,
+      `Every ${cfg.season_days} days: grow independent holders ${cfg.season_growth_bps / 100}% or the season bonus is cancelled.`,
+      `Selling is never blocked: no transfer tax, no sell lock.`,
+    ].map((r, i) => `<li><span>${i + 1}</span>${esc(r)}</li>`).join("");
     $("err").textContent = "";
+    $("updated").textContent = "Updated " + new Date().toLocaleTimeString(); $("rpcId").textContent = rpc();
   } catch (e) { $("err").textContent = "Could not read the contract: " + e.message; }
+  document.body.classList.remove("loading");
 }
 
 $("lookup").addEventListener("change", async (e) => {
-  const id = e.target.value.trim(); if (!id) return;
+  const id = e.target.value.trim(); const box = $("member");
+  if (!id) { box.hidden = true; return; }
+  box.hidden = false; box.textContent = "Looking up…";
   try {
     const [m, bal, w, c] = await Promise.all([view("get_member", { account_id: id }), view("ft_balance_of", { account_id: id }), view("preview_weight", { account_id: id }), view("get_cluster", { account_id: id })]);
-    $("member").innerHTML = `balance <b>${tok(bal)}</b> · weight if checking in now <b>${(Number(w) / 1e6).toFixed(4)}</b>` +
-      (c ? ` · <span class="flag">${esc(c.id)} (size ${c.size})</span>` : ` · <span class="ok">independent</span>`) +
-      (m ? `<br>streak ${m.streak} · last check-in day ${m.last_day ?? "–"} · rewards ${tok(m.rewards_total)} · burned ${tok(m.burned_total)}` : "<br>never checked in");
-  } catch (err) { $("member").textContent = err.message; }
+    box.innerHTML = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">${avatar(id, "margin:0")}
+      <div style="flex:1;min-width:0"><div class="mono">${esc(id)}</div>
+      <div class="muted small">${c ? `<span class="tag bad">${esc(c.id)} · size ${c.size}</span>` : `<span class="tag ok">independent</span>`}</div></div>
+      <span class="pill">balance ${tok(bal)}</span><span class="pill">weight now ${(Number(w) / 1e6).toFixed(4)}</span>
+      ${m ? `<span class="pill">streak ${m.streak}</span><span class="pill lime">earned ${tok(m.rewards_total)}</span>` : `<span class="pill">never checked in</span>`}</div>`;
+  } catch (err) { box.textContent = err.message; }
 });
+$("reload").addEventListener("click", refresh);
 
 refresh();
-setInterval(refresh, 30000);
+setInterval(refresh, 45000);
 </script>
 </body>
 </html>

@@ -75,7 +75,7 @@ impl T {
         let now_ms = 1_000_000;
         set_ctx(now_ms, &acc("deployer.near"), 0);
         let c = Contract::new(
-            "Grassroots Dog".into(),
+            "INSYDR Dog".into(),
             "GDOG".into(),
             None,
             config,

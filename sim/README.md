@@ -1,10 +1,10 @@
-# Grassroots 60-day simulation
+# INSYDR 60-day simulation
 
-`grassroots_sim.py` models 60 days of a coin's life under four scenarios. It compares a **naive streak coin** (every check-in weighs the same, every account counts as a holder) with **Grassroots** rules. Its purpose is to choose the contract parameters before writing the contract.
+`insydr_sim.py` models 60 days of a coin's life under four scenarios. It compares a **naive streak coin** (every check-in weighs the same, every account counts as a holder) with **INSYDR** rules. Its purpose is to choose the contract parameters before writing the contract.
 
 ```sh
 uv venv .venv && uv pip install --python .venv/bin/python matplotlib   # charts only
-.venv/bin/python sim/grassroots_sim.py                                  # writes sim/results/
+.venv/bin/python sim/insydr_sim.py                                  # writes sim/results/
 ```
 
 ## Scenarios
@@ -19,7 +19,7 @@ uv venv .venv && uv pip install --python .venv/bin/python matplotlib   # charts 
 
 **Share of all rewards captured by bad actors**
 
-| Actor | Naive coin | Grassroots |
+| Actor | Naive coin | INSYDR |
 |---|---|---|
 | Sybil farm (300 accounts) | **54.3%** | **13.8%** |
 | Insiders (30 wallets) | 1.3% | 0.7% |
@@ -27,12 +27,12 @@ uv venv .venv && uv pip install --python .venv/bin/python matplotlib   # charts 
 
 **Reward per token held (does splitting into many accounts pay?)**
 
-| | Naive | Grassroots |
+| | Naive | INSYDR |
 |---|---|---|
 | Sybil farm | **0.78** | 0.17 |
 | Organic holders, same scenario | 0.10 | 0.15 |
 
-Under Grassroots, the farm earns about the same per token as an honest holder. **Running 300 accounts earns nothing extra over holding the same coins in one account.** In the naive coin, the farm earns 8× per token.
+Under INSYDR, the farm earns about the same per token as an honest holder. **Running 300 accounts earns nothing extra over holding the same coins in one account.** In the naive coin, the farm earns 8× per token.
 
 **Supply follows the real community** (`results/supply_vs_community.png`): supply unlocks in steps as independent holders who've held ≥14 days pass milestones. The dead community stalls at 54% of max supply with its season bonus cancelled; the organic one reaches 74% by day 60.
 

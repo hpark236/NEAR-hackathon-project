@@ -1,6 +1,6 @@
 // Organic Score oracle (v1).
 //
-// Reads every holder of a Grassroots coin straight from the contract (public RPC, no indexer),
+// Reads every holder of a INSYDR coin straight from the contract (public RPC, no indexer),
 // groups wallets that look like one actor, counts independent holders who have held long enough,
 // writes the evidence to app/data/score-<coin>.json, then signs and submits an attestation.
 //

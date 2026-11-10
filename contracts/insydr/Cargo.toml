@@ -1,6 +1,6 @@
 [package]
-name = "grassroots"
-description = "Grassroots: a memecoin whose supply, treasury and rewards follow its real community (NEAR HACKATHON 2026)"
+name = "insydr"
+description = "INSYDR: a memecoin whose supply, treasury and rewards follow its real community (NEAR HACKATHON 2026)"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"

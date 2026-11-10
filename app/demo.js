@@ -1,4 +1,4 @@
-// End-to-end testnet demo: deploy a Grassroots coin, then run a small community through it
+// End-to-end testnet demo: deploy a INSYDR coin, then run a small community through it
 // alongside a sybil farm and deployer-side insiders, with the oracle attesting every "day".
 //
 //   node demo.js setup  <main.testnet> [--farmer <farmer.testnet>]   create actors, deploy, distribute
@@ -24,7 +24,7 @@ import { register as registerChallenge, signCompletion } from "./challenge-serve
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const STATE = path.join(here, "data", "demo.json");
-const WASM = path.join(here, "..", "contracts", "grassroots", "target", "near", "grassroots.wasm");
+const WASM = path.join(here, "..", "contracts", "insydr", "target", "near", "insydr.wasm");
 const st = readJson(STATE, {});
 const save = () => writeJson(STATE, st);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -118,8 +118,8 @@ async function deployCoin(dayMs = DEMO_CONFIG.day_ms) {
   await sleep(3000);
   await retry(async () => (await account(coin)).deployContract(fs.readFileSync(WASM)));
   await retry(() => call(coin, coin, "new", {
-    name: "Grassroots Dog",
-    symbol: "GDOG",
+    name: "INSYDR Dog",
+    symbol: "IDOG",
     icon: null,
     config: { ...DEMO_CONFIG, day_ms: String(dayMs) },
     creator: main,
