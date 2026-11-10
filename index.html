@@ -4,601 +4,737 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>INSYDR</title>
+<meta name="description" content="INSYDR: a memecoin that pays the people who show up and nobody else. Live from the contract on NEAR.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Martian+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     color-scheme: dark;
-    --bg: #08070d;
-    --surface: #15121f;
-    --surface-2: #1c1829;
-    --line: rgba(255, 255, 255, 0.08);
-    --line-2: rgba(255, 255, 255, 0.14);
-    --ink: #f4f2fa;
-    --ink-2: #c9c4d9;
-    --muted: #8f89a3;
-    --violet: #7c3aed;
+    --bg: #07060b;
+    --panel: #0e0c16;
+    --panel-2: #14111f;
+    --line: rgba(255, 255, 255, 0.09);
+    --line-2: rgba(255, 255, 255, 0.18);
+    --ink: #f2f0f8;
+    --ink-2: #bfbad0;
+    --muted: #7f7994;
+    --violet: #6d28ff;
     --violet-2: #a855f7;
-    --lime: #d7f25c;          /* highlight accent (UI only, never data) */
-    --mint: #2ea374;          /* data: independent / supply */
-    --orange: #e5602c;        /* data: flagged / burn */
-    --mint-soft: rgba(46, 163, 116, 0.16);
-    --orange-soft: rgba(229, 96, 44, 0.16);
-    --violet-soft: rgba(124, 58, 237, 0.18);
-    --r-xl: 32px; --r-lg: 24px; --r-md: 16px;
-    --num: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+    --lime: #d7f25c;
+    --mint: #2ea374;      /* data: independent, supply */
+    --orange: #e5602c;    /* data: clustered, burn */
+    --iris: #9085e9;      /* data: creator side */
+    --mono: "Martian Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "Instrument Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { background: var(--bg); }
-  body {
-    margin: 0; color: var(--ink);
-    font: 14px/1.5 "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    min-height: 100vh;
-    background:
-      radial-gradient(900px 520px at 8% -10%, rgba(124, 58, 237, 0.35), transparent 60%),
-      radial-gradient(700px 500px at 100% 0%, rgba(168, 85, 247, 0.18), transparent 60%),
-      radial-gradient(800px 600px at 90% 100%, rgba(229, 96, 44, 0.10), transparent 60%),
-      var(--bg);
-    background-attachment: fixed;
-  }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 20px 64px; padding-top: calc(20px + env(safe-area-inset-top, 0px)); }
+  body { margin: 0; color: var(--ink); font: 14px/1.5 var(--sans); min-height: 100vh; overflow-x: hidden; }
+  #grid { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .glow { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+          background: radial-gradient(900px 480px at 12% -8%, rgba(109, 40, 255, 0.32), transparent 62%),
+                      radial-gradient(700px 520px at 104% 6%, rgba(168, 85, 247, 0.14), transparent 60%),
+                      radial-gradient(800px 520px at 80% 110%, rgba(229, 96, 44, 0.08), transparent 60%); }
+  .wrap { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; padding: 0 20px 72px; padding-top: env(safe-area-inset-top, 0px); }
+  .mono { font-family: var(--mono); }
+  .lbl { font: 500 10.5px/1.2 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  a { color: inherit; }
 
-  /* nav */
-  nav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .logo { display: flex; align-items: center; gap: 10px; font: 700 20px/1 var(--num); letter-spacing: 0.04em; }
-  .mark { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center;
-          background: linear-gradient(135deg, var(--violet), var(--violet-2)); box-shadow: 0 6px 24px rgba(124, 58, 237, 0.45); }
-  .search { flex: 1 1 260px; display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px;
-            border-radius: 999px; background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line); color: var(--muted); }
-  .search input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--ink); font: inherit; }
-  .search input::placeholder { color: var(--muted); }
-  .iconbtn { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line);
-             background: rgba(255, 255, 255, 0.07); color: var(--ink); text-decoration: none; cursor: pointer; }
-  .iconbtn:hover { background: rgba(255, 255, 255, 0.12); }
-  .pill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px;
-          font-size: 12.5px; font-weight: 600; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; }
-  .pill.light { background: #f4f2fa; color: #15121f; border-color: transparent; }
-  .pill.lime { background: var(--lime); color: #15121f; border-color: transparent; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 10px var(--lime); }
+  /* top bar */
+  .bar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .word { font: 700 17px/1 var(--mono); letter-spacing: 0.32em; }
+  .word i { font-style: normal; color: var(--lime); }
+  .bar .sp { flex: 1; }
+  .kv { display: flex; gap: 8px; align-items: baseline; font: 400 11.5px/1 var(--mono); color: var(--ink-2); white-space: nowrap; }
+  .kv b { font-weight: 500; color: var(--ink); }
+  .live { width: 7px; height: 7px; background: var(--lime); display: inline-block; box-shadow: 0 0 10px var(--lime); animation: blink 1.6s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0.25; } }
+  .btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font: 600 11px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); background: transparent;
+         border: 1px solid var(--line-2); border-radius: 2px; height: 34px; padding: 0 14px; cursor: pointer; position: relative; overflow: hidden;
+         transition: border-color 0.15s, background 0.15s, color 0.15s; }
+  .btn:hover { border-color: var(--lime); color: var(--lime); }
+  .btn.solid { background: var(--lime); color: #0b0a10; border-color: var(--lime); }
+  .btn.solid:hover { background: #e6ff7a; color: #0b0a10; }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  :focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 
-  /* hero */
-  .hero { position: relative; overflow: hidden; margin-top: 18px; border-radius: var(--r-xl); padding: 34px 34px 30px;
-          background: linear-gradient(160deg, #3b10c9 0%, #5b21f6 38%, #7c3aed 70%, #9d4ced 100%);
-          box-shadow: 0 30px 80px -30px rgba(91, 33, 246, 0.7); }
-  .hero::before { content: ""; position: absolute; inset: -40% -10% auto 35%; height: 160%;
-                  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.22), transparent 70%); transform: rotate(-18deg); pointer-events: none; }
-  .hero::after { content: ""; position: absolute; left: -10%; right: -10%; bottom: -55%; height: 90%; border-radius: 50%;
-                 border-top: 1px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.04); pointer-events: none; }
-  .hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: center; }
-  @media (max-width: 820px) { .hero-grid { grid-template-columns: 1fr; } }
-  .eyebrow { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.78); letter-spacing: 0.02em; }
-  .coinname { font: 600 15px/1.2 var(--num); color: #fff; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .streak { font: 700 clamp(56px, 10vw, 104px)/0.95 var(--num); letter-spacing: -0.04em; margin: 12px 0 6px; color: #fff; }
-  .streak small { font-size: 0.32em; font-weight: 600; letter-spacing: -0.01em; margin-left: 10px; color: rgba(255, 255, 255, 0.8); }
-  .tagline { color: rgba(255, 255, 255, 0.82); font-size: 15px; max-width: 46ch; margin: 4px 0 18px; }
-  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-  .chips .pill { background: rgba(255, 255, 255, 0.16); color: #fff; border-color: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); }
-  .ringbox { justify-self: end; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
-  @media (max-width: 820px) { .ringbox { justify-self: start; flex-direction: row; text-align: left; } }
-  .ring { width: 172px; height: 172px; position: relative; }
-  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-  .ring .val { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
-  .ring .val b { font: 700 38px/1 var(--num); color: #fff; }
-  .ring .val span { font-size: 12px; color: rgba(255, 255, 255, 0.75); margin-top: 4px; }
-  .ringcap { font-size: 12.5px; color: rgba(255, 255, 255, 0.8); max-width: 26ch; }
-
-  /* stat strip */
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px; }
-  @media (max-width: 900px) { .stats { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 480px) { .stats { grid-template-columns: 1fr; } }
-  .stat { display: flex; gap: 14px; align-items: flex-start; padding: 18px; border-radius: var(--r-lg);
-          background: var(--surface); border: 1px solid var(--line); }
-  .stat .ico { flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, 0.06); color: var(--ink-2); }
-  .stat .k { font-size: 12.5px; color: var(--muted); font-weight: 500; }
-  .stat .v { font: 600 24px/1.15 var(--num); letter-spacing: -0.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .stat .s { font-size: 12px; color: var(--muted); margin-top: 4px; }
-  .meter { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin-top: 10px; }
-  .meter > i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--violet), var(--violet-2)); transition: width 0.6s; }
+  /* ticker */
+  .ticker { overflow: hidden; border-bottom: 1px solid var(--line); height: 34px; display: flex; align-items: center; mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+  .ticker .run { display: inline-flex; gap: 40px; white-space: nowrap; font: 400 11.5px/1 var(--mono); color: var(--ink-2); animation: slide 70s linear infinite; padding-left: 40px; }
+  .ticker:hover .run { animation-play-state: paused; }
+  .ticker b { font-weight: 600; }
+  .up { color: #5fd3a2; } .down { color: #f3a27f; } .pay { color: #c4b8ff; }
+  @keyframes slide { to { transform: translateX(-50%); } }
 
   /* panels */
-  .grid2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; margin-top: 14px; }
+  .panel { position: relative; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: 20px; --mx: 50%; --my: 50%; }
+  .panel::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; opacity: 0; transition: opacity 0.25s;
+                   background: radial-gradient(420px circle at var(--mx) var(--my), rgba(168, 85, 247, 0.13), transparent 60%); }
+  .panel:hover::before { opacity: 1; }
+  .panel > * { position: relative; }
+  .ph { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .ph h2 { margin: 0; font: 600 12px/1.2 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
+  .ph h2 em { font-style: normal; color: var(--muted); margin-left: 8px; }
+  .tag { display: inline-block; font: 600 10px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 7px; border-radius: 2px; border: 1px solid var(--line-2); color: var(--ink-2); white-space: nowrap; }
+  .tag.lime { background: var(--lime); border-color: var(--lime); color: #0b0a10; }
+  .tag.mint { border-color: rgba(46, 163, 116, 0.6); color: #5fd3a2; background: rgba(46, 163, 116, 0.12); }
+  .tag.orange { border-color: rgba(229, 96, 44, 0.6); color: #f3a27f; background: rgba(229, 96, 44, 0.12); }
+  .tag.iris { border-color: rgba(144, 133, 233, 0.6); color: #c4b8ff; background: rgba(144, 133, 233, 0.12); }
+  .note { color: var(--muted); font-size: 12.5px; }
+
+  /* hero */
+  .hero { position: relative; margin-top: 20px; border-radius: 3px; padding: 1px; overflow: hidden; background: var(--line); }
+  .hero::before { content: ""; position: absolute; width: 180%; aspect-ratio: 1; left: -40%; top: 50%; translate: 0 -50%;
+                  background: conic-gradient(from 0deg, transparent 0 82%, rgba(215, 242, 92, 0.9) 90%, #fff 92%, transparent 94%); animation: spin 7s linear infinite; }
+  @keyframes spin { to { rotate: 360deg; } }
+  .hero-in { position: relative; border-radius: 2px; padding: 34px; overflow: hidden;
+             background: linear-gradient(118deg, #2a0aa8 0%, #4f1df0 34%, #6d28ff 62%, #8b3df2 100%); }
+  .hero-in::before { content: ""; position: absolute; inset: 0; opacity: 0.22; pointer-events: none;
+                     background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+                     background-size: 44px 44px; mask-image: radial-gradient(120% 100% at 100% 0%, #000, transparent 70%); }
+  .hero-in::after { content: ""; position: absolute; left: -10%; right: -10%; bottom: -70%; height: 110%; border-radius: 50%; border-top: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.045); pointer-events: none; }
+  .corner { position: absolute; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.75); z-index: 2; }
+  .corner.tl { left: 10px; top: 10px; border-right: 0; border-bottom: 0; } .corner.tr { right: 10px; top: 10px; border-left: 0; border-bottom: 0; }
+  .corner.bl { left: 10px; bottom: 10px; border-right: 0; border-top: 0; } .corner.br { right: 10px; bottom: 10px; border-left: 0; border-top: 0; }
+  .hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1.15fr 1fr; gap: 36px; align-items: end; }
+  @media (max-width: 880px) { .hero-grid { grid-template-columns: 1fr; } .hero-in { padding: 26px 22px; } }
+  .hero .lbl { color: rgba(255,255,255,0.72); }
+  .coin { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font: 500 12.5px/1 var(--mono); letter-spacing: 0.06em; color: #fff; }
+  .coin .tag { border-color: rgba(255,255,255,0.5); color: #fff; }
+  .streak { display: flex; align-items: baseline; gap: 14px; margin: 14px 0 6px; }
+  .streak b { font: 700 clamp(64px, 11vw, 124px)/0.9 var(--mono); letter-spacing: -0.06em; color: #fff; font-variant-numeric: tabular-nums; }
+  .streak span { font: 500 13px/1.3 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.8); }
+  .tagline { font: 500 17px/1.35 var(--sans); color: #fff; max-width: 34ch; margin: 14px 0 0; }
+  .tagline s { text-decoration: none; color: var(--lime); }
+  .facts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+  .facts .tag { border-color: rgba(255,255,255,0.28); color: rgba(255,255,255,0.92); background: rgba(10, 4, 40, 0.28); }
+  .meter { background: rgba(10, 4, 40, 0.42); border: 1px solid rgba(255,255,255,0.2); border-radius: 2px; padding: 18px; backdrop-filter: blur(6px); }
+  .meter .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .meter .big { font: 600 30px/1 var(--mono); letter-spacing: -0.03em; color: #fff; font-variant-numeric: tabular-nums; }
+  .meter .big small { font: 400 12px/1 var(--mono); color: rgba(255,255,255,0.7); letter-spacing: 0; margin-left: 8px; }
+  .track { position: relative; height: 16px; margin: 16px 0 24px; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.16) 0 2px, transparent 2px 8px); }
+  .track i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--lime); transition: width 0.7s cubic-bezier(.2,.8,.2,1); box-shadow: 0 0 18px rgba(215,242,92,0.55); }
+  .track i.low { background: #fff; box-shadow: none; opacity: 0.85; }
+  .track u { position: absolute; top: -6px; bottom: -6px; width: 2px; background: #fff; transition: left 0.7s; }
+  .track u[hidden] { display: none; }
+  .track u::after { content: "TARGET"; position: absolute; bottom: -15px; left: 50%; translate: -50% 0; font: 600 9px/1 var(--mono); letter-spacing: 0.12em; color: #fff; }
+  .meter .sub { font: 400 11.5px/1.5 var(--mono); color: rgba(255,255,255,0.78); }
+  .meter .foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.18); font: 400 11.5px/1.3 var(--mono); color: rgba(255,255,255,0.78); flex-wrap: wrap; }
+  .meter .foot b { color: #fff; font-weight: 600; }
+
+  /* stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+  @media (max-width: 960px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .stats { grid-template-columns: 1fr; } }
+  .stat .v { font: 600 26px/1.1 var(--mono); letter-spacing: -0.04em; margin: 10px 0 8px; font-variant-numeric: tabular-nums; }
+  .stat .s { font: 400 11px/1.5 var(--mono); color: var(--muted); }
+  .thin { height: 3px; background: rgba(255,255,255,0.08); margin: 10px 0; }
+  .thin i { display: block; height: 100%; background: linear-gradient(90deg, var(--violet), var(--violet-2)); transition: width 0.7s; }
+
+  .grid2 { display: grid; grid-template-columns: 1.45fr 1fr; gap: 12px; margin-top: 12px; }
   .grid2.even { grid-template-columns: 1fr 1fr; }
-  @media (max-width: 900px) { .grid2, .grid2.even { grid-template-columns: 1fr; } }
-  .panel { min-width: 0; padding: 22px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); }
-  .ph { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-  .ph h2 { margin: 0; font: 600 17px/1.2 var(--num); letter-spacing: -0.01em; }
-  .ph .count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; margin-left: 8px; border-radius: 99px;
-               background: rgba(255, 255, 255, 0.08); font: 600 12px/1 "Inter"; color: var(--ink-2); vertical-align: 2px; }
-  .muted { color: var(--muted); } .small { font-size: 12.5px; }
-  .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); }
-  .seg button { border: 0; background: none; color: var(--muted); font: 600 12px/1 "Inter"; height: 26px; padding: 0 11px; border-radius: 999px; cursor: pointer; }
-  .seg button[aria-pressed="true"] { background: #f4f2fa; color: #15121f; }
+  @media (max-width: 960px) { .grid2, .grid2.even { grid-template-columns: 1fr; } }
 
-  /* chart */
-  .chart { position: relative; height: 240px; }
+  /* terminal */
+  .term { margin-top: 12px; padding: 0; overflow: hidden; }
+  .term .ph { margin: 0; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .quick { display: flex; gap: 6px; flex-wrap: wrap; }
+  .quick .btn { height: 28px; padding: 0 10px; font-size: 10px; }
+  .screen { position: relative; height: 340px; overflow-y: auto; padding: 16px 18px; font: 400 12px/1.65 var(--mono); color: var(--ink-2); background:
+            linear-gradient(rgba(255,255,255,0.022) 50%, transparent 50%) 0 0 / 100% 4px, #09080f; }
+  .screen div { white-space: pre-wrap; word-break: break-word; }
+  .screen .cmd { color: var(--ink); } .screen .cmd::before { content: "insydr> "; color: var(--lime); }
+  .screen .ok { color: #9be36b; } .screen .bad { color: #f3a27f; } .screen .dim { color: var(--muted); } .screen .hi { color: #fff; }
+  .prompt { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--line); background: #09080f; font: 400 12px/1 var(--mono); }
+  .prompt span { color: var(--lime); }
+  .prompt input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--ink); font: inherit; caret-color: var(--lime); }
+
+  /* charts */
+  .chart { position: relative; height: 230px; }
   .chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
-  .tip { position: absolute; pointer-events: none; padding: 8px 10px; border-radius: 12px; background: #f4f2fa; color: #15121f;
-         font-size: 12px; line-height: 1.3; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); transform: translate(-50%, -110%); white-space: nowrap; }
-  .tip b { display: block; font: 700 14px/1.2 var(--num); }
-  .tip .key { display: inline-block; width: 12px; height: 2px; background: var(--mint); vertical-align: middle; margin-right: 6px; }
+  .tip { position: absolute; pointer-events: none; padding: 8px 10px; border-radius: 2px; background: #f2f0f8; color: #0b0a10; font: 400 11px/1.4 var(--mono); transform: translate(-50%, -115%); white-space: nowrap; z-index: 3; }
+  .tip b { display: block; font-weight: 700; font-size: 13px; }
+  .tip i { display: inline-block; width: 12px; height: 2px; vertical-align: middle; margin-right: 6px; }
+  .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 2px; }
+  .seg button { border: 0; background: none; color: var(--muted); font: 600 10px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; height: 26px; padding: 0 10px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: #0b0a10; }
+  .bars { display: grid; gap: 14px; }
+  .barrow .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font: 400 11.5px/1.3 var(--mono); color: var(--ink-2); }
+  .barrow .top b { font-weight: 600; color: var(--ink); font-size: 14px; }
+  .barrow .rail { height: 14px; margin-top: 7px; background: rgba(255,255,255,0.05); }
+  .barrow .rail i { display: block; height: 100%; min-width: 2px; border-radius: 0 3px 3px 0; transition: width 0.8s cubic-bezier(.2,.8,.2,1); }
+  .barrow .meta { font: 400 11px/1.4 var(--mono); color: var(--muted); margin-top: 5px; }
 
-  /* streak calendar */
-  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-  .day { aspect-ratio: 1; border-radius: 14px; display: grid; place-content: center; text-align: center; gap: 2px;
-         background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); font-size: 11px; color: var(--muted); position: relative; }
-  .day b { font: 600 15px/1 var(--num); color: var(--ink); }
-  .day.hit { background: var(--lime); border-color: transparent; color: #3a4410; }
-  .day.hit b { color: #15121f; }
-  .day.miss { background: var(--orange-soft); border-color: rgba(229, 96, 44, 0.5); color: #f3a27f; }
-  .day.open { border: 1px dashed var(--line-2); }
-  .day.pending { border-style: dashed; opacity: 0.75; }
-  .day.hit.pending { background: rgba(215, 242, 92, 0.25); color: var(--lime); }
-  .day.hit.pending b { color: var(--lime); }
-  .day.open::after { content: ""; position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px var(--lime); }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--muted); }
-  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  /* calendar */
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .day { aspect-ratio: 1.15; border: 1px solid var(--line); border-radius: 2px; display: grid; place-content: center; text-align: center; gap: 3px; font: 400 9.5px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: rgba(255,255,255,0.03); }
+  .day b { font: 600 14px/1 var(--mono); color: var(--ink); letter-spacing: -0.02em; }
+  .day.hit { background: var(--lime); border-color: var(--lime); color: #47530f; } .day.hit b { color: #0b0a10; }
+  .day.miss { background: rgba(229, 96, 44, 0.16); border-color: rgba(229, 96, 44, 0.6); color: #f3a27f; }
+  .day.open { border: 1px dashed var(--line-2); box-shadow: inset 0 0 0 1px rgba(215,242,92,0.35); }
+  .day.pending { border-style: dashed; opacity: 0.7; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font: 400 10.5px/1.4 var(--mono); color: var(--muted); }
+  .legend i { display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: -1px; }
 
-  /* activity */
-  .list { display: flex; flex-direction: column; gap: 8px; max-height: 470px; overflow-y: auto; padding-right: 4px; }
-  .tx { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: var(--r-md);
-        background: var(--surface-2); border: 1px solid var(--line); }
-  .tx .ti { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font: 700 16px/1 var(--num); }
-  .tx .tt { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tx .ts { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tx .ta { text-align: right; font: 600 14px/1.2 var(--num); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .tx .ta small { display: block; font: 500 11.5px/1.3 "Inter"; color: var(--muted); }
-  .k-mint .ti { background: var(--mint-soft); color: #5fd3a2; }
-  .k-burn .ti, .k-cancel .ti { background: var(--orange-soft); color: #f3a27f; }
-  .k-payout .ti { background: var(--violet-soft); color: #c4a5ff; }
-  .k-burn { background: linear-gradient(90deg, rgba(229, 96, 44, 0.10), var(--surface-2) 45%); }
-  .k-mint { background: linear-gradient(90deg, rgba(46, 163, 116, 0.10), var(--surface-2) 45%); }
-  .okline { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
-  .okline .badge { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--lime); color: #15121f; font-size: 11px; font-weight: 800; }
-  .okline .badge.bad { background: var(--orange); color: #fff; }
-
-  /* holders */
-  .avatars { display: flex; align-items: center; margin-bottom: 16px; }
-  .av { width: 42px; height: 42px; border-radius: 50%; border: 3px solid var(--surface); margin-left: -10px; display: grid; place-items: center;
-        font: 700 13px/1 var(--num); color: #fff; }
-  .av:first-child { margin-left: 0; }
-  .av.more { background: #2a2538; color: var(--ink-2); }
-  .split { margin: 4px 0 6px; }
-  .split .bar { display: flex; height: 12px; border-radius: 99px; overflow: hidden; gap: 2px; background: transparent; }
-  .split .bar i { display: block; height: 100%; border-radius: 4px; }
-  .split .rowlab { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; margin-top: 10px; }
-  .split .rowlab span { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
-  .split .rowlab i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-  .split .rowlab b { font: 600 13px/1 var(--num); color: var(--ink); }
-  table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
-  th, td { text-align: left; padding: 9px 6px; border-bottom: 1px solid var(--line); }
-  th { color: var(--muted); font-weight: 500; font-size: 12px; }
-  .tscroll { max-height: 300px; overflow: auto; margin-top: 14px; }
-  .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
-  .tag.ok { background: var(--mint-soft); color: #5fd3a2; }
-  .tag.bad { background: var(--orange-soft); color: #f3a27f; }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-
-  /* rules / treasury */
-  .kv { display: grid; grid-template-columns: 1fr auto; gap: 10px 14px; font-size: 13px; }
-  .kv dt { color: var(--muted); } .kv dd { margin: 0; text-align: right; font: 600 13.5px/1.4 var(--num); font-variant-numeric: tabular-nums; }
-  .rules { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-  .rules li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; font-size: 13px; color: var(--ink-2); }
-  .rules li span { width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.06); font: 600 12px/1 var(--num); color: var(--ink); }
-  .member { margin-top: 12px; padding: 14px; border-radius: var(--r-md); background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; }
-  .member[hidden] { display: none; }
-  .err { margin: 14px 0 0; padding: 12px 16px; border-radius: var(--r-md); background: var(--orange-soft); color: #f3a27f; border: 1px solid rgba(229, 96, 44, 0.4); }
+  /* lists and tables */
+  .list { display: flex; flex-direction: column; max-height: 430px; overflow-y: auto; }
+  .tx { display: grid; grid-template-columns: 54px 1fr auto; gap: 12px; align-items: center; padding: 10px 2px; border-bottom: 1px solid var(--line); }
+  .tx .k { font: 600 9.5px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 0; text-align: center; border-radius: 2px; }
+  .tx .tt { font: 500 13px/1.3 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx .ts { font: 400 10.5px/1.4 var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx .ta { font: 600 13px/1.2 var(--mono); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .k.mint { background: rgba(46,163,116,0.16); color: #5fd3a2; } .k.burn, .k.cancel { background: rgba(229,96,44,0.16); color: #f3a27f; } .k.payout { background: rgba(144,133,233,0.16); color: #c4b8ff; }
+  table { width: 100%; border-collapse: collapse; font: 400 11.5px/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 9px 8px 9px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+  td.r, th.r { text-align: right; }
+  .tscroll { max-height: 380px; overflow: auto; }
+  .who { display: flex; align-items: center; gap: 9px; }
+  .ident { width: 20px; height: 20px; flex: none; image-rendering: pixelated; border-radius: 1px; }
+  .rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+  .rules li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink-2); }
+  .rules li span { font: 600 11px/1.6 var(--mono); color: var(--lime); }
+  .dl { display: grid; grid-template-columns: 1fr auto; gap: 0; font: 400 12px/1.4 var(--mono); }
+  .dl dt { color: var(--muted); padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .dl dd { margin: 0; text-align: right; padding: 9px 0; border-bottom: 1px solid var(--line); color: var(--ink); font-weight: 500; }
+  .err { margin: 12px 0 0; padding: 12px 14px; border: 1px solid rgba(229,96,44,0.5); background: rgba(229,96,44,0.12); color: #f3a27f; font: 400 12px/1.5 var(--mono); border-radius: 2px; }
   .err:empty { display: none; }
-  footer { margin-top: 22px; font-size: 12px; color: var(--muted); display: flex; gap: 8px 18px; flex-wrap: wrap; }
-  .loading { opacity: 0.6; transition: opacity 0.3s; }
-  :focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+  footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; gap: 8px 22px; flex-wrap: wrap; font: 400 11px/1.5 var(--mono); color: var(--muted); }
+  .spark { position: fixed; width: 3px; height: 3px; background: var(--lime); pointer-events: none; z-index: 9; }
+  @media (prefers-reduced-motion: reduce) { .ticker .run, .hero::before, .live { animation: none; } * { transition: none !important; } }
 </style>
 </head>
 <body>
+<canvas id="grid" aria-hidden="true"></canvas>
+<div class="glow" aria-hidden="true"></div>
 <div class="wrap">
-  <nav>
-    <div class="logo">
-      <span class="mark" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 4v16M7 4h10M7 20h10"/></svg>
-      </span>
-      INSYDR
-    </div>
-    <label class="search">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="lookup" placeholder="Look up any account, e.g. alice.testnet" autocomplete="off" aria-label="Look up an account">
-    </label>
-    <span class="pill"><span class="dot"></span><span id="netTag">testnet</span></span>
-    <a class="iconbtn" href="https://github.com/hpark236/NEAR-hackathon-project" target="_blank" rel="noopener" title="Source code" aria-label="Source code">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>
-    </a>
-    <button class="iconbtn" id="reload" title="Refresh now" aria-label="Refresh now">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
-    </button>
-  </nav>
-  <div class="member" id="member" hidden></div>
-  <p class="err" id="err"></p>
+  <header class="bar">
+    <div class="word">INSY<i>D</i>R</div>
+    <div class="kv"><span class="live" aria-hidden="true"></span><span id="netTag">TESTNET</span></div>
+    <div class="kv">BLOCK <b id="block">–</b></div>
+    <div class="kv">CONTRACT <b id="coinId">–</b></div>
+    <div class="sp"></div>
+    <a class="btn" href="https://github.com/hpark236/NEAR-hackathon-project" target="_blank" rel="noopener">Source</a>
+    <button class="btn" id="reload">Refresh</button>
+  </header>
+  <div class="ticker" aria-label="Latest ledger entries"><div class="run" id="ticker"></div></div>
+  <p class="err" id="err" role="status"></p>
 
-  <section class="hero" id="main">
-    <div class="hero-grid">
-      <div>
-        <div class="coinname"><span id="coinName">Loading…</span><span class="pill light" id="sym">$—</span></div>
-        <div class="eyebrow" style="margin-top:18px">Community streak</div>
-        <div class="streak" id="streak">–<small>days</small></div>
-        <p class="tagline">Everyone's an insider. Except the insiders. Supply grows only with real holders, the pool pays whoever shows up, and nobody can change the rules.</p>
-        <div class="chips" id="chips"></div>
-      </div>
-      <div class="ringbox">
-        <div class="ring" role="img" id="ringImg" aria-label="Today's check-ins">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="12"/>
-            <circle id="ringArc" cx="60" cy="60" r="50" fill="none" stroke="#d7f25c" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 314.16"/>
-          </svg>
-          <div class="val"><b id="todayN">–</b><span id="todayQ">of – needed</span></div>
+  <section class="hero">
+    <div class="hero-in">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="hero-grid">
+        <div>
+          <div class="coin"><span id="coinName">LOADING</span><span class="tag" id="sym">$—</span><span class="tag" id="lockTag">…</span></div>
+          <div class="streak"><b id="streak">–</b><span>day<br>community<br>streak</span></div>
+          <p class="tagline">Everyone's an insider.<br><s>Except the insiders.</s></p>
+          <div class="facts" id="facts"></div>
         </div>
-        <div class="ringcap" id="ringCap">Today's independent check-ins</div>
+        <div class="meter" id="meter">
+          <div class="row"><span class="lbl">Today's turnout</span><span class="tag" id="turnTag">…</span></div>
+          <div class="row" style="margin-top:12px"><div class="big"><span id="turnout">–</span><small id="turnOf"></small></div></div>
+          <div class="track" role="img" id="trackImg" aria-label="Turnout against target"><i id="trackFill" style="width:0"></i><u id="trackMark" style="left:0"></u></div>
+          <div class="sub" id="turnSub">Turnout is the sum of anti-farm weights that checked in today.</div>
+          <div class="foot"><span>CHECK-INS <b id="ciN">–</b></span><span>INDEPENDENT <b id="ciU">–</b></span><span>DAY ENDS IN <b id="eta">–</b></span></div>
+        </div>
       </div>
     </div>
   </section>
 
   <div class="stats">
-    <div class="stat">
-      <span class="ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-2-4.7"/></svg></span>
-      <div style="flex:1;min-width:0"><div class="k">Independent holders</div><div class="v" id="indep">–</div>
-        <div class="meter"><i id="msBar" style="width:0"></i></div><div class="s" id="ms"></div></div>
-    </div>
-    <div class="stat">
-      <span class="ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span>
-      <div style="flex:1;min-width:0"><div class="k">Supply</div><div class="v" id="supply">–</div>
-        <div class="meter"><i id="supplyBar" style="width:0"></i></div><div class="s" id="supplySub"></div></div>
-    </div>
-    <div class="stat">
-      <span class="ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10h18M5 10V8l7-4 7 4v2M6 10v8M10 10v8M14 10v8M18 10v8M3 20h18"/></svg></span>
-      <div style="flex:1;min-width:0"><div class="k">Community pool</div><div class="v" id="pool">–</div><div class="s" id="poolSub"></div></div>
-    </div>
-    <div class="stat">
-      <span class="ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4 0 7-2.7 7-6.6 0-3.8-3-6.2-4.4-9.4-.8 2.3-2 3.4-3.3 3.9C11 7 10.4 4.4 8 2c.3 3.6-3 6.4-3 11.4C5 19.3 8 22 12 22Z"/></svg></span>
-      <div style="flex:1;min-width:0"><div class="k">Burned · cancelled forever</div><div class="v" id="burned">–</div><div class="s" id="burnSub"></div></div>
-    </div>
+    <div class="panel stat"><div class="lbl">Independent holders</div><div class="v" id="indep">–</div><div class="thin"><i id="msBar" style="width:0"></i></div><div class="s" id="ms"></div></div>
+    <div class="panel stat"><div class="lbl">Supply</div><div class="v" id="supply">–</div><div class="thin"><i id="supplyBar" style="width:0"></i></div><div class="s" id="supplySub"></div></div>
+    <div class="panel stat"><div class="lbl">Community pool</div><div class="v" id="pool">–</div><div class="thin"><i id="poolBar" style="width:0"></i></div><div class="s" id="poolSub"></div></div>
+    <div class="panel stat"><div class="lbl">Burned / cancelled forever</div><div class="v" id="burned">–</div><div class="thin"><i id="burnBar" style="width:0;background:var(--orange)"></i></div><div class="s" id="burnSub"></div></div>
+  </div>
+
+  <section class="panel term" aria-labelledby="termH">
+    <div class="ph"><h2 id="termH">Test terminal<em>live against the contract</em></h2>
+      <div class="quick" id="quick">
+        <button class="btn solid" data-cmd="verify">Verify</button><button class="btn" data-cmd="farms">Farms</button>
+        <button class="btn" data-cmd="split 3000000 30">Split test</button><button class="btn" data-cmd="join">Join as guest</button>
+        <button class="btn" data-cmd="checkin">Check in</button><button class="btn" data-cmd="attack all">Attack it</button><button class="btn" data-cmd="help">Help</button>
+      </div></div>
+    <div class="screen" id="screen" tabindex="0" aria-live="polite"></div>
+    <label class="prompt"><span>insydr&gt;</span><input id="cli" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type a command, or press a button above" aria-label="Terminal command"></label>
+  </section>
+
+  <div class="grid2">
+    <section class="panel" aria-labelledby="payH">
+      <div class="ph"><h2 id="payH">Who gets paid<em>rewards per 1,000 coins held</em></h2><span class="tag" id="payTag">live</span></div>
+      <div class="bars" id="payBars"><div class="note">Reading every holder from the contract…</div></div>
+      <p class="note" style="margin:16px 0 0" id="payNote"></p>
+    </section>
+    <section class="panel" aria-labelledby="calH">
+      <div class="ph"><h2 id="calH">Streak calendar</h2><span class="tag" id="seasonTag">season –</span></div>
+      <div class="days" id="days"></div>
+      <div class="legend"><span><i style="background:var(--lime)"></i>Hit: pool paid</span><span><i style="background:rgba(229,96,44,0.3);outline:1px solid var(--orange)"></i>Missed: slice burned</span><span><i style="outline:1px dashed var(--line-2)"></i>Open / unsettled</span></div>
+      <p class="note" id="calNote" style="margin:10px 0 0"></p>
+    </section>
   </div>
 
   <div class="grid2">
-    <section class="panel" aria-labelledby="supplyH">
-      <div class="ph"><h2 id="supplyH">Supply over time</h2>
-        <div class="seg" role="group" aria-label="Range"><button data-range="14" aria-pressed="false">14 days</button><button data-range="all" aria-pressed="true">All</button></div></div>
+    <section class="panel" aria-labelledby="supH">
+      <div class="ph"><h2 id="supH">Supply over time</h2>
+        <div class="seg" role="group" aria-label="Range"><button data-range="14" aria-pressed="false">14D</button><button data-range="all" aria-pressed="true">All</button></div></div>
       <div class="chart" id="chart"><svg id="chartSvg" role="img" aria-label="Total supply by day"></svg><div class="tip" id="tip" hidden></div></div>
-      <div class="muted small" id="chartNote" style="margin-top:8px">Built from the contract's own ledger. Steps up = growth tranches and season bonuses; steps down = burns.</div>
+      <p class="note" style="margin:8px 0 0">Rebuilt from the contract's own ledger. Steps up are growth tranches and season bonuses. Steps down are burns.</p>
     </section>
-    <section class="panel" aria-labelledby="calH">
-      <div class="ph"><h2 id="calH">Streak calendar</h2><span class="pill" id="seasonPill">season –</span></div>
-      <div class="days" id="days"></div>
-      <div class="legend"><span><i style="background:var(--lime)"></i>Quorum hit, pool paid</span><span><i style="background:var(--orange-soft);border:1px solid var(--orange)"></i>Missed, slice burned</span><span><i style="border:1px dashed var(--line-2)"></i>Today (open)</span><span><i style="background:var(--orange-soft);border:1px dashed var(--orange)"></i>Waiting to settle</span></div>
-      <div class="muted small" id="calNote" style="margin-top:10px"></div>
+    <section class="panel" aria-labelledby="actH">
+      <div class="ph"><h2 id="actH">Ledger<em id="ledgerN"></em></h2><span class="tag" id="ledgerOk">…</span></div>
+      <div class="list" id="ledger"></div>
     </section>
   </div>
 
-  <div class="grid2 even">
-    <section class="panel" aria-labelledby="actH">
-      <div class="ph"><h2 id="actH">Activity<span class="count" id="ledgerN">0</span></h2><span id="ledgerOk" class="okline"></span></div>
-      <div class="list" id="ledger"></div>
-    </section>
-    <section class="panel" aria-labelledby="holdH">
-      <div class="ph"><h2 id="holdH">Holders<span class="count" id="holderN">0</span></h2><span class="muted small">flags from the Organic Score oracle</span></div>
-      <div class="avatars" id="avatars"></div>
-      <div class="split" id="split"></div>
-      <div class="tscroll"><table>
-        <thead><tr><th>Account</th><th style="text-align:right">Balance</th><th style="text-align:right">Held</th><th>Status</th></tr></thead>
-        <tbody id="holders"></tbody></table></div>
-    </section>
-  </div>
+  <section class="panel" style="margin-top:12px" aria-labelledby="holdH">
+    <div class="ph"><h2 id="holdH">Holders<em id="holderN"></em></h2><span class="note">flags from a 2-of-3 oracle; the evidence column is read from the contract</span></div>
+    <div class="tscroll"><table>
+      <thead><tr><th>Account</th><th class="r">Balance</th><th class="r">Coin-age</th><th class="r">Earned</th><th>Status</th><th>Evidence on-chain</th></tr></thead>
+      <tbody id="holders"></tbody></table></div>
+  </section>
 
   <div class="grid2 even">
     <section class="panel" aria-labelledby="rulesH">
-      <div class="ph"><h2 id="rulesH">Rules, fixed at launch</h2><span class="pill lime">no admin key</span></div>
+      <div class="ph"><h2 id="rulesH">Rules, fixed at launch</h2><span class="tag lime" id="rulesTag">no setters</span></div>
       <ul class="rules" id="rules"></ul>
     </section>
     <section class="panel" aria-labelledby="treH">
-      <div class="ph"><h2 id="treH">Treasury & creator</h2></div>
-      <dl class="kv" id="treasury"></dl>
-      <div class="ph" style="margin:20px 0 10px"><h2>Weekly bonfire</h2></div>
-      <div id="bonfire" class="muted small">No offerings yet.</div>
-      <div class="ph" style="margin:20px 0 10px"><h2>Official links</h2></div>
-      <div id="links" class="small"></div>
+      <div class="ph"><h2 id="treH">Treasury, creator, oracle</h2></div>
+      <dl class="dl" id="treasury"></dl>
+      <p class="note" id="links" style="margin:14px 0 0"></p>
     </section>
   </div>
 
-  <footer><span>Contract <span class="mono" id="coinId"></span></span><span>RPC <span class="mono" id="rpcId"></span></span><span id="updated"></span></footer>
+  <footer><span>RPC <span id="rpcId"></span></span><span id="updated"></span><span>Read-only until you join as a guest. Guest keys are throwaway testnet keys kept in this browser.</span></footer>
 </div>
 
 <script>
+"use strict";
+// ============================================================ config and RPC
 const q = new URLSearchParams(location.search);
-const COIN = q.get("coin") || "";
-// several free public RPCs; on a rate limit or network error the page rotates to the next one
-const RPCS = q.get("rpc") ? [q.get("rpc")] : COIN.endsWith(".near")
-  ? ["https://free.rpc.fastnear.com", "https://near.drpc.org", "https://rpc.mainnet.near.org"]
+const DEFAULT_COIN = ""; // set to the live demo coin when the page is hosted
+const COIN = q.get("coin") || DEFAULT_COIN;
+const MAINNET = COIN.endsWith(".near");
+const RPCS = q.get("rpc") ? [q.get("rpc")] : MAINNET
+  ? ["https://free.rpc.fastnear.com", "https://near.drpc.org"]
   : ["https://test.rpc.fastnear.com", "https://near-testnet.drpc.org", "https://rpc.testnet.near.org"];
 let rpcIdx = 0;
-const rpc = () => RPCS[rpcIdx % RPCS.length];
+const rpcUrl = () => RPCS[rpcIdx % RPCS.length];
 const $ = (id) => document.getElementById(id);
-const tokN = (v) => Number(BigInt(v) / 10n ** 14n) / 1e4;
-const short = (n) => n >= 1e9 ? (n / 1e9).toFixed(2) + "B" : n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "k" : n.toLocaleString("en-US", { maximumFractionDigits: 2 });
-const tok = (v) => short(tokN(v));
-const pct = (a, b) => (b ? Math.min(100, (100 * a) / b) : 0);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const shortAcc = (a) => a.length > 22 ? a.slice(0, 8) + "…" + a.slice(-6) : a;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// at most 4 requests in flight; free public RPCs rate-limit bursts (and a 429 can surface as a CORS "Failed to fetch")
+// at most 4 requests in flight; on a rate limit or network error rotate to the next public RPC
 let inflight = 0; const waiters = [];
 const acquire = () => inflight < 4 ? (inflight++, Promise.resolve()) : new Promise((r) => waiters.push(r));
 const release = () => { const w = waiters.shift(); if (w) w(); else inflight--; };
-async function view(method, args = {}) {
+async function rpc(method, params) {
   await acquire();
   try {
     for (let i = 0; ; i++) {
       let r;
       try {
-        r = await fetch(rpc(), { method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "call_function", finality: "optimistic",
-            account_id: COIN, method_name: method, args_base64: btoa(JSON.stringify(args)) } }) });
-      } catch (e) { if (i < 6) { rpcIdx++; await new Promise((ok) => setTimeout(ok, 500 * 2 ** i)); continue; } throw e; }
-      if ((r.status === 429 || r.status >= 500) && i < 6) { rpcIdx++; await new Promise((ok) => setTimeout(ok, 500 * 2 ** i)); continue; }
+        r = await fetch(rpcUrl(), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+      } catch (e) { if (i < 6) { rpcIdx++; await sleep(400 * 2 ** i); continue; } throw e; }
+      if ((r.status === 429 || r.status >= 500) && i < 6) { rpcIdx++; await sleep(400 * 2 ** i); continue; }
       const j = await r.json();
-      if (j.error || j.result?.error) throw new Error(JSON.stringify(j.error || j.result.error));
-      return JSON.parse(new TextDecoder().decode(new Uint8Array(j.result.result)));
+      if (j.error) throw new Error(j.error.data || j.error.message || JSON.stringify(j.error));
+      if (j.result?.error) throw new Error(j.result.error);
+      return j.result;
     }
   } finally { release(); }
 }
-const MISSING_METHOD = /MethodNotFound|wasm execution failed.*not found/i;
-
-// deterministic avatar gradient per account
-function hue(a) { let h = 0; for (const c of a) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
-function avatar(a, extra = "") {
-  const h = hue(a);
-  const label = /^[0-9a-f]{64}$/.test(a) ? a.slice(0, 2).toUpperCase() : a.replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase();
-  return `<span class="av" title="${esc(a)}" style="background:linear-gradient(135deg,hsl(${h} 70% 55%),hsl(${(h + 50) % 360} 70% 40%));${extra}">${esc(label)}</span>`;
+async function view(method, args = {}, contract = COIN) {
+  const res = await rpc("query", { request_type: "call_function", finality: "optimistic", account_id: contract, method_name: method, args_base64: btoa(JSON.stringify(args)) });
+  return JSON.parse(new TextDecoder().decode(new Uint8Array(res.result)));
 }
 
-let supplySeries = [], range = "all", clusterCache = new Map();
+// ============================================================ formatting
+const tokN = (v) => Number(BigInt(v) / 10n ** 14n) / 1e4;
+const short = (n) => { const a = Math.abs(n); return a >= 1e9 ? (n / 1e9).toFixed(2) + "B" : a >= 1e6 ? (n / 1e6).toFixed(2) + "M" : a >= 1e4 ? (n / 1e3).toFixed(1) + "K" : n.toLocaleString("en-US", { maximumFractionDigits: 2 }); };
+const tok = (v) => short(tokN(v));
+const wt = (v) => (Number(v) / 1e6).toFixed(2);
+const pct = (a, b) => (b ? Math.min(100, (100 * a) / b) : 0);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const acct = (a) => a.length > 26 ? a.slice(0, 8) + "…" + a.slice(-6) : a;
+const dur = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h ? `${h}h ${String(m).padStart(2, "0")}m` : `${String(m).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; };
+const dayLen = (ms) => ms >= 86400000 ? "24 h" : ms >= 3600000 ? ms / 3600000 + " h" : ms >= 60000 ? ms / 60000 + " min" : ms / 1000 + " s";
 
-function drawChart() {
-  const svg = $("chartSvg"), box = $("chart");
-  const W = box.clientWidth, H = box.clientHeight, padL = 52, padR = 12, padT = 12, padB = 26;
-  let pts = supplySeries;
-  if (range !== "all") pts = pts.slice(-Number(range));
-  if (pts.length < 2) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" fill="#8f89a3" text-anchor="middle" font-size="13">Not enough history yet</text>`; return; }
-  const xs = pts.map((p) => p.day), ys = pts.map((p) => p.supply);
-  const x0 = xs[0], x1 = xs[xs.length - 1];
-  const yMax = Math.max(...ys) * 1.08, yMin = 0;
-  const X = (d) => padL + ((d - x0) / Math.max(1, x1 - x0)) * (W - padL - padR);
-  const Y = (v) => padT + (1 - (v - yMin) / (yMax - yMin)) * (H - padT - padB);
-  // step-after path
-  let line = `M${X(xs[0])},${Y(ys[0])}`;
-  for (let i = 1; i < pts.length; i++) line += ` H${X(xs[i])} V${Y(ys[i])}`;
-  const area = `${line} V${Y(0)} H${X(xs[0])} Z`;
-  const ticks = 4, grid = [];
-  for (let t = 0; t <= ticks; t++) {
-    const v = (yMax / ticks) * t, y = Y(v);
-    grid.push(`<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,0.06)"/>` +
-      `<text x="${padL - 8}" y="${y + 4}" fill="#8f89a3" font-size="11" text-anchor="end">${short(v)}</text>`);
+// 5x5 symmetric identicon, drawn from the account id (no avatars, no initials)
+function ident(a) {
+  let h = 2166136261; for (const c of a) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  const hue = h % 360; let bits = h, cells = "";
+  for (let y = 0; y < 5; y++) for (let x = 0; x < 3; x++) { bits = (Math.imul(bits, 1103515245) + 12345) >>> 0; if ((bits >>> 16) & 1) { cells += `<rect x="${x}" y="${y}" width="1" height="1"/>`; if (x < 2) cells += `<rect x="${4 - x}" y="${y}" width="1" height="1"/>`; } }
+  return `<svg class="ident" viewBox="0 0 5 5" aria-hidden="true" style="background:hsl(${hue} 30% 14%)"><g fill="hsl(${hue} 80% 66%)">${cells}</g></svg>`;
+}
+
+// ============================================================ effects (plain JS takes on reactbits ideas)
+// Dot Grid: a field of dots that brightens near the pointer
+(function dotGrid() {
+  const c = $("grid"), x = c.getContext("2d"); let W, H, mx = -999, my = -999, raf = 0;
+  const size = () => { const d = Math.min(devicePixelRatio || 1, 2); W = c.width = innerWidth * d; H = c.height = innerHeight * d; x.setTransform(d, 0, 0, d, 0, 0); draw(); };
+  function draw() {
+    raf = 0; x.clearRect(0, 0, innerWidth, innerHeight);
+    for (let gx = 14; gx < innerWidth; gx += 28) for (let gy = 14; gy < innerHeight; gy += 28) {
+      const d = Math.hypot(gx - mx, gy - my), k = Math.max(0, 1 - d / 190);
+      x.fillStyle = k > 0 ? `rgba(${Math.round(168 + 47 * k)},${Math.round(133 + 109 * k)},${Math.round(247 - 155 * k)},${0.12 + 0.75 * k})` : "rgba(255,255,255,0.07)";
+      const r = 1 + 1.6 * k; x.fillRect(gx - r / 2, gy - r / 2, r, r);
+    }
   }
-  const xt = [];
-  const step = Math.max(1, Math.ceil((x1 - x0) / 6));
-  for (let d = x0; d <= x1; d += step) xt.push(`<text x="${X(d)}" y="${H - 6}" fill="#8f89a3" font-size="11" text-anchor="middle">day ${d}</text>`);
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  svg.innerHTML = `<defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2ea374" stop-opacity="0.45"/><stop offset="1" stop-color="#2ea374" stop-opacity="0"/></linearGradient></defs>
-    ${grid.join("")}${xt.join("")}
-    <path d="${area}" fill="url(#ga)"/>
-    <path d="${line}" fill="none" stroke="#2ea374" stroke-width="2" stroke-linejoin="round"/>
-    <line id="cross" y1="${padT}" y2="${H - padB}" stroke="rgba(255,255,255,0.35)" stroke-dasharray="3 3" visibility="hidden"/>
-    <circle id="crossDot" r="5" fill="#2ea374" stroke="#15121f" stroke-width="2" visibility="hidden"/>
-    <rect x="${padL}" y="0" width="${W - padL - padR}" height="${H}" fill="transparent" id="hit" tabindex="0"/>`;
-  const tip = $("tip"), cross = svg.querySelector("#cross"), dot = svg.querySelector("#crossDot"), hit = svg.querySelector("#hit");
-  let focusIdx = pts.length - 1;
-  const show = (i) => {
-    const p = pts[i]; focusIdx = i;
-    const x = X(p.day), y = Y(p.supply);
-    cross.setAttribute("x1", x); cross.setAttribute("x2", x); cross.setAttribute("visibility", "visible");
-    dot.setAttribute("cx", x); dot.setAttribute("cy", y); dot.setAttribute("visibility", "visible");
-    tip.replaceChildren();
-    const b = document.createElement("b"); b.textContent = short(p.supply);
-    const l = document.createElement("div"); const k = document.createElement("span"); k.className = "key";
-    l.append(k, document.createTextNode(`Supply · day ${p.day}`));
-    tip.append(b, l); tip.hidden = false;
-    tip.style.left = Math.min(W - 60, Math.max(60, x)) + "px"; tip.style.top = y + "px";
-  };
-  const hide = () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); };
-  hit.addEventListener("pointermove", (e) => {
-    const r = svg.getBoundingClientRect(); const mx = ((e.clientX - r.left) / r.width) * W;
-    let best = 0; for (let i = 0; i < pts.length; i++) if (Math.abs(X(pts[i].day) - mx) < Math.abs(X(pts[best].day) - mx)) best = i;
-    show(best);
-  });
-  hit.addEventListener("pointerleave", hide);
-  hit.addEventListener("focus", () => show(focusIdx)); hit.addEventListener("blur", hide);
-  hit.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft") show(Math.max(0, focusIdx - 1));
-    if (e.key === "ArrowRight") show(Math.min(pts.length - 1, focusIdx + 1));
-  });
+  addEventListener("resize", size);
+  if (!REDUCED) addEventListener("pointermove", (e) => { mx = e.clientX; my = e.clientY; if (!raf) raf = requestAnimationFrame(draw); });
+  size();
+})();
+// Spotlight Card: panels light up under the pointer
+document.addEventListener("pointermove", (e) => { const p = e.target.closest?.(".panel"); if (!p) return; const r = p.getBoundingClientRect(); p.style.setProperty("--mx", e.clientX - r.left + "px"); p.style.setProperty("--my", e.clientY - r.top + "px"); });
+// Decrypted Text: characters settle left to right
+function decrypt(el, text) {
+  text = String(text); if (REDUCED || el.dataset.t === text) { el.textContent = text; el.dataset.t = text; return; }
+  el.dataset.t = text; const pool = "0123456789ABCDEF#%$/<>"; let f = 0; const n = 14;
+  const tick = () => { f++; const keep = Math.floor((f / n) * text.length); let out = text.slice(0, keep); for (let i = keep; i < text.length; i++) out += /\s/.test(text[i]) ? text[i] : pool[(Math.random() * pool.length) | 0]; el.textContent = out; if (f < n && el.dataset.t === text) requestAnimationFrame(tick); else if (el.dataset.t === text) el.textContent = text; };
+  tick();
 }
-document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
-  range = b.dataset.range;
-  document.querySelectorAll(".seg button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
-  drawChart();
-}));
+// Count Up
+function countUp(el, to, fmt = (v) => String(Math.round(v))) {
+  const from = Number(el.dataset.v ?? 0); el.dataset.v = to; if (REDUCED || from === to) { el.textContent = fmt(to); return; }
+  const t0 = performance.now(), d = 700; const step = (t) => { const k = Math.min(1, (t - t0) / d), e = 1 - (1 - k) ** 3; el.textContent = fmt(from + (to - from) * e); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step);
+}
+// Click Spark
+document.addEventListener("click", (e) => { if (REDUCED || !e.target.closest?.(".btn")) return; for (let i = 0; i < 8; i++) { const s = document.createElement("i"); s.className = "spark"; s.style.left = e.clientX + "px"; s.style.top = e.clientY + "px"; document.body.append(s); const a = (i / 8) * 6.283, r = 26; s.animate([{ transform: "translate(0,0)", opacity: 1 }, { transform: `translate(${Math.cos(a) * r}px,${Math.sin(a) * r}px)`, opacity: 0 }], { duration: 380, easing: "ease-out" }).onfinish = () => s.remove(); } });
+
+// ============================================================ data
+const D = { heavyAt: 0, ledger: [], holders: [], flags: new Map(), members: new Map() };
+const MISSING = /MethodNotFound|method.*not found|CodeDoesNotExist/i;
+
+async function loadLight() {
+  const [meta, cfg, s, block] = await Promise.all([D.meta ?? view("ft_metadata"), D.cfg ?? view("get_config"), view("get_state"), rpc("block", { finality: "optimistic" })]);
+  Object.assign(D, { meta, cfg, s, block, dayMs: Number(cfg.day_ms) });
+  D.started = s.ritual_started_ms !== null && s.ritual_started_ms !== undefined;
+  D.today = (D.started && (await view("get_day", { day: s.current_day }))) || { unique: 0, checkins: 0, turnout: "0" };
+  const n = await view("get_ledger_len");
+  if (n !== D.ledger.length) { const all = []; for (let i = 0; i < n; i += 200) all.push(...await view("get_ledger", { from_index: i, limit: 200 })); D.ledger = all; D.heavyAt = 0; }
+  const first = Math.max(0, s.current_day - 20);
+  D.dayFirst = first;
+  D.days = D.started ? await Promise.all(Array.from({ length: s.current_day - first + 1 }, (_, i) => view("get_day", { day: first + i }))) : [];
+}
+async function loadHeavy() {
+  if (Date.now() - D.heavyAt < 150000) return;
+  const holders = []; for (let i = 0; ; i += 200) { const page = await view("get_holders", { from_index: i, limit: 200 }); holders.push(...page); if (page.length < 200) break; }
+  const [flags, members, claimable, launch, creator, links, pks, threshold, vests, keys] = await Promise.all([
+    Promise.all(holders.map((h) => view("get_cluster", { account_id: h.account_id }))),
+    Promise.all(holders.map((h) => view("get_member", { account_id: h.account_id }))),
+    Promise.all(holders.map((h) => view("get_claimable", { account_id: h.account_id }))),
+    view("get_launch_receiver"), view("get_creator"), view("get_links"), view("get_oracle_pks"), view("get_oracle_threshold"), view("get_creator_vests"),
+    rpc("query", { request_type: "view_access_key_list", finality: "final", account_id: COIN }).then((r) => r.keys.length).catch(() => null),
+  ]);
+  D.holders = holders.map((h, i) => ({ ...h, flag: flags[i], member: members[i], earned: BigInt(members[i]?.rewards_total ?? 0) + BigInt(claimable[i]) }));
+  Object.assign(D, { launch, creator, links, pks, threshold, vests, keys, heavyAt: Date.now() });
+  D.tap = await view("info", {}, `tap.${creator}`).then((i) => ({ id: `tap.${creator}`, amount: i[1], served: i[2] })).catch(() => null);
+}
+
+// ============================================================ render
+let supplySeries = [], range = "all";
+function drawChart() {
+  const svg = $("chartSvg"), box = $("chart"), W = box.clientWidth, H = box.clientHeight, pL = 54, pR = 10, pT = 12, pB = 24;
+  let pts = range === "all" ? supplySeries : supplySeries.slice(-Number(range));
+  if (pts.length < 2) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" fill="#7f7994" text-anchor="middle" font-size="11" font-family="Martian Mono, monospace">NO HISTORY YET</text>`; return; }
+  const x0 = pts[0].day, x1 = pts[pts.length - 1].day, yMax = Math.max(...pts.map((p) => p.supply)) * 1.08;
+  const X = (d) => pL + ((d - x0) / Math.max(1, x1 - x0)) * (W - pL - pR), Y = (v) => pT + (1 - v / yMax) * (H - pT - pB);
+  let line = `M${X(pts[0].day)},${Y(pts[0].supply)}`; for (let i = 1; i < pts.length; i++) line += ` H${X(pts[i].day)} V${Y(pts[i].supply)}`;
+  const grid = []; for (let t = 0; t <= 4; t++) { const v = (yMax / 4) * t, y = Y(v); grid.push(`<line x1="${pL}" x2="${W - pR}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,0.06)"/><text x="${pL - 8}" y="${y + 4}" fill="#7f7994" font-size="10" text-anchor="end" font-family="Martian Mono, monospace">${short(v)}</text>`); }
+  const xt = [], step = Math.max(1, Math.ceil((x1 - x0) / 6)); for (let d = x0; d <= x1; d += step) xt.push(`<text x="${X(d)}" y="${H - 5}" fill="#7f7994" font-size="10" text-anchor="middle" font-family="Martian Mono, monospace">D${d}</text>`);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = `<defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2ea374" stop-opacity="0.4"/><stop offset="1" stop-color="#2ea374" stop-opacity="0"/></linearGradient></defs>${grid.join("")}${xt.join("")}
+    <path d="${line} V${Y(0)} H${X(pts[0].day)} Z" fill="url(#ga)"/><path d="${line}" fill="none" stroke="#2ea374" stroke-width="2"/>
+    <line id="cross" y1="${pT}" y2="${H - pB}" stroke="rgba(255,255,255,0.4)" stroke-dasharray="3 3" visibility="hidden"/><rect id="dot" width="8" height="8" fill="#2ea374" stroke="#0e0c16" stroke-width="2" visibility="hidden"/>
+    <rect id="hit" x="${pL}" y="0" width="${W - pL - pR}" height="${H}" fill="transparent" tabindex="0"/>`;
+  const tip = $("tip"), cross = svg.querySelector("#cross"), dot = svg.querySelector("#dot"), hit = svg.querySelector("#hit"); let fi = pts.length - 1;
+  const show = (i) => { fi = i; const p = pts[i], x = X(p.day), y = Y(p.supply); cross.setAttribute("x1", x); cross.setAttribute("x2", x); cross.setAttribute("visibility", "visible"); dot.setAttribute("x", x - 4); dot.setAttribute("y", y - 4); dot.setAttribute("visibility", "visible");
+    tip.replaceChildren(); const b = document.createElement("b"); b.textContent = short(p.supply); const l = document.createElement("div"), k = document.createElement("i"); k.style.background = "#2ea374"; l.append(k, document.createTextNode(`supply, day ${p.day}`)); tip.append(b, l); tip.hidden = false; tip.style.left = Math.min(W - 70, Math.max(70, x)) + "px"; tip.style.top = y + "px"; };
+  const hide = () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); };
+  hit.addEventListener("pointermove", (e) => { const r = svg.getBoundingClientRect(), mx = ((e.clientX - r.left) / r.width) * W; let b = 0; for (let i = 0; i < pts.length; i++) if (Math.abs(X(pts[i].day) - mx) < Math.abs(X(pts[b].day) - mx)) b = i; show(b); });
+  hit.addEventListener("pointerleave", hide); hit.addEventListener("focus", () => show(fi)); hit.addEventListener("blur", hide);
+  hit.addEventListener("keydown", (e) => { if (e.key === "ArrowLeft") show(Math.max(0, fi - 1)); if (e.key === "ArrowRight") show(Math.min(pts.length - 1, fi + 1)); });
+}
+document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => { range = b.dataset.range; document.querySelectorAll(".seg button").forEach((o) => o.setAttribute("aria-pressed", String(o === b))); drawChart(); }));
 addEventListener("resize", drawChart);
 
-const KIND = {
-  mint: { cls: "k-mint", icon: "+", sign: "+" },
-  burn: { cls: "k-burn", icon: "−", sign: "−" },
-  cancel: { cls: "k-cancel", icon: "×", sign: "×" },
-  payout: { cls: "k-payout", icon: "↗", sign: "" },
-};
-function title(e) {
+const KIND = { mint: ["MINT", "up", "+"], burn: ["BURN", "down", "−"], cancel: ["CANCEL", "down", "×"], payout: ["PAY", "pay", ""] };
+function entryTitle(e) {
   const m = e.memo;
-  if (e.kind === "mint" && m === "growth tranche") return "Growth tranche minted";
-  if (e.kind === "mint" && m === "season bonus") return "Season bonus minted";
-  if (e.kind === "mint" && m === "launch") return "Launch allocation";
-  if (e.kind === "mint" && m === "pool seed") return "Community pool seeded";
-  if (e.kind === "mint" && m === "creator earn-out") return "Creator earn-out";
-  if (e.kind === "burn" && m === "missed quorum") return "Missed quorum: pool slice burned";
-  if (e.kind === "burn" && m === "bonfire") return "Bonfire offering";
+  if (m === "growth tranche") return "Growth tranche minted to the pool"; if (m === "season bonus") return "Season bonus minted to the pool";
+  if (m === "launch") return "Launch allocation"; if (m === "pool seed") return "Community pool seeded"; if (m === "creator earn-out") return "Creator claimed vested earn-out";
+  if (m === "missed quorum") return "Target missed: pool slice burned"; if (m === "bonfire") return "Bonfire offering";
   if (e.kind === "payout" && m.startsWith("challenge")) return m.replace(/^challenge \d+: /, "Challenge: ");
-  if (e.kind === "payout") return "Daily ritual paid out";
-  if (e.kind === "cancel") return m.split(":")[0].replace(/^./, (c) => c.toUpperCase()) + ": reserve cancelled";
+  if (e.kind === "payout") return "Daily ritual paid to check-ins"; if (m.startsWith("season missed")) return "Season goal missed: bonus cancelled";
+  if (m.includes("unvested creator")) return "Creator's unvested earn-out clawed back"; if (m.startsWith("contraction")) return "Community shrank: reserve cut";
   return m;
 }
 
-async function refresh() {
-  if (!COIN) { $("err").textContent = "Add ?coin=<contract id> to the URL."; return; }
-  document.body.classList.add("loading");
-  $("coinId").textContent = COIN; $("rpcId").textContent = rpc();
-  $("netTag").textContent = COIN.endsWith(".near") ? "mainnet" : "testnet";
-  try {
-    const [meta, cfg, s, links, top] = await Promise.all([view("ft_metadata"), view("get_config"), view("get_state"), view("get_links"), view("get_week_top")]);
-    $("coinName").textContent = meta.name; $("sym").textContent = "$" + meta.symbol;
-    const dayMs = Number(cfg.day_ms);
-    const dayLabel = dayMs >= 86400000 ? "1 day = 24 h" : `1 day = ${dayMs / 60000 >= 1 ? dayMs / 60000 + " min" : dayMs / 1000 + " s"} (demo)`;
-    const started = s.ritual_started_ms !== null;
-    $("streak").innerHTML = `${s.community_streak}<small>${s.community_streak === 1 ? "day" : "days"}</small>`;
-    $("chips").innerHTML = [
-      `🏆 best ${s.best_streak}`, started ? `day ${s.current_day}` : `starts at ${cfg.quorum_min} holders`, dayLabel,
-      `seasons ${s.seasons_won}W · ${s.seasons_lost}L`,
-    ].map((c) => `<span class="pill">${esc(c)}</span>`).join("");
-
-    const today = (started && (await view("get_day", { day: s.current_day }))) || { unique: 0, checkins: 0 };
-    const quorum = Math.max(cfg.quorum_min, Math.floor((s.independent_holders * cfg.quorum_bps) / 10000));
-    const frac = Math.min(1, quorum ? today.unique / quorum : 0);
-    $("ringArc").setAttribute("stroke-dasharray", `${(frac * 314.16).toFixed(1)} 314.16`);
-    $("ringArc").style.visibility = frac > 0 ? "visible" : "hidden";
-    $("todayN").textContent = today.unique; $("todayQ").textContent = `of ${quorum} needed`;
-    $("ringImg").setAttribute("aria-label", `${today.unique} of ${quorum} independent check-ins today`);
-    $("ringCap").textContent = !started ? "The ritual hasn't started yet" : today.unique >= quorum
-      ? `Quorum reached · ${today.checkins} check-ins today` : `${quorum - today.unique} more independent check-ins to keep the streak`;
-
-    const next = cfg.milestones[s.milestone_idx];
-    $("indep").textContent = s.independent_holders;
-    $("msBar").style.width = next ? pct(s.independent_holders, next) + "%" : "100%";
-    $("ms").textContent = next ? `next tranche at ${next} · milestone ${s.milestone_idx + 1}/${cfg.milestones.length}` : "all milestones reached";
-    const max = BigInt(cfg.max_supply);
-    $("supply").textContent = tok(s.total_supply);
-    $("supplyBar").style.width = Number((BigInt(s.total_supply) * 1000n) / max) / 10 + "%";
-    $("supplySub").textContent = `${Number((BigInt(s.total_supply) * 1000n) / max) / 10}% of ${tok(cfg.max_supply)} max · ${tok(s.reserve)} locked`;
-    $("pool").textContent = tok(s.pool_free);
-    $("poolSub").textContent = `${cfg.daily_payout_bps / 100}% paid per hit day · ${tok(s.pool_committed)} pending`;
-    $("burned").textContent = tok(s.burned);
-    $("burnSub").textContent = `${tok(s.cancelled)} cancelled from reserve`;
-    $("seasonPill").textContent = `season ${Math.floor(s.current_day / cfg.season_days) + 1} · ${cfg.season_days}-day`;
-
-    // streak calendar: last 21 days
-    const first = Math.max(0, s.current_day - 20);
-    const dayRows = await Promise.all(Array.from({ length: s.current_day - first + 1 }, (_, i) => view("get_day", { day: first + i })));
-    const waiting = Math.max(0, s.current_day - s.next_settle_day);
-    $("days").innerHTML = started ? dayRows.map((x, i) => {
-      const d = first + i;
-      let cls, sub, label;
-      if (d === s.current_day) { cls = "open"; sub = `${x?.unique ?? 0}/${quorum}`; label = "today, open"; }
-      else if (x?.settled) { cls = x.hit ? "hit" : "miss"; sub = x.hit ? "paid" : "burn"; label = x.hit ? "quorum hit" : "missed"; }
-      else if (x && x.unique >= quorum) { cls = "hit pending"; sub = "hit"; label = "quorum hit, not yet settled"; }
-      else { cls = "miss pending"; sub = x ? `${x.unique}/${quorum}` : "empty"; label = "quorum missed, burns when settled"; }
-      return `<div class="day ${cls}" title="Day ${d}: ${label}" aria-label="Day ${d}: ${label}"><b>${d}</b>${sub}</div>`;
-    }).join("") : `<div class="muted small" style="grid-column:1/-1">Day 0 begins when the oracle reports ${cfg.quorum_min} independent holders.</div>`;
-    $("calNote").textContent = waiting ? `${waiting} past day${waiting === 1 ? "" : "s"} not settled yet. The next check-in (or anyone calling settle) processes them: hit days pay, empty days burn and reset the streak.` : "";
-
-    // ledger
-    const n = await view("get_ledger_len").catch((e) => { if (MISSING_METHOD.test(e.message)) return null; throw e; });
-    if (n === null) { $("ledger").innerHTML = `<div class="muted small">This coin predates the on-chain ledger.</div>`; supplySeries = []; }
-    else {
-      const all = [];
-      for (let i = 0; i < n; i += 200) all.push(...await view("get_ledger", { from_index: i, limit: 200 }));
-      let minted = 0n, burned = 0n;
-      const byDay = new Map();
-      for (const e of all) {
-        if (e.kind === "mint") minted += BigInt(e.amount);
-        if (e.kind === "burn") burned += BigInt(e.amount);
-        byDay.set(e.day, minted - burned);
-      }
-      const ok = minted - burned === BigInt(s.total_supply);
-      $("ledgerN").textContent = n;
-      $("ledgerOk").innerHTML = ok ? `<span class="badge">✓</span>reconciles with total supply` : `<span class="badge bad">!</span>does not match supply`;
-      // supply at the end of every day, carried forward
-      supplySeries = []; let last = 0n;
-      const lastDay = Math.max(s.current_day, ...byDay.keys());
-      for (let d = 0; d <= lastDay; d++) { if (byDay.has(d)) last = byDay.get(d); supplySeries.push({ day: d, supply: tokN(last) }); }
-      $("ledger").innerHTML = all.slice(-80).reverse().map((e) => {
-        const k = KIND[e.kind] || KIND.payout;
-        const who = e.account ? shortAcc(e.account) : e.kind === "payout" ? "split across that day's check-ins" : "reserve";
-        return `<div class="tx ${k.cls}"><span class="ti" aria-hidden="true">${k.icon}</span>
-          <div style="min-width:0"><div class="tt">${esc(title(e))}</div><div class="ts">day ${e.day} · ${esc(who)}</div></div>
-          <div class="ta">${k.sign}${tok(e.amount)}<small>${esc(e.kind)}</small></div></div>`;
-      }).join("");
-    }
-    drawChart();
-
-    // holders
-    const holders = await view("get_holders", { from_index: 0, limit: 200 });
-    holders.sort((a, b) => (BigInt(b[1]) > BigInt(a[1]) ? 1 : -1));
-    const flags = await Promise.all(holders.map(async ([a]) => {
-      const c = clusterCache.get(a);
-      if (c && Date.now() - c.t < 120000) return c.v;
-      const v = await view("get_cluster", { account_id: a }); clusterCache.set(a, { v, t: Date.now() }); return v;
-    }));
-    $("holderN").textContent = holders.length;
-    const indepList = holders.filter((_, i) => !flags[i]);
-    $("avatars").innerHTML = indepList.slice(0, 6).map(([a]) => avatar(a)).join("") +
-      (indepList.length > 6 ? `<span class="av more">+${indepList.length - 6}</span>` : "") +
-      `<span class="muted small" style="margin-left:12px">${indepList.length} independent</span>`;
-    const launchAcc = await view("get_launch_receiver").catch(() => null);
-    let bi = 0n, bf = 0n;
-    holders.forEach(([a, bal], i) => { if (a === launchAcc) return; if (flags[i]) bf += BigInt(bal); else bi += BigInt(bal); });
-    const tot = bi + bf || 1n, pi = Number((bi * 1000n) / tot) / 10, pf = Math.round((100 - pi) * 10) / 10;
-    $("split").innerHTML = `<div class="muted small">Share of circulating holdings <span title="The unsold launch allocation sits in the launch account and is left out">(excl. unsold launch allocation)</span></div>
-      <div class="bar" style="margin-top:8px" role="img" aria-label="Independent ${pi}%, flagged ${pf}%">
-        <i style="width:${pi}%;background:var(--mint)"></i><i style="width:${pf}%;background:var(--orange)"></i></div>
-      <div class="rowlab"><span><i style="background:var(--mint)"></i>Independent <b>${pi}%</b></span><span><i style="background:var(--orange)"></i>Flagged (clusters, creator side) <b>${pf}%</b></span></div>`;
-    $("holders").innerHTML = holders.map(([a, bal, since], i) => {
-      const f = flags[i];
-      const held = Number(since) ? ((Date.now() - Number(since)) / dayMs).toFixed(1) + " d" : "";
-      const tag = f ? `<span class="tag bad">${esc(f.id === "deployer" ? "creator side" : "cluster of " + f.size)}</span>` : `<span class="tag ok">independent</span>`;
-      return `<tr><td class="mono" title="${esc(a)}">${esc(shortAcc(a))}</td><td style="text-align:right">${tok(bal)}</td><td style="text-align:right">${held}</td><td>${tag}</td></tr>`;
-    }).join("");
-
-    $("treasury").innerHTML = [
-      ["Pool, free", tok(s.pool_free)], ["Pool, pending rewards", tok(s.pool_committed)],
-      ["Burned", tok(s.burned)], ["Cancelled forever", tok(s.cancelled)],
-      ["Creator earn-out unlocked", tok(s.creator_unlocked)], ["Creator claimed", tok(s.creator_claimed)],
-    ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
-    $("bonfire").innerHTML = top.length ? top.slice(-4).reverse().map(([w, a, amt]) => `Week ${w}: <b class="mono">${esc(shortAcc(a))}</b> offered ${tok(amt)}`).join("<br>") : "No offerings yet.";
-    $("links").innerHTML = links.map((l) => `<div><span class="muted">${esc(l.label)}</span> · <span class="mono">${esc(l.url)}</span></div>`).join("");
-    $("rules").innerHTML = [
-      `Supply mints only at ${cfg.milestones.join(" / ")} independent holders. No other mint exists.`,
-      `${cfg.tranche_to_pool_bps / 100}% of each tranche goes to the community pool; the creator's cut unlocks only through that growth.`,
-      `Quorum hit: ${cfg.daily_payout_bps / 100}% of the pool is paid to that day's check-ins. Missed: ${cfg.miss_burn_bps / 100}% burns and the streak resets.`,
-      `Reward weight = independence × holding age (full at ${cfg.age_full_days} days) × streak (up to +${cfg.streak_max_bonus_bps / 100}%) × stake (capped). Splitting a stack earns nothing.`,
-      `Creator challenges together pay at most ${cfg.challenge_daily_cap_bps / 100}% of the pool per day.`,
-      `Every ${cfg.season_days} days: grow independent holders ${cfg.season_growth_bps / 100}% or the season bonus is cancelled.`,
-      `Selling is never blocked: no transfer tax, no sell lock.`,
-    ].map((r, i) => `<li><span>${i + 1}</span>${esc(r)}</li>`).join("");
-    $("err").textContent = "";
-    $("updated").textContent = "Updated " + new Date().toLocaleTimeString(); $("rpcId").textContent = rpc();
-  } catch (e) { $("err").textContent = "Could not read the contract: " + e.message; }
-  document.body.classList.remove("loading");
+function renderLight() {
+  const { meta, cfg, s, today, dayMs, started } = D;
+  $("coinId").textContent = acct(COIN); $("coinId").title = COIN; $("rpcId").textContent = rpcUrl().replace("https://", "");
+  $("netTag").textContent = MAINNET ? "MAINNET" : "TESTNET"; $("block").textContent = D.block.header.height.toLocaleString("en-US");
+  decrypt($("coinName"), meta.name.toUpperCase()); $("sym").textContent = "$" + meta.symbol;
+  countUp($("streak"), s.community_streak);
+  $("facts").innerHTML = [`best streak ${s.best_streak}`, started ? `day ${s.current_day}` : `starts at ${cfg.quorum_min} holders`, `1 day = ${dayLen(dayMs)}`, `seasons ${s.seasons_won} won / ${s.seasons_lost} lost`].map((c) => `<span class="tag">${esc(c)}</span>`).join("");
+  // turnout meter
+  const turnout = Number(today.turnout ?? 0), target = Number(s.turnout_target), need = today.unique < cfg.quorum_min;
+  const scale = Math.max(target * 1.6, turnout * 1.15, 1), onTrack = started && turnout >= target && !need;
+  countUp($("turnout"), turnout / 1e6, (v) => v.toFixed(2)); $("turnOf").textContent = `of ${wt(target)} needed`;
+  $("trackFill").style.width = pct(turnout, scale) + "%"; $("trackFill").className = onTrack ? "" : "low"; $("trackMark").style.left = Math.min(96, Math.max(4, pct(target, scale))) + "%"; $("trackMark").hidden = !(target > 0);
+  $("turnTag").textContent = !started ? "not started" : onTrack ? "target met" : need ? `needs ${cfg.quorum_min - today.unique} more people` : "below target";
+  $("turnTag").className = "tag" + (onTrack ? " lime" : "");
+  $("trackImg").setAttribute("aria-label", `Turnout ${wt(turnout)} of ${wt(target)} needed`);
+  $("turnSub").textContent = !started ? `The ritual starts when the oracle reports ${cfg.quorum_min} independent holders.`
+    : `The bar is ${cfg.quorum_bps / 100}% of this community's own ${cfg.quorum_window_days}-day average turnout, and at least ${cfg.quorum_min} independent check-ins. Turnout counts aged stake, so dust wallets add nothing.`;
+  $("ciN").textContent = today.checkins; $("ciU").textContent = today.unique;
+  // stats
+  const next = cfg.milestones[s.milestone_idx], max = BigInt(cfg.max_supply), supPct = Number((BigInt(s.total_supply) * 1000n) / max) / 10;
+  countUp($("indep"), s.independent_holders); $("msBar").style.width = next ? pct(s.independent_holders, next) + "%" : "100%";
+  $("ms").textContent = next ? `next tranche at ${next} · milestone ${s.milestone_idx + 1}/${cfg.milestones.length} · ${s.holder_count} wallets hold it` : "all milestones reached";
+  countUp($("supply"), tokN(s.total_supply), short); $("supplyBar").style.width = supPct + "%"; $("supplySub").textContent = `${supPct}% of ${tok(cfg.max_supply)} max · ${tok(s.reserve)} locked in reserve`;
+  countUp($("pool"), tokN(s.pool_free), short); $("poolBar").style.width = pct(tokN(s.pool_free), tokN(s.total_supply)) + "%"; $("poolSub").textContent = `${cfg.daily_payout_bps / 100}% paid per hit day · ${tok(s.pool_committed)} owed to check-ins`;
+  const gone = BigInt(s.burned) + BigInt(s.cancelled); countUp($("burned"), tokN(gone), short); $("burnBar").style.width = pct(tokN(gone), tokN(cfg.max_supply)) * 4 + "%";
+  $("burnSub").textContent = `${tok(s.burned)} burned · ${tok(s.cancelled)} cancelled from reserve`;
+  $("seasonTag").textContent = `season ${Math.floor(s.current_day / cfg.season_days) + 1} · ${cfg.season_days} days`;
+  // calendar
+  const waiting = Math.max(0, s.current_day - s.next_settle_day);
+  $("days").innerHTML = started ? D.days.map((x, i) => { const d = D.dayFirst + i; let c, sub, l;
+    if (d === s.current_day) { c = "open"; sub = "open"; l = "today, open"; }
+    else if (x?.settled) { c = x.hit ? "hit" : "miss"; sub = x.hit ? "paid" : "burn"; l = x.hit ? "target hit" : "target missed"; }
+    else { const ok = x && Number(x.turnout) >= target && x.unique >= cfg.quorum_min; c = (ok ? "hit" : "miss") + " pending"; sub = x ? "wait" : "empty"; l = "not settled yet"; }
+    return `<div class="day ${c}" title="Day ${d}: ${l}" aria-label="Day ${d}: ${l}"><b>${d}</b>${sub}</div>`; }).join("")
+    : `<p class="note" style="grid-column:1/-1;margin:0">Day 0 begins when the oracle reports ${cfg.quorum_min} independent holders.</p>`;
+  $("calNote").textContent = waiting > 1 ? `${waiting} past days are not settled yet. The next check-in, or anyone calling settle, processes them: empty days burn and reset the streak.` : "";
+  // ledger, ticker, chart
+  let minted = 0n, burned = 0n; const byDay = new Map();
+  for (const e of D.ledger) { if (e.kind === "mint") minted += BigInt(e.amount); if (e.kind === "burn") burned += BigInt(e.amount); byDay.set(e.day, minted - burned); }
+  D.reconciles = minted - burned === BigInt(s.total_supply);
+  $("ledgerN").textContent = `${D.ledger.length} entries`; $("ledgerOk").textContent = D.reconciles ? "reconciles with supply" : "does not reconcile"; $("ledgerOk").className = "tag " + (D.reconciles ? "lime" : "orange");
+  supplySeries = []; let last = 0n; const lastDay = Math.max(s.current_day, ...byDay.keys(), 0);
+  for (let d = 0; d <= lastDay; d++) { if (byDay.has(d)) last = byDay.get(d); supplySeries.push({ day: d, supply: tokN(last) }); }
+  const recent = D.ledger.slice(-80).reverse();
+  $("ledger").innerHTML = recent.map((e) => { const [lab, , sign] = KIND[e.kind] ?? KIND.payout; const who = e.account ? acct(e.account) : e.kind === "payout" ? "split by weight" : "reserve";
+    return `<div class="tx"><span class="k ${esc(e.kind)}">${lab}</span><div style="min-width:0"><div class="tt">${esc(entryTitle(e))}</div><div class="ts">DAY ${e.day} · ${esc(who)}</div></div><div class="ta">${sign}${tok(e.amount)}</div></div>`; }).join("");
+  const tick = recent.slice(0, 16).map((e) => { const [lab, cls, sign] = KIND[e.kind] ?? KIND.payout; return `<span><b class="${cls}">${lab} ${sign}${tok(e.amount)}</b> ${esc(entryTitle(e)).toUpperCase()} · D${e.day}</span>`; }).join("");
+  if ($("ticker").dataset.n !== String(D.ledger.length)) { $("ticker").innerHTML = tick + tick; $("ticker").dataset.n = D.ledger.length; }
+  drawChart();
+  // rules
+  $("rules").innerHTML = [
+    `Supply mints only when independent holders pass ${cfg.milestones.join(" / ")}. At most one tranche every ${cfg.tranche_cooldown_days} day(s). There is no other mint.`,
+    `${cfg.tranche_to_pool_bps / 100}% of each tranche goes to the community pool. The creator's ${100 - cfg.tranche_to_pool_bps / 100}% vests over ${cfg.creator_vest_days} days and the unvested part is cancelled if the community shrinks.`,
+    `Daily target: ${cfg.quorum_bps / 100}% of the trailing ${cfg.quorum_window_days}-day turnout. Hit pays ${cfg.daily_payout_bps / 100}% of the pool to that day's check-ins. Miss burns ${cfg.miss_burn_bps / 100}% and resets the streak.`,
+    `Weight = independence x coin-age (full at ${cfg.age_full_days} days) x stake (linear, capped at ${tok(BigInt(cfg.max_supply) * BigInt(cfg.balance_cap_bps) / 10000n)}) x streak (up to +${cfg.streak_max_bonus_bps / 100}%). Splitting a stack earns nothing.`,
+    `A holder counts only with ${tok(cfg.holder_min_balance)} coins aged ${cfg.holder_min_days} days. Coin-age follows the coins, so a pre-aged dust wallet gains nothing when loaded.`,
+    `Creator challenges together pay at most ${cfg.challenge_daily_cap_bps / 100}% of the pool per day, and one account at most ${cfg.challenge_account_cap_bps / 100}% of that.`,
+    `Selling is never blocked. No transfer tax, no sell lock, flagged or not.`,
+  ].map((r, i) => `<li><span>${String(i + 1).padStart(2, "0")}</span>${esc(r)}</li>`).join("");
+  $("updated").textContent = "updated " + new Date().toLocaleTimeString();
 }
 
-$("lookup").addEventListener("change", async (e) => {
-  const id = e.target.value.trim(); const box = $("member");
-  if (!id) { box.hidden = true; return; }
-  box.hidden = false; box.textContent = "Looking up…";
-  try {
-    const [m, bal, w, c] = await Promise.all([view("get_member", { account_id: id }), view("ft_balance_of", { account_id: id }), view("preview_weight", { account_id: id }), view("get_cluster", { account_id: id })]);
-    box.innerHTML = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">${avatar(id, "margin:0")}
-      <div style="flex:1;min-width:0"><div class="mono">${esc(id)}</div>
-      <div class="muted small">${c ? `<span class="tag bad">${esc(c.id)} · size ${c.size}</span>` : `<span class="tag ok">independent</span>`}</div></div>
-      <span class="pill">balance ${tok(bal)}</span><span class="pill">weight now ${(Number(w) / 1e6).toFixed(4)}</span>
-      ${m ? `<span class="pill">streak ${m.streak}</span><span class="pill lime">earned ${tok(m.rewards_total)}</span>` : `<span class="pill">never checked in</span>`}</div>`;
-  } catch (err) { box.textContent = err.message; }
-});
-$("reload").addEventListener("click", refresh);
+function groupOf(h) { return !h.flag ? "indep" : h.flag.id === "deployer" ? "creator" : "cluster"; }
+function renderHeavy() {
+  const { holders, s, cfg } = D; if (!holders.length) return;
+  const sorted = [...holders].sort((a, b) => (BigInt(b.balance) > BigInt(a.balance) ? 1 : -1));
+  $("holderN").textContent = `${holders.length} wallets`;
+  const G = { indep: { n: 0, held: 0n, earned: 0n }, cluster: { n: 0, held: 0n, earned: 0n }, creator: { n: 0, held: 0n, earned: 0n } };
+  for (const h of holders) { if (h.account_id === D.launch || h.account_id === D.tap?.id) continue; const g = G[groupOf(h)]; g.n++; g.earned += h.earned; const base = BigInt(h.balance) - BigInt(h.member?.rewards_total ?? 0); g.held += base > 0n ? base : 0n; }
+  const rate = (g) => g.held > 0n ? Number((g.earned * 1000000n) / g.held) / 1000 : 0;
+  const rows = [["indep", "Independent holders", "#2ea374"], ["cluster", "Wallets flagged as one farm", "#e5602c"], ["creator", "Creator-side wallets", "#9085e9"]];
+  const top = Math.max(...rows.map(([k]) => rate(G[k])), 0.001);
+  $("payBars").innerHTML = rows.map(([k, label, color]) => { const g = G[k], r = rate(g);
+    return `<div class="barrow" title="${esc(label)}: ${r.toFixed(1)} per 1,000 coins"><div class="top"><span>${esc(label)}</span><b>${r.toFixed(1)}</b></div><div class="rail"><i style="width:${pct(r, top)}%;background:${color}"></i></div><div class="meta">${g.n} wallets · hold ${tok(g.held)} · earned ${tok(g.earned)}</div></div>`; }).join("");
+  const ri = rate(G.indep); $("payNote").textContent = ri > 0 ? `Same contract, same days. A flagged farm wallet earns ${(rate(G.cluster) / ri * 100).toFixed(1)}% and a creator-side wallet ${(rate(G.creator) / ri * 100).toFixed(2)}% of what an independent holder earns per coin.` : "No rewards paid yet.";
+  $("holders").innerHTML = sorted.map((h) => { const g = groupOf(h), age = Number(h.since_ms) ? ((Date.now() - Number(h.since_ms)) / D.dayMs).toFixed(1) + " d" : "";
+    const tag = h.account_id === D.launch ? `<span class="tag iris">launch account</span>` : h.account_id === D.tap?.id ? `<span class="tag iris">demo tap</span>` : g === "indep" ? `<span class="tag mint">independent</span>` : g === "creator" ? `<span class="tag iris">creator side</span>` : `<span class="tag orange">farm of ${h.flag.size}</span>`;
+    const parent = h.account_id.split(".").length > 2 ? h.account_id.slice(h.account_id.indexOf(".") + 1) : null;
+    const ev = h.source && h.source !== D.launch && h.source !== D.tap?.id ? `coins from ${acct(h.source)}` : parent ? `sub-account of ${acct(parent)}` : h.source === D.tap?.id ? "coins from the demo tap" : h.source ? "bought from launch" : "";
+    return `<tr><td><div class="who" title="${esc(h.account_id)}">${ident(h.account_id)}${esc(acct(h.account_id))}</div></td><td class="r">${tok(h.balance)}</td><td class="r">${age}</td><td class="r">${tok(h.earned)}</td><td>${tag}</td><td style="color:var(--muted)">${esc(ev)}</td></tr>`; }).join("");
+  const vestEnd = D.vests.length ? Math.max(...D.vests.map((v) => Number(v.end_ms))) : 0;
+  $("treasury").innerHTML = [
+    ["Pool, free", tok(s.pool_free)], ["Pool, owed to check-ins", tok(s.pool_committed)], ["Burned", tok(s.burned)], ["Cancelled forever", tok(s.cancelled)],
+    ["Creator earn-out granted", tok(s.creator_unlocked)], ["Creator earn-out vested", tok(s.creator_vested) + (vestEnd > Date.now() ? ` (fully in ${dur(vestEnd - Date.now())})` : "")], ["Creator earn-out claimed", tok(s.creator_claimed)],
+    ["Oracle", `${D.threshold} of ${D.pks.length} signatures`], ["Access keys on the contract", D.keys === null ? "unknown" : D.keys === 0 ? "0 (locked forever)" : `${D.keys} (not locked yet)`],
+  ].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+  $("lockTag").textContent = D.keys === 0 ? "locked: 0 keys" : D.keys === null ? "…" : "not locked yet"; $("lockTag").className = "tag" + (D.keys === 0 ? " lime" : "");
+  $("rulesTag").textContent = D.keys === 0 ? "no setters, no keys" : "no setters";
+  $("links").innerHTML = D.links.map((l) => `${esc(l.label)}: <span class="mono" style="color:var(--ink-2)">${esc(l.url)}</span>`).join("<br>");
+}
 
-refresh();
-setInterval(refresh, 45000);
+let busy = false;
+async function refresh(force) {
+  if (!COIN) { $("err").textContent = "Add ?coin=<contract id> to the URL."; return; }
+  if (busy) return; busy = true;
+  try {
+    await loadLight(); renderLight(); $("err").textContent = "";
+    if (force) D.heavyAt = 0;
+    await loadHeavy(); renderHeavy();
+  } catch (e) {
+    $("err").textContent = MISSING.test(e.message) ? "This contract is not an INSYDR v2 coin (a view method is missing)." : "Could not read the contract: " + e.message;
+  }
+  busy = false;
+}
+setInterval(() => { if (!D.s || !D.started) return; const end = Number(D.s.ritual_started_ms) + (D.s.current_day + 1) * D.dayMs; const left = end - Date.now(); $("eta").textContent = left > 0 ? dur(left) : "settling"; if (left < -3000) refresh(); }, 1000);
+$("reload").addEventListener("click", () => refresh(true));
+
+// ============================================================ terminal
+const screen = $("screen"), cli = $("cli"), hist = []; let hi = 0;
+function out(text = "", cls = "") { const d = document.createElement("div"); if (cls) d.className = cls; d.textContent = text; screen.append(d); screen.scrollTop = screen.scrollHeight; return d; }
+const pad = (s, n) => String(s).padEnd(n);
+const panic = (e) => { const m = String(e?.message || e); return m.match(/Smart contract panicked: ([^"\\]+)/)?.[1] ?? (/MethodNotFound|method.*not found/i.test(m) ? "MethodNotFound: the contract has no such method" : m.slice(0, 200)); };
+
+// --- guest account (burner testnet key, kept in this browser only)
+const GKEY = "insydr.guest." + (MAINNET ? "mainnet" : "testnet");
+let api, guest = JSON.parse(localStorage.getItem(GKEY) || "null");
+async function nearApiLib() {
+  if (window.nearApi) return window.nearApi;
+  out("loading the signing library (near-api-js)…", "dim");
+  await new Promise((ok, bad) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/near-api-js@4.0.4/dist/near-api-js.min.js"; s.onload = ok; s.onerror = () => bad(new Error("could not load near-api-js")); document.head.append(s); });
+  return window.nearApi;
+}
+async function guestAccount() {
+  if (!guest) throw new Error("no guest account yet: run `join` first");
+  const lib = await nearApiLib();
+  if (!api) { const ks = new lib.keyStores.InMemoryKeyStore(); await ks.setKey("testnet", guest.id, lib.KeyPair.fromString(guest.key)); api = await lib.connect({ networkId: "testnet", nodeUrl: rpcUrl(), keyStore: ks }); }
+  return api.account(guest.id);
+}
+async function send(contractId, methodName, args = {}, gasT = 100, deposit = "0") {
+  const a = await guestAccount();
+  const r = await a.functionCall({ contractId, methodName, args, gas: BigInt(gasT) * 10n ** 12n, attachedDeposit: BigInt(deposit) });
+  const v = r.status?.SuccessValue; return v ? JSON.parse(atob(v) || "null") : null;
+}
+const need = () => { if (MAINNET) throw new Error("guest mode is testnet only"); };
+
+const CMDS = {
+  help: ["this list", async () => {
+    out("READ (no account needed)", "hi");
+    for (const k of ["status", "verify", "farms", "split", "whois", "ledger", "day", "oracle", "rules"]) out(`  ${pad(k + (USAGE[k] ? " " + USAGE[k] : ""), 26)} ${CMDS[k][0]}`);
+    out("ACT (creates a throwaway testnet account in this browser)", "hi");
+    for (const k of ["join", "checkin", "claim", "me", "attack", "leave"]) out(`  ${pad(k + (USAGE[k] ? " " + USAGE[k] : ""), 26)} ${CMDS[k][0]}`);
+    out("  clear                      wipe the screen");
+  }],
+  status: ["the coin right now", async () => { await loadLight(); renderLight(); const { s, cfg, today } = D;
+    out(`${D.meta.name} ($${D.meta.symbol})  ${COIN}`, "hi");
+    out(`streak ${s.community_streak} (best ${s.best_streak})   day ${s.current_day}   1 day = ${dayLen(D.dayMs)}`);
+    out(`today: turnout ${wt(today.turnout ?? 0)} of ${wt(s.turnout_target)} needed, ${today.checkins} check-ins, ${today.unique} independent`);
+    out(`supply ${tok(s.total_supply)} of ${tok(cfg.max_supply)}   reserve ${tok(s.reserve)}   pool ${tok(s.pool_free)}   burned ${tok(s.burned)}   cancelled ${tok(s.cancelled)}`);
+    out(`independent holders ${s.independent_holders} of ${s.holder_count} wallets   milestone ${s.milestone_idx}/${cfg.milestones.length}`); }],
+  verify: ["check the claims this page makes against the chain", async () => {
+    const line = (ok, text) => out(`${ok ? "PASS" : "FAIL"}  ${text}`, ok ? "ok" : "bad");
+    await loadLight(); D.heavyAt = 0; await loadHeavy(); renderLight(); renderHeavy(); const { s, cfg } = D;
+    line(D.keys === 0, D.keys === 0 ? "the contract account has 0 access keys: nobody can change or redeploy it" : `the contract account still has ${D.keys} access key(s): not locked`);
+    const acc = await rpc("query", { request_type: "view_account", finality: "final", account_id: COIN });
+    out(`      code hash ${acc.code_hash}`, "dim");
+    let mint = 0n, burn = 0n, cancel = 0n; for (const e of D.ledger) { if (e.kind === "mint") mint += BigInt(e.amount); if (e.kind === "burn") burn += BigInt(e.amount); if (e.kind === "cancel") cancel += BigInt(e.amount); }
+    line(mint - burn === BigInt(s.total_supply), `ledger: ${D.ledger.length} entries, minted ${tok(mint)} - burned ${tok(burn)} = total supply ${tok(s.total_supply)}`);
+    line(burn === BigInt(s.burned) && cancel === BigInt(s.cancelled), `ledger burns and cancellations match the contract's counters`);
+    const sum = BigInt(s.total_supply) + BigInt(s.burned) + BigInt(s.reserve) + BigInt(s.cancelled) + BigInt(s.creator_unlocked) - BigInt(s.creator_claimed);
+    line(sum === BigInt(cfg.max_supply), `every coin is accounted for: supply + burned + reserve + cancelled + creator's unclaimed = ${tok(cfg.max_supply)}`);
+    line(D.threshold >= 2 && D.pks.length > D.threshold - 1, `oracle needs ${D.threshold} of ${D.pks.length} signatures`);
+    line(s.independent_holders <= s.holder_count, `independent holders (${s.independent_holders}) do not exceed on-chain holders (${s.holder_count})`);
+    line(BigInt(s.creator_claimed) <= BigInt(s.creator_vested) && BigInt(s.creator_vested) <= BigInt(s.creator_unlocked), `creator earn-out: claimed ${tok(s.creator_claimed)} <= vested ${tok(s.creator_vested)} <= granted ${tok(s.creator_unlocked)}`);
+    out("reading the contract's own code to list what it can do…", "dim");
+    const code = await rpc("query", { request_type: "view_code", finality: "final", account_id: COIN });
+    const names = wasmExports(Uint8Array.from(atob(code.code_base64), (c) => c.charCodeAt(0)));
+    const bad = names.filter((n) => /^(mint|burn_from|set_|update_|upgrade|migrate|pause|unpause|blacklist|freeze|withdraw_all|change_|transfer_ownership|owner_)/.test(n));
+    line(bad.length === 0, `${names.length} public methods, none of them an admin mint, setter, pause, blacklist or upgrade${bad.length ? ": " + bad.join(", ") : ""}`);
+    out(`      ${names.filter((n) => !n.startsWith("ft_") && !n.startsWith("storage_") && !n.startsWith("get_")).join(" ")}`, "dim");
+  }],
+  farms: ["wallet clusters and the on-chain evidence for each", async () => { await loadHeavy(); const by = new Map();
+    for (const h of D.holders) if (h.flag) { if (!by.has(h.flag.id)) by.set(h.flag.id, []); by.get(h.flag.id).push(h); }
+    if (!by.size) return out("no clusters flagged");
+    for (const [id, ms] of by) { const held = ms.reduce((t, h) => t + BigInt(h.balance), 0n), earned = ms.reduce((t, h) => t + h.earned, 0n);
+      out(`${id === "deployer" ? "CREATOR SIDE" : "FARM " + acct(id.slice(2))}  ${ms.length} wallets, hold ${tok(held)}, earned ${tok(earned)}`, "hi");
+      for (const h of ms.slice(0, 8)) { const parent = h.account_id.split(".").length > 2 ? h.account_id.slice(h.account_id.indexOf(".") + 1) : null;
+        out(`  ${pad(acct(h.account_id), 26)} ${pad(tok(h.balance), 9)} ${h.source && h.source !== D.launch ? "coins from " + acct(h.source) : parent ? "sub-account of " + acct(parent) : "named creator account"}`); }
+      if (ms.length > 8) out(`  … and ${ms.length - 8} more`, "dim"); } }],
+  split: ["does splitting a stack across wallets earn more?", async (coins = "3000000", n = "30") => { const c = Number(coins), k = Math.max(1, Number(n)), cap = tokN(BigInt(D.cfg.max_supply) * BigInt(D.cfg.balance_cap_bps) / 10000n);
+    const one = Math.min(c, cap) / cap, many = k * Math.min(c / k, cap) / cap;
+    out(`whale cap ${short(cap)} coins per wallet. Stack ${short(c)}, split across ${k} wallets.`);
+    out(`  1 wallet      weight ${one.toFixed(4)}`); out(`  ${pad(k + " wallets", 13)} weight ${many.toFixed(4)}  (${short(c / k)} each)`);
+    if (Math.abs(one - many) < 1e-9) out("same weight: splitting earns nothing.", "ok");
+    else { out(`splitting gets around the whale cap (${(many / one).toFixed(1)}x). That is the only thing it buys.`, "bad"); out(`if the wallets are fed from one stack, the contract records it and the oracle clusters them: weight ${(many / k).toFixed(4)} in total.`); } }],
+  whois: ["everything the contract knows about an account", async (id) => { if (!id) throw new Error("usage: whois <account>");
+    const [bal, m, cl, src, w, claim] = await Promise.all([view("ft_balance_of", { account_id: id }), view("get_member", { account_id: id }), view("get_cluster", { account_id: id }), view("get_source", { account_id: id }), view("preview_weight", { account_id: id }).catch(() => "0"), view("get_claimable", { account_id: id })]);
+    out(id, "hi"); out(`  balance ${tok(bal)}   weight if checking in now ${(Number(w) / 1e6).toFixed(4)}   claimable ${tok(claim)}`);
+    out(`  most of its coins came from: ${src ?? "nobody in particular"}`); out(`  flag: ${cl ? (cl.id === "deployer" ? "creator side" : "farm of " + cl.size) : "independent"}`, cl ? "bad" : "ok");
+    out(m ? `  streak ${m.streak}   last check-in day ${m.last_day ?? "-"}   earned ${tok(m.rewards_total)}` : "  never checked in"); }],
+  ledger: ["the last n entries of the on-chain ledger", async (n = "12") => { await loadLight(); for (const e of D.ledger.slice(-Number(n))) out(`  D${pad(e.day, 4)} ${pad(e.kind, 7)} ${pad(tok(e.amount), 10)} ${e.memo}`); }],
+  day: ["one day in detail", async (n) => { const d = n === undefined ? D.s.current_day : Number(n), x = await view("get_day", { day: d }); if (!x) return out(`day ${d}: nobody checked in`);
+    out(`day ${d}: ${x.settled ? (x.hit ? "HIT" : "MISS") : "open"}`, x.settled ? (x.hit ? "ok" : "bad") : "hi"); out(`  check-ins ${x.checkins}, independent ${x.unique}, turnout ${wt(x.turnout)}${x.settled ? ` vs target ${wt(x.target)}` : ""}`); if (x.settled) out(`  paid ${tok(x.payout)}   burned ${tok(x.burned)}`); }],
+  oracle: ["who can attest, and what an attestation can and cannot do", async () => { await loadHeavy();
+    out(`${D.threshold} of ${D.pks.length} keys must sign every attestation:`, "hi"); D.pks.forEach((k, i) => out(`  [${i}] ${k}`));
+    out("an attestation can: set flags, report the independent-holder count."); out(`it cannot: mint more than one tranche per ${D.cfg.tranche_cooldown_days} day(s), report more holders than exist on-chain,`); out("            move a balance, change a rule, or stop the daily ritual (which uses no oracle number)."); }],
+  rules: ["the parameters, as stored in the contract", async () => { for (const [k, v] of Object.entries(D.cfg)) out(`  ${pad(k, 28)} ${Array.isArray(v) ? v.join(", ") : v}`); }],
+  join: ["create a guest account and get demo coins from the tap", async () => { need();
+    if (!D.tap) { await loadHeavy(); if (!D.tap) throw new Error("this coin has no demo tap"); }
+    const lib = await nearApiLib();
+    if (!guest) { const kp = lib.KeyPair.fromRandom("ed25519"), id = `insydr-guest-${Math.random().toString(36).slice(2, 8)}.testnet`;
+      out(`creating ${id} through the public testnet faucet…`, "dim");
+      const r = await fetch("https://helper.nearprotocol.com/account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ newAccountId: id, newAccountPublicKey: kp.getPublicKey().toString() }) });
+      if (!r.ok) throw new Error("the testnet faucet refused: " + (await r.text()).slice(0, 120));
+      guest = { id, key: kp.toString() }; localStorage.setItem(GKEY, JSON.stringify(guest)); api = null; await sleep(2500); }
+    out(`you are ${guest.id}`, "hi");
+    if (await view("served", { account_id: guest.id }, D.tap.id)) out("the tap already served this account");
+    else { out("asking the tap for coins…", "dim"); await send(D.tap.id, "drip", {}, 100); }
+    const bal = await view("ft_balance_of", { account_id: guest.id }); out(`balance ${tok(bal)} $${D.meta.symbol}`, "ok");
+    out(`fresh coins weigh nothing: your weight ramps to full over ${D.cfg.age_full_days} day(s) of ${dayLen(D.dayMs)}. Tap accounts hold less than ${tok(D.cfg.holder_min_balance)}, so they never count toward supply.`, "dim");
+    out("now try: checkin"); }],
+  checkin: ["check in for today as your guest account", async () => { need(); const before = await view("preview_weight", { account_id: (guest ?? {}).id ?? "x" }).catch(() => "0");
+    out("signing check_in…", "dim"); const paid = await send(COIN, "check_in", {}, 80);
+    out(`checked in. weight ${(Number(before) / 1e6).toFixed(4)}, paid ${tok(paid ?? "0")} from earlier days`, "ok"); await refresh(); }],
+  claim: ["claim settled rewards", async () => { need(); out("signing claim…", "dim"); const paid = await send(COIN, "claim", {}, 80); out(`claimed ${tok(paid ?? "0")}`, "ok"); }],
+  me: ["your guest account", async () => { if (!guest) throw new Error("no guest account yet: run `join` first"); await CMDS.whois[1](guest.id); }],
+  leave: ["forget the guest account in this browser", async () => { localStorage.removeItem(GKEY); guest = null; api = null; out("guest account forgotten"); }],
+  attack: ["try to break it as your guest account", async (what = "all") => { need(); await guestAccount();
+    const tries = {
+      mint: ["call an admin mint", () => send(COIN, "mint", { account_id: guest.id, amount: "1000000000000000000000000000" })],
+      config: ["change the rules", () => send(COIN, "set_config", { daily_payout_bps: 10000 })],
+      upgrade: ["replace the code", () => send(COIN, "upgrade", {})],
+      oracle: ["forge an oracle attestation claiming 1,000,000 holders", async () => { const lib = await nearApiLib(), kp = lib.KeyPair.fromRandom("ed25519");
+        const payload = JSON.stringify({ ts: String(Date.now() + 9e9), independent_holders: 1000000, clusters: [] }); const sig = btoa(String.fromCharCode(...kp.sign(new TextEncoder().encode(payload)).signature));
+        return send(COIN, "attest", { payload, signatures: [{ index: 0, signature: sig }, { index: 1, signature: sig }] }, 200); }],
+      challenge: ["register a challenge that pays me", () => send(COIN, "add_challenge", { name: "free money", proof: { Contract: { verifier_id: guest.id } }, reward: "1", cooldown_days: 0, daily_budget: "1" })],
+      creator: ["claim the creator's earn-out", () => send(COIN, "claim_creator", {})],
+      twice: ["check in twice in one day", async () => { await send(COIN, "check_in", {}, 80).catch(() => {}); return send(COIN, "check_in", {}, 80); }],
+    };
+    const list = what === "all" ? Object.keys(tries) : [what]; let held = 0;
+    for (const k of list) { if (!tries[k]) throw new Error(`unknown attack. Try: ${Object.keys(tries).join(", ")}, all`);
+      out(`> ${tries[k][0]}`, "hi"); try { const r = await tries[k][1](); out(`  it went through: ${JSON.stringify(r)}`, "bad"); } catch (e) { held++; out(`  refused by the contract: ${panic(e)}`, "ok"); } }
+    out(`${held}/${list.length} attacks refused on-chain. Every refusal above is a real failed transaction from ${guest.id}.`, held === list.length ? "ok" : "bad"); }],
+  clear: ["", async () => { screen.replaceChildren(); }],
+};
+const USAGE = { split: "<coins> <wallets>", whois: "<account>", ledger: "[n]", day: "[n]", attack: "[mint|oracle|twice|all…]" };
+
+// minimal WebAssembly export-section reader: the contract's public method names
+function wasmExports(b) {
+  let p = 8; const u = () => { let r = 0, s = 0, x; do { x = b[p++]; r |= (x & 127) << s; s += 7; } while (x & 128); return r >>> 0; };
+  while (p < b.length) { const id = b[p++], len = u(), end = p + len;
+    if (id === 7) { const n = u(), names = []; for (let i = 0; i < n; i++) { const l = u(), name = new TextDecoder().decode(b.subarray(p, p + l)); p += l; const kind = b[p++]; u(); if (kind === 0) names.push(name); } return names.sort(); }
+    p = end; }
+  return [];
+}
+
+let running = false;
+async function run(lineText) {
+  const text = lineText.trim(); if (!text || running) return; running = true; hist.push(text); hi = hist.length; out(text, "cmd");
+  const [name, ...args] = text.split(/\s+/); const cmd = CMDS[name.toLowerCase()];
+  try { if (!cmd) throw new Error(`unknown command "${name}". Type help.`); if (!D.s) await refresh(); await cmd[1](...args); }
+  catch (e) { out(panic(e), "bad"); }
+  running = false;
+}
+cli.addEventListener("keydown", (e) => { if (e.key === "Enter") { const v = cli.value; cli.value = ""; run(v); } else if (e.key === "ArrowUp") { if (hi > 0) cli.value = hist[--hi]; e.preventDefault(); } else if (e.key === "ArrowDown") { cli.value = hi < hist.length - 1 ? hist[++hi] : ((hi = hist.length), ""); } });
+$("quick").addEventListener("click", (e) => { const b = e.target.closest("[data-cmd]"); if (b) run(b.dataset.cmd); });
+screen.addEventListener("click", () => { if (!getSelection().toString()) cli.focus({ preventScroll: true }); });
+
+out("INSYDR test terminal. Everything here is a live call to the contract.", "hi");
+out("`verify` checks this page's claims on-chain. `join` gives you a throwaway account to check in with. `attack all` lets you try to break it.", "dim");
+if (guest) out(`welcome back, ${guest.id}`, "dim");
+
+refresh().then(() => { if (D.s) run("status"); });
+setInterval(refresh, 30000);
 </script>
 </body>
 </html>
