@@ -10,6 +10,17 @@ export const NETWORK = process.env.NEAR_NETWORK || "testnet";
 export const RPC = process.env.NEAR_RPC || "https://test.rpc.fastnear.com";
 export const TGAS = 10n ** 12n;
 
+// Public RPCs rate-limit bursts with HTTP 429. A 429 means the request was rejected unprocessed,
+// so retrying it (including transaction submits) can never double-execute anything.
+const rawFetch = globalThis.fetch;
+globalThis.fetch = async (input, init) => {
+  for (let i = 0; ; i++) {
+    const res = await rawFetch(input, init);
+    if (res.status !== 429 || i >= 8) return res;
+    await new Promise((r) => setTimeout(r, Math.min(30_000, 2_000 * 2 ** i)));
+  }
+};
+
 export const keyStore = new keyStores.UnencryptedFileSystemKeyStore(KEY_DIR);
 
 let _near;
