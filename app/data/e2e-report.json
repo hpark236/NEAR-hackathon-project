@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-10T22:08:02.226Z",
+  "at": "2026-11-10T22:16:19.561Z",
   "checks": [
     {
       "ok": true,
@@ -20,6 +20,22 @@
     {
       "ok": true,
       "name": "the oracle cannot report more holders than exist on-chain"
+    },
+    {
+      "ok": true,
+      "name": "a visitor with no coins gets 50,000 from the demo tap, once"
+    },
+    {
+      "ok": true,
+      "name": "the visitor can check in at once, but fresh coins weigh nothing yet"
+    },
+    {
+      "ok": true,
+      "name": "a day later the visitor's weight has ramped up, and they are not flagged"
+    },
+    {
+      "ok": true,
+      "name": "tap accounts never count as independent holders, so they cannot unlock supply"
     },
     {
       "ok": true,
@@ -85,9 +101,9 @@
       "wallets": 8,
       "flagged": 0,
       "held": "4080000000000000000000000",
-      "rewards": "2429877258238720183324130",
-      "share_pct": 73.692,
-      "per_1000_tokens": 595.558
+      "rewards": "2741834809436844287418116",
+      "share_pct": 73.683,
+      "per_1000_tokens": 672.018
     },
     {
       "group": "lazy",
@@ -95,9 +111,9 @@
       "wallets": 6,
       "flagged": 6,
       "held": "1800000000000000000000000",
-      "rewards": "103652183720663237833867",
-      "share_pct": 3.143,
-      "per_1000_tokens": 57.584
+      "rewards": "114458747511525138015595",
+      "share_pct": 3.075,
+      "per_1000_tokens": 63.588
     },
     {
       "group": "hidden",
@@ -105,9 +121,9 @@
       "wallets": 4,
       "flagged": 4,
       "held": "1200000000000000000000000",
-      "rewards": "69196908846464554217959",
-      "share_pct": 2.098,
-      "per_1000_tokens": 57.664
+      "rewards": "76401773764536623473509",
+      "share_pct": 2.053,
+      "per_1000_tokens": 63.668
     },
     {
       "group": "patient",
@@ -115,9 +131,9 @@
       "wallets": 3,
       "flagged": 0,
       "held": "900000000000000000000000",
-      "rewards": "689599721826506286967999",
-      "share_pct": 20.913,
-      "per_1000_tokens": 766.221
+      "rewards": "782899945367607526957053",
+      "share_pct": 21.039,
+      "per_1000_tokens": 869.888
     },
     {
       "group": "insiders",
@@ -125,9 +141,9 @@
       "wallets": 2,
       "flagged": 2,
       "held": "4000000000000000000000000",
-      "rewards": "2497994301339843669138",
-      "share_pct": 0.075,
-      "per_1000_tokens": 0.624
+      "rewards": "2749509585752541359512",
+      "share_pct": 0.073,
+      "per_1000_tokens": 0.687
     },
     {
       "group": "stealth",
@@ -135,39 +151,39 @@
       "wallets": 2,
       "flagged": 2,
       "held": "4000000000000000000000000",
-      "rewards": "2497994301339843669138",
-      "share_pct": 0.075,
-      "per_1000_tokens": 0.624
+      "rewards": "2749509585752541359512",
+      "share_pct": 0.073,
+      "per_1000_tokens": 0.687
     }
   ],
   "state": {
-    "total_supply": "494560182898058878700000000",
+    "total_supply": "490377121613033517202109604",
     "reserve": "460000000000000000000000000",
-    "pool_free": "141262860836823844750317666",
-    "pool_committed": "531929184381296173255083",
-    "burned": "1439817101941121300000000",
+    "pool_free": "136656010969288011718176318",
+    "pool_committed": "480926737738251845601973",
+    "burned": "5622878386966482797890396",
     "cancelled": "20000000000000000000000000",
     "creator_unlocked": "24000000000000000000000000",
-    "creator_vested": "6765251111111111111111111",
+    "creator_vested": "9994621111111111111111110",
     "creator_claimed": "0",
     "milestone_idx": 2,
     "independent_holders": 12,
-    "holder_count": 28,
-    "community_streak": 3,
+    "holder_count": 30,
+    "community_streak": 0,
     "best_streak": 5,
-    "turnout_avg": "1072552",
-    "turnout_target": "804414",
-    "current_day": 9,
-    "next_settle_day": 9,
+    "turnout_avg": "582784",
+    "turnout_target": "437088",
+    "current_day": 13,
+    "next_settle_day": 13,
     "season_start_holders": 12,
     "seasons_won": 0,
     "seasons_lost": 1,
-    "ritual_started_ms": "1794348553871"
+    "ritual_started_ms": "1794349042022"
   },
   "ledger": {
-    "entries": 20,
+    "entries": 24,
     "minted": "496000000000000000000000000",
-    "burned": "1439817101941121300000000",
+    "burned": "5622878386966482797890396",
     "cancelled": "20000000000000000000000000",
     "reconciles": true
   },
@@ -175,7 +191,7 @@
     {
       "group": "organic",
       "label": "Real holders",
-      "account": "9b5ce0a43fcc9bc869095aea56c4d2b094ba8757654dd2230d3516ef93d96412",
+      "account": "d3980f5711405c1e2a11c6c6666e3cfb33c4f9e32b2fa7f9348ff75603d23b4c",
       "paid": "3417850000000000000000",
       "note": ""
     },
@@ -189,14 +205,14 @@
     {
       "group": "hidden",
       "label": "Farm, random-looking wallets fed from one stack",
-      "account": "87c5ba9fb8c076b5ccd1068b588062cd76974577443adfe7c4ca9bf0e10ccbc2",
+      "account": "07a3663342126311bc4f562537036d5f33ba4400f7e9aff2bfdab346c2583e77",
       "paid": "276150000000000000000",
       "note": ""
     },
     {
       "group": "patient",
       "label": "Farm, each wallet bought on its own",
-      "account": "e591c69381ce64b7260707c05b5ca2fe04699938cea27b34aa40428917419d65",
+      "account": "fad1a6878b1ae705f53f2732b9802cc4f3f4178fd943e08f69d3f4f3d6e491c3",
       "paid": "3417850000000000000000",
       "note": ""
     },
@@ -210,7 +226,7 @@
     {
       "group": "stealth",
       "label": "Creator's unnamed wallets",
-      "account": "b4c690870ac3dc0fea85b0bcc3789aa44a220dd0f749abf9fda47e8051e07dc7",
+      "account": "01fbbefb8e2a44a4a4669753c42f20b98a60b5ad3d2f5c52a7d623b47f2d74cb",
       "paid": "20000000000000000000",
       "note": ""
     }
@@ -304,6 +320,16 @@
       "turnout": "1143489",
       "target": "791113",
       "payout": "425063773831967436560634",
+      "burned": "0"
+    },
+    {
+      "day": 9,
+      "hit": true,
+      "checkins": 25,
+      "unique": 13,
+      "turnout": "1401054",
+      "target": "804414",
+      "payout": "423788582510471534250952",
       "burned": "0"
     }
   ]

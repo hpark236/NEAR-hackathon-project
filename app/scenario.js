@@ -20,7 +20,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // a fresh local build if there is one, otherwise the committed, CI-tested binary
 const BUILT = path.join(here, "..", "contracts", "insydr", "target", "near", "insydr.wasm");
 export const WASM = fs.existsSync(BUILT) ? BUILT : path.join(here, "..", "contracts", "insydr", "res", "insydr.wasm");
+const TAP_BUILT = path.join(here, "..", "contracts", "tap", "target", "near", "insydr_tap.wasm");
+export const TAP_WASM = fs.existsSync(TAP_BUILT) ? TAP_BUILT : path.join(here, "..", "contracts", "tap", "res", "insydr_tap.wasm");
 const ISSUER_ID = "issuer.local";
+export const TAP_AMOUNT = 50_000; // below holder_min_balance: tap accounts never count as holders
 
 /** Demo-scale parameters: small milestones and short days, so a coin's whole life fits in minutes. */
 export const demoConfig = (dayMs) => ({
@@ -168,6 +171,22 @@ export class Scenario {
       log(`actors: ${GROUPS.map(([g]) => `${st[g].length} ${g}`).join(", ")}`);
     });
     await this.step("distribute", () => this.distribute());
+    await this.step("tap", () => this.deployTap());
+  }
+
+  /** Demo-only faucet so a visitor can try the coin without a wallet (see contracts/tap). */
+  async deployTap() {
+    const { st } = this;
+    st.tap = await createSubAccount(st.main, "tap", "4");
+    await retry(async () => (await account(st.tap)).deployContract(fs.readFileSync(TAP_WASM)));
+    await retry(() => call(st.tap, st.tap, "new", { token: st.coin, amount: tokens(TAP_AMOUNT).toString() }));
+    const deposit = (await view(st.coin, "storage_balance_bounds")).min;
+    await retry(() => call(st.launch, st.coin, "storage_deposit", { account_id: st.tap, registration_only: true }, { deposit }));
+    await retry(async () => {
+      if (BigInt(await view(st.coin, "ft_balance_of", { account_id: st.tap })) > 0n) return;
+      await call(st.launch, st.coin, "ft_transfer", { receiver_id: st.tap, amount: tokens(20_000_000).toString() }, { deposit: "1" });
+    });
+    this.log(`demo tap ${st.tap}: ${TAP_AMOUNT.toLocaleString()} IDOG per visitor, once`);
   }
 
   /** Idempotent: tops each account up to its target, so an interrupted run can resume. */
@@ -212,8 +231,8 @@ export class Scenario {
   }
 
   async oracle(opts) {
-    const r = await submit(this.st.coin, this.st.exchange, opts);
-    return r;
+    // the tap sells to everyone, like a market: being supplied by it links nobody
+    return submit(this.st.coin, this.st.exchange, { market: this.st.tap ? [this.st.tap] : [], ...opts });
   }
 
   /** Wait until coins have enough coin-age to count, then attest until the ritual starts. */

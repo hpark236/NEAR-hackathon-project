@@ -5,7 +5,7 @@
 //   cd app && npm install && npm run e2e
 //
 // It deploys a coin, runs a small community next to three kinds of wallet farm and the creator's
-// insiders for nine days, then asserts every claim the README makes. Exit code 0 = all passed.
+// insiders for ten days, then asserts every claim the README makes. Exit code 0 = all passed.
 import os from "node:os";
 import fs from "node:fs";
 import path from "node:path";
@@ -121,6 +121,32 @@ try {
     if (days.length === 3) await sc.challenge();
   }
 
+  console.log("\n== a visitor tries it ==");
+  let guest;
+  await check("a visitor with no coins gets 50,000 from the demo tap, once", async () => {
+    guest = await net.createTopLevel("guest", "5");
+    await call(guest, st.tap, "drip", {}, { gasTgas: 100 });
+    assert.equal(await view(coin, "ft_balance_of", { account_id: guest }), near.tokens(50_000).toString());
+    await rejects(() => call(guest, st.tap, "drip", {}, { gasTgas: 100 }), /already used the tap/);
+  });
+  await check("the visitor can check in at once, but fresh coins weigh nothing yet", async () => {
+    await call(guest, coin, "check_in", {}, { gasTgas: 60 });
+    // full weight for 50,000 coins against a 5,000,000 cap is 10,000 (scale 1e6); seconds-old coins are near zero
+    const w = Number((await view(coin, "get_member", { account_id: guest })).pending[0][1]);
+    assert.ok(w < 500, `weight ${w}`);
+  });
+  await check("a day later the visitor's weight has ramped up, and they are not flagged", async () => {
+    days.push(await sc.day({ attendance: 0.9 }));
+    assert.ok(Number(await view(coin, "preview_weight", { account_id: guest })) > 2_000);
+    assert.equal(await view(coin, "get_cluster", { account_id: guest }), null);
+  });
+  await check("tap accounts never count as independent holders, so they cannot unlock supply", async () => {
+    await sc.net.passTime(3 * 60_000);
+    const r = await sc.oracle();
+    assert.equal(r.independent_holders, 12);
+    assert.equal(r.clusters[st.tap]?.cluster_id, "deployer", "the tap itself is creator side");
+  });
+
   console.log("\n== results ==");
   const rep = await sc.report();
   sc.print(rep);
@@ -160,7 +186,7 @@ try {
     assert.ok(days[4].hit && days[4].state.community_streak >= 4, "the week before was a streak");
   });
   await check("the target came back down and the streak restarted", async () => {
-    assert.ok(days[8].hit && days[8].state.community_streak >= 1);
+    assert.ok(days[8].hit && days[8].state.community_streak >= 3);
   });
   await check("the challenge paid by stake and independence, not per wallet", async () => {
     const paid = Object.fromEntries(rep.challenge.map((c) => [c.group, BigInt(c.paid)]));
