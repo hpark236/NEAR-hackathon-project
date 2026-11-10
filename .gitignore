@@ -6,3 +6,5 @@ target/
 node_modules/
 .keys/
 .env
+app/data/run.log
+app/data/score-*.sandbox.json

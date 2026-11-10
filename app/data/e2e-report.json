@@ -1,0 +1,310 @@
+{
+  "at": "2026-11-10T22:08:02.226Z",
+  "checks": [
+    {
+      "ok": true,
+      "name": "nobody can check in before the community exists"
+    },
+    {
+      "ok": true,
+      "name": "the contract records where each wallet's coins came from"
+    },
+    {
+      "ok": true,
+      "name": "a forged oracle attestation is rejected"
+    },
+    {
+      "ok": true,
+      "name": "one oracle key alone cannot attest (2 of 3 required)"
+    },
+    {
+      "ok": true,
+      "name": "the oracle cannot report more holders than exist on-chain"
+    },
+    {
+      "ok": true,
+      "name": "supply grew only through milestones, one tranche per day"
+    },
+    {
+      "ok": true,
+      "name": "the sub-account farm and the split-stack farm are flagged; real holders are not"
+    },
+    {
+      "ok": true,
+      "name": "both kinds of creator wallet are flagged as creator side"
+    },
+    {
+      "ok": true,
+      "name": "flagged farm wallets earn under 10% of what real holders earn per coin"
+    },
+    {
+      "ok": true,
+      "name": "creator-side wallets earn under 1% of what real holders earn per coin"
+    },
+    {
+      "ok": true,
+      "name": "the undetected farm earns no more than its coins and attendance explain (under 1.6x a real holder)"
+    },
+    {
+      "ok": true,
+      "name": "the day most real holders stayed away was a miss: pool burned, streak reset"
+    },
+    {
+      "ok": true,
+      "name": "the target came back down and the streak restarted"
+    },
+    {
+      "ok": true,
+      "name": "the challenge paid by stake and independence, not per wallet"
+    },
+    {
+      "ok": true,
+      "name": "the creator's cut is vesting, not paid out"
+    },
+    {
+      "ok": true,
+      "name": "the on-chain ledger reconciles with total supply"
+    },
+    {
+      "ok": true,
+      "name": "every token is accounted for: supply + burned + reserve + cancelled + creator's unclaimed = max"
+    },
+    {
+      "ok": true,
+      "name": "a flagged insider can still sell everything (never a honeypot)"
+    },
+    {
+      "ok": true,
+      "name": "after the keys are deleted nobody can redeploy or reconfigure the coin"
+    }
+  ],
+  "groups": [
+    {
+      "group": "organic",
+      "label": "Real holders",
+      "wallets": 8,
+      "flagged": 0,
+      "held": "4080000000000000000000000",
+      "rewards": "2429877258238720183324130",
+      "share_pct": 73.692,
+      "per_1000_tokens": 595.558
+    },
+    {
+      "group": "lazy",
+      "label": "Farm, sub-accounts",
+      "wallets": 6,
+      "flagged": 6,
+      "held": "1800000000000000000000000",
+      "rewards": "103652183720663237833867",
+      "share_pct": 3.143,
+      "per_1000_tokens": 57.584
+    },
+    {
+      "group": "hidden",
+      "label": "Farm, random-looking wallets fed from one stack",
+      "wallets": 4,
+      "flagged": 4,
+      "held": "1200000000000000000000000",
+      "rewards": "69196908846464554217959",
+      "share_pct": 2.098,
+      "per_1000_tokens": 57.664
+    },
+    {
+      "group": "patient",
+      "label": "Farm, each wallet bought on its own",
+      "wallets": 3,
+      "flagged": 0,
+      "held": "900000000000000000000000",
+      "rewards": "689599721826506286967999",
+      "share_pct": 20.913,
+      "per_1000_tokens": 766.221
+    },
+    {
+      "group": "insiders",
+      "label": "Creator's named wallets",
+      "wallets": 2,
+      "flagged": 2,
+      "held": "4000000000000000000000000",
+      "rewards": "2497994301339843669138",
+      "share_pct": 0.075,
+      "per_1000_tokens": 0.624
+    },
+    {
+      "group": "stealth",
+      "label": "Creator's unnamed wallets",
+      "wallets": 2,
+      "flagged": 2,
+      "held": "4000000000000000000000000",
+      "rewards": "2497994301339843669138",
+      "share_pct": 0.075,
+      "per_1000_tokens": 0.624
+    }
+  ],
+  "state": {
+    "total_supply": "494560182898058878700000000",
+    "reserve": "460000000000000000000000000",
+    "pool_free": "141262860836823844750317666",
+    "pool_committed": "531929184381296173255083",
+    "burned": "1439817101941121300000000",
+    "cancelled": "20000000000000000000000000",
+    "creator_unlocked": "24000000000000000000000000",
+    "creator_vested": "6765251111111111111111111",
+    "creator_claimed": "0",
+    "milestone_idx": 2,
+    "independent_holders": 12,
+    "holder_count": 28,
+    "community_streak": 3,
+    "best_streak": 5,
+    "turnout_avg": "1072552",
+    "turnout_target": "804414",
+    "current_day": 9,
+    "next_settle_day": 9,
+    "season_start_holders": 12,
+    "seasons_won": 0,
+    "seasons_lost": 1,
+    "ritual_started_ms": "1794348553871"
+  },
+  "ledger": {
+    "entries": 20,
+    "minted": "496000000000000000000000000",
+    "burned": "1439817101941121300000000",
+    "cancelled": "20000000000000000000000000",
+    "reconciles": true
+  },
+  "challenge": [
+    {
+      "group": "organic",
+      "label": "Real holders",
+      "account": "9b5ce0a43fcc9bc869095aea56c4d2b094ba8757654dd2230d3516ef93d96412",
+      "paid": "3417850000000000000000",
+      "note": ""
+    },
+    {
+      "group": "lazy",
+      "label": "Farm, sub-accounts",
+      "account": "f1.farmer.sandbox",
+      "paid": "276150000000000000000",
+      "note": ""
+    },
+    {
+      "group": "hidden",
+      "label": "Farm, random-looking wallets fed from one stack",
+      "account": "87c5ba9fb8c076b5ccd1068b588062cd76974577443adfe7c4ca9bf0e10ccbc2",
+      "paid": "276150000000000000000",
+      "note": ""
+    },
+    {
+      "group": "patient",
+      "label": "Farm, each wallet bought on its own",
+      "account": "e591c69381ce64b7260707c05b5ca2fe04699938cea27b34aa40428917419d65",
+      "paid": "3417850000000000000000",
+      "note": ""
+    },
+    {
+      "group": "insiders",
+      "label": "Creator's named wallets",
+      "account": "insider1.creator.sandbox",
+      "paid": "20000000000000000000",
+      "note": ""
+    },
+    {
+      "group": "stealth",
+      "label": "Creator's unnamed wallets",
+      "account": "b4c690870ac3dc0fea85b0bcc3789aa44a220dd0f749abf9fda47e8051e07dc7",
+      "paid": "20000000000000000000",
+      "note": ""
+    }
+  ],
+  "days": [
+    {
+      "day": 0,
+      "hit": true,
+      "checkins": 24,
+      "unique": 12,
+      "turnout": "968140",
+      "target": "0",
+      "payout": "270000000000000000000000",
+      "burned": "0"
+    },
+    {
+      "day": 1,
+      "hit": true,
+      "checkins": 25,
+      "unique": 13,
+      "turnout": "1052140",
+      "target": "726105",
+      "payout": "437190000000000000000000",
+      "burned": "0"
+    },
+    {
+      "day": 2,
+      "hit": true,
+      "checkins": 24,
+      "unique": 12,
+      "turnout": "1001928",
+      "target": "738705",
+      "payout": "435878430000000000000000",
+      "burned": "0"
+    },
+    {
+      "day": 3,
+      "hit": true,
+      "checkins": 23,
+      "unique": 11,
+      "turnout": "941732",
+      "target": "741252",
+      "payout": "434548510710000000000000",
+      "burned": "0"
+    },
+    {
+      "day": 4,
+      "hit": true,
+      "checkins": 25,
+      "unique": 13,
+      "turnout": "1251406",
+      "target": "734262",
+      "payout": "433244865177870000000000",
+      "burned": "0"
+    },
+    {
+      "day": 5,
+      "hit": false,
+      "checkins": 19,
+      "unique": 7,
+      "turnout": "668304",
+      "target": "775120",
+      "payout": "0",
+      "burned": "1439817101941121300000000"
+    },
+    {
+      "day": 6,
+      "hit": true,
+      "checkins": 23,
+      "unique": 11,
+      "turnout": "1106953",
+      "target": "720342",
+      "payout": "427625679276513026100000",
+      "burned": "0"
+    },
+    {
+      "day": 7,
+      "hit": true,
+      "checkins": 24,
+      "unique": 12,
+      "turnout": "1315070",
+      "target": "742316",
+      "payout": "426342802238683487021700",
+      "burned": "0"
+    },
+    {
+      "day": 8,
+      "hit": true,
+      "checkins": 22,
+      "unique": 10,
+      "turnout": "1143489",
+      "target": "791113",
+      "payout": "425063773831967436560634",
+      "burned": "0"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 // Example creator challenge server: the plug-in model in ~60 lines.
 //
 // A creator runs any game or activity. When a player completes it, this server signs
-//   grassroots-challenge:{coin}:{challenge_id}:{account}:{nonce}
+//   insydr-challenge:{coin}:{challenge_id}:{account}:{nonce}
 // and the player submits that signature to the coin's `claim_signed`. The coin contract checks
 // the signature against the issuer key registered with the challenge, then applies the same
 // anti-farm weighting and budget caps as every other payout.
@@ -28,7 +28,7 @@ async function issuer() {
 
 export async function signCompletion(coin, challengeId, accountId) {
   const nonce = crypto.randomUUID();
-  const msg = `grassroots-challenge:${coin}:${challengeId}:${accountId}:${nonce}`;
+  const msg = `insydr-challenge:${coin}:${challengeId}:${accountId}:${nonce}`;
   const { signature } = (await issuer()).sign(Buffer.from(msg));
   return { nonce, signature: Buffer.from(signature).toString("base64") };
 }

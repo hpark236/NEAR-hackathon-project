@@ -204,7 +204,10 @@ fn ritual_hit_pays_checkins_next_day() {
     t.check_in("alice.near");
     t.check_in("bob.near");
     t.advance_days(1.0);
-    let paid_a = t.check_in("alice.near"); // settles yesterday and pays it
+    t.c.settle();
+    let claimable = t.c.get_claimable(acc("alice.near")).0;
+    let paid_a = t.check_in("alice.near"); // pays yesterday
+    assert_eq!(claimable, paid_a, "the view matches what a claim pays");
     let paid_b = t.claim("bob.near");
     let day = t.c.get_day(15).unwrap();
     assert!(day.hit);

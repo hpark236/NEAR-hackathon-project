@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-export const KEY_DIR = process.env.GRASSROOTS_KEY_DIR || path.join(here, "..", ".keys");
+export const KEY_DIR = process.env.INSYDR_KEY_DIR || path.join(here, "..", ".keys");
 export const NETWORK = process.env.NEAR_NETWORK || "testnet";
 export const RPC = process.env.NEAR_RPC || "https://test.rpc.fastnear.com";
 export const TGAS = 10n ** 12n;
@@ -45,6 +45,22 @@ export async function retry(fn, tries = 8) {
       await new Promise((r) => setTimeout(r, Math.min(20_000, 1500 * 2 ** i)));
     }
   }
+}
+
+/** Raw JSON-RPC call (used for block time and the sandbox's fast-forward). */
+export async function rpc(method, params) {
+  return retry(async () => {
+    const res = await fetch(RPC, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: "g", method, params }) });
+    const j = await res.json();
+    if (j.error) throw new Error(JSON.stringify(j.error));
+    return j.result;
+  });
+}
+
+/** The chain's own clock (ms). The contract measures days and coin-age with it, so the oracle does too. */
+export async function chainNowMs() {
+  const b = await rpc("block", { finality: "optimistic" });
+  return Number(BigInt(b.header.timestamp_nanosec) / 1000000n);
 }
 
 export async function view(contractId, methodName, args = {}) {

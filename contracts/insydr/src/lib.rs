@@ -757,6 +757,23 @@ impl Contract {
         self.members.get(&account_id).cloned()
     }
 
+    /// Rewards `account_id` could claim right now (settled days only).
+    pub fn get_claimable(&self, account_id: AccountId) -> U128 {
+        let Some(m) = self.members.get(&account_id) else { return U128(0) };
+        let mut total = 0u128;
+        for (d, w) in m.pending.iter() {
+            if *d >= self.next_settle_day {
+                continue;
+            }
+            if let Some(day) = self.days.get(d) {
+                if day.hit && day.total_weight.0 > 0 {
+                    total += day.payout.0 * w.0 / day.total_weight.0;
+                }
+            }
+        }
+        U128(total.min(self.pool_committed))
+    }
+
     pub fn get_day(&self, day: u32) -> Option<Day> {
         self.days.get(&day).cloned()
     }

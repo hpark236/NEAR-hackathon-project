@@ -1,74 +1,110 @@
-// Organic Score oracle (v1).
+// Organic Score oracle (v2).
 //
-// Reads every holder of a INSYDR coin straight from the contract (public RPC, no indexer),
-// groups wallets that look like one actor, counts independent holders who have held long enough,
-// writes the evidence to app/data/score-<coin>.json, then signs and submits an attestation.
+// Reads every holder of an INSYDR coin straight from the contract (public RPC, no indexer),
+// groups wallets that look like one actor, counts independent holders, writes the evidence to
+// app/data/score-<coin>.json, then signs and submits an attestation.
 //
-// Heuristics in v1 (stated plainly; see README "Limits"):
+// The scoring is a pure function of on-chain state (`scoreHolders`), so every oracle signer that
+// reads the same block computes the same payload, and anyone can re-run it to check a flag.
+//
+// Clustering rules (stated plainly; see docs/STRENGTH-TEST.md for what they miss):
 //   1. Shared parent: sub-accounts of the same parent (f1.farm.testnet, f2.farm.testnet, ...) and
 //      the parent itself are one actor.
-//   2. Deployer side: the creator, the launch receiver and anything under them are one cluster
-//      ("deployer") and never count as independent.
-// Not caught in v1: unrelated-looking top-level accounts funded through exchanges or bridges.
+//   2. Majority token source: the contract records, for every holder, the account that supplied
+//      most of its coins. Wallets whose coins mostly came from the same non-market account are
+//      one actor (one stack, split). Chains are followed to their root.
+//   3. Creator side: the creator, the launch receiver, their sub-accounts and anything whose coins
+//      mostly came from the creator are one cluster ("deployer") and never count as independent.
+// An account counts as an independent holder only if it holds `holder_min_balance` with a
+// coin-age of `holder_min_days` (both fixed in the coin's config).
 //
 // usage: node oracle.js <coin-contract> <relayer-account> [--dry]
-import { view, call, retry, getKey, KEY_DIR, readJson, writeJson } from "./lib/near.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const ORACLE_ID = "oracle.local";
-const TOP_LEVEL = new Set(["testnet", "near"]);
+export const ORACLE_IDS = ["oracle0.local", "oracle1.local", "oracle2.local"];
+const TOP_LEVEL = new Set(["testnet", "near", "sandbox"]);
 
-const parentOf = (id) => {
+export const parentOf = (id) => {
   const i = id.indexOf(".");
   if (i < 0) return null; // implicit account
   const p = id.slice(i + 1);
   return TOP_LEVEL.has(p) ? null : p;
 };
 
-export async function allHolders(coin) {
-  const out = [];
-  for (let from = 0; ; from += 200) {
-    const page = await view(coin, "get_holders", { from_index: from, limit: 200 });
-    out.push(...page.map(([account_id, balance, since]) => ({ account_id, balance: BigInt(balance), since: Number(since) })));
-    if (page.length < 200) return out;
-  }
-}
-
-export async function score(coin) {
-  const [cfg, holders, creator, launchReceiver] = await Promise.all([
-    view(coin, "get_config"),
-    allHolders(coin),
-    view(coin, "get_creator"),
-    view(coin, "get_launch_receiver"),
-  ]);
-  const prevState = readJson(path.join(here, "data", `score-${coin}.json`), { clusters: {} });
-  const deployerRoots = new Set([creator, launchReceiver]);
-
-  // union-find over holder ids
-  const parent = new Map(holders.map((h) => [h.account_id, h.account_id]));
-  const find = (x) => (parent.get(x) === x ? x : (parent.set(x, find(parent.get(x))), parent.get(x)));
-  const union = (a, b) => parent.set(find(a), find(b));
+/**
+ * Pure scoring. `holders`: [{account_id, balance: bigint, since_ms: number, source: string|null}].
+ * `market`: accounts that sell to everyone (launch receiver, DEX pools); being supplied by one of
+ * them links nobody.
+ */
+export function scoreHolders({ cfg, holders, creator, launchReceiver, market = [], now, previouslyFlagged = [] }) {
+  const marketSet = new Set([launchReceiver, ...market]);
+  const byId = new Map(holders.map((h) => [h.account_id, h]));
   const reasons = new Map();
-  const byParent = new Map();
+  const note = (id, why) => { if (!reasons.has(id)) reasons.set(id, why); };
+
+  // union-find over account ids (holders, plus sources that no longer hold anything)
+  const parent = new Map();
+  const add = (x) => { if (!parent.has(x)) parent.set(x, x); };
+  const find = (x) => { add(x); let r = x; while (parent.get(r) !== r) r = parent.get(r); parent.set(x, r); return r; };
+  const union = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
+  holders.forEach((h) => add(h.account_id));
+
+  // 1. shared parent
+  const kidsOf = new Map();
   for (const h of holders) {
     const p = parentOf(h.account_id);
-    if (p) {
-      if (!byParent.has(p)) byParent.set(p, []);
-      byParent.get(p).push(h.account_id);
-    }
+    if (!p) continue;
+    if (!kidsOf.has(p)) kidsOf.set(p, []);
+    kidsOf.get(p).push(h.account_id);
   }
-  for (const [p, kids] of byParent) {
-    const members = parent.has(p) ? [p, ...kids] : kids;
+  for (const [p, kids] of kidsOf) {
+    const members = byId.has(p) ? [p, ...kids] : kids;
     if (members.length < 2) continue;
     for (const k of members.slice(1)) union(members[0], k);
-    for (const k of members) reasons.set(k, `shares parent account ${p} with ${members.length - 1} other holder(s)`);
+    for (const k of members) note(k, `shares parent account ${p} with ${members.length - 1} other holder(s)`);
   }
-  const isDeployer = (id) => [...deployerRoots].some((r) => id === r || id.endsWith("." + r));
-  const deployerIds = holders.map((h) => h.account_id).filter(isDeployer);
-  for (const k of deployerIds.slice(1)) union(deployerIds[0], k);
-  for (const k of deployerIds) reasons.set(k, "creator / launch side");
+
+  // 2. majority token source, followed to its root
+  const rootSource = (id) => {
+    const seen = new Set([id]);
+    let cur = byId.get(id)?.source ?? null;
+    let root = null;
+    while (cur && !marketSet.has(cur) && !seen.has(cur)) {
+      root = cur;
+      seen.add(cur);
+      cur = byId.get(cur)?.source ?? null;
+    }
+    return root;
+  };
+  const bySource = new Map();
+  for (const h of holders) {
+    if (marketSet.has(h.account_id)) continue;
+    const r = rootSource(h.account_id);
+    if (!r || r === h.account_id) continue;
+    if (!bySource.has(r)) bySource.set(r, []);
+    bySource.get(r).push(h.account_id);
+  }
+  for (const [src, kids] of bySource) {
+    // one wallet fed by a friend is not a farm: link only when the source is itself a holder,
+    // or feeds two or more wallets
+    if (kids.length < 2 && !byId.has(src)) continue;
+    for (const k of kids) {
+      union(src, k);
+      note(k, `most of its coins came from ${src}` + (kids.length > 1 ? `, like ${kids.length - 1} other holder(s)` : ""));
+    }
+    if (byId.has(src)) note(src, `supplied most of the coins of ${kids.length} other holder(s)`);
+  }
+
+  // 3. creator side
+  const deployerRoots = [creator, launchReceiver];
+  const underDeployer = (id) => deployerRoots.some((r) => id === r || id.endsWith("." + r));
+  const deployerGroups = new Set();
+  for (const id of parent.keys()) if (underDeployer(id)) deployerGroups.add(find(id));
+  // a wallet whose coins mostly came from the creator is creator side too
+  for (const h of holders) if (rootSource(h.account_id) === creator) deployerGroups.add(find(h.account_id));
+  const isDeployerGroup = (root) => deployerGroups.has(root);
 
   const groups = new Map();
   for (const h of holders) {
@@ -77,61 +113,109 @@ export async function score(coin) {
     groups.get(r).push(h);
   }
 
-  const now = Date.now();
-  const holdMs = (cfg.age_full_days ?? 14) * Number(cfg.day_ms);
+  const minBal = BigInt(cfg.holder_min_balance ?? "0");
+  const holdMs = Number(cfg.holder_min_days ?? cfg.age_full_days ?? 14) * Number(cfg.day_ms);
   let independent = 0;
   const clusters = [];
   let clusteredBalance = 0n;
-  const total = holders.reduce((s, h) => s + h.balance, 0n);
+  let total = 0n;
+  // normalise deployer groups first so several of them merge into one "deployer" cluster
   for (const [root, members] of groups) {
-    const deployer = members.some((m) => isDeployer(m.account_id));
-    const id = deployer ? "deployer" : `c:${root}`;
-    const heldLongEnough = members.some((m) => m.since > 0 && now - m.since >= holdMs);
-    if (!deployer && heldLongEnough) independent += 1;
+    const deployer = isDeployerGroup(root) || members.some((m) => underDeployer(m.account_id));
+    const bal = members.reduce((s, m) => s + m.balance, 0n);
+    if (!members.every((m) => marketSet.has(m.account_id))) total += bal;
+    const counts = members.some((m) => m.balance >= minBal && m.since_ms > 0 && now - m.since_ms >= holdMs);
+    if (!deployer && counts) independent += 1;
     if (members.length > 1 || deployer) {
-      clusteredBalance += members.reduce((s, m) => s + m.balance, 0n);
-      // a deployer cluster always shares one weight, even if it is a single account
-      const size = Math.max(members.length, deployer ? 1000 : 1);
+      if (!members.every((m) => marketSet.has(m.account_id))) clusteredBalance += bal;
+      // the creator side always shares one tiny weight, even as a single account
+      const size = deployer ? 1000 : members.length;
+      const id = deployer ? "deployer" : `c:${root}`;
       for (const m of members) {
-        clusters.push({ account_id: m.account_id, cluster_id: id, size, reason: reasons.get(m.account_id) });
+        clusters.push({
+          account_id: m.account_id,
+          cluster_id: id,
+          size,
+          reason: reasons.get(m.account_id) ?? (deployer ? "creator / launch side" : "linked to a cluster"),
+        });
       }
     }
   }
+  clusters.sort((a, b) => (a.account_id < b.account_id ? -1 : 1));
   // clear flags for accounts that are no longer clustered
-  const now_ids = new Set(clusters.map((c) => c.account_id));
-  for (const id of Object.keys(prevState.clusters)) {
-    if (!now_ids.has(id)) clusters.push({ account_id: id, cluster_id: "none", size: 1, reason: "no longer clustered" });
-  }
+  const flaggedNow = new Set(clusters.map((c) => c.account_id));
+  const cleared = [...previouslyFlagged].filter((id) => !flaggedNow.has(id)).sort()
+    .map((id) => ({ account_id: id, cluster_id: "none", size: 1, reason: "no longer clustered" }));
 
+  const multi = [...groups.entries()].filter(([r, g]) => g.length > 1 && !isDeployerGroup(r));
   const report = {
-    coin,
     ts: now,
     holders: holders.length,
     independent_holders: independent,
+    holder_min_balance: minBal.toString(),
     hold_requirement_ms: holdMs,
     clustered_supply_share: total ? Number((clusteredBalance * 10000n) / total) / 100 : 0,
-    largest_cluster: Math.max(0, ...[...groups.values()].filter((g) => g.length > 1).map((g) => g.length)),
-    clusters: Object.fromEntries(clusters.filter((c) => c.size > 1).map((c) => [c.account_id, c])),
-    heuristics: ["shared parent account", "creator / launch side"],
+    farms: multi.length,
+    largest_cluster: Math.max(0, ...multi.map(([, g]) => g.length)),
+    clusters: Object.fromEntries(clusters.map((c) => [c.account_id, c])),
+    rules: ["shared parent account", "majority token source", "creator / launch side"],
   };
-  return { report, clusters };
+  return { report, clusters: [...clusters, ...cleared] };
 }
 
-export async function submit(coin, relayer, { dry = false } = {}) {
-  const { report, clusters } = await score(coin);
-  writeJson(path.join(here, "data", `score-${coin}.json`), report);
-  const payload = JSON.stringify({
-    ts: String(report.ts),
-    independent_holders: report.independent_holders,
-    clusters: clusters.map(({ account_id, cluster_id, size }) => ({ account_id, cluster_id, size })),
-  });
-  const kp = await getKey(ORACLE_ID);
-  if (!kp) throw new Error(`no oracle key in ${KEY_DIR}; run setup first`);
-  const { signature } = kp.sign(Buffer.from(payload));
+export const attestationPayload = (report, clusters) => JSON.stringify({
+  ts: String(report.ts),
+  independent_holders: report.independent_holders,
+  clusters: clusters.map(({ account_id, cluster_id, size }) => ({ account_id, cluster_id, size })),
+});
+
+// ----------------------------------------------------------------------------- chain I/O
+export async function allHolders(coin) {
+  const { view } = await import("./lib/near.js");
+  const out = [];
+  for (let from = 0; ; from += 200) {
+    const page = await view(coin, "get_holders", { from_index: from, limit: 200 });
+    out.push(...page.map((h) => ({ account_id: h.account_id, balance: BigInt(h.balance), since_ms: Number(h.since_ms), source: h.source })));
+    if (page.length < 200) return out;
+  }
+}
+
+export async function score(coin, { market = [] } = {}) {
+  const { view, chainNowMs, readJson } = await import("./lib/near.js");
+  const [cfg, holders, creator, launchReceiver, now] = await Promise.all([
+    view(coin, "get_config"), allHolders(coin), view(coin, "get_creator"), view(coin, "get_launch_receiver"), chainNowMs(),
+  ]);
+  const prev = readJson(path.join(here, "data", `score-${coin}.json`), { clusters: {} });
+  const out = scoreHolders({ cfg, holders, creator, launchReceiver, market, now, previouslyFlagged: Object.keys(prev.clusters) });
+  out.report.coin = coin;
+  return out;
+}
+
+/**
+ * Score, sign with `signers` oracle keys (default: the first `threshold` of them) and submit.
+ * In this demo one process holds all the oracle keys; in production each signer runs this file on
+ * its own machine and the relayer collects the signatures.
+ */
+export async function submit(coin, relayer, { dry = false, signers, market } = {}) {
+  const { view, call, retry, getKey, KEY_DIR, writeJson } = await import("./lib/near.js");
+  const { report, clusters } = await score(coin, { market });
+  const payload = attestationPayload(report, clusters);
+  const [pks, threshold] = await Promise.all([view(coin, "get_oracle_pks"), view(coin, "get_oracle_threshold")]);
+  const signatures = [];
+  for (const id of ORACLE_IDS) {
+    const kp = await getKey(id);
+    if (!kp) continue;
+    const index = pks.indexOf(kp.getPublicKey().toString());
+    if (index < 0 || (signers && !signers.includes(index))) continue;
+    signatures.push({ index, signature: Buffer.from(kp.sign(Buffer.from(payload)).signature).toString("base64") });
+    if (!signers && signatures.length >= threshold) break;
+  }
+  if (!signatures.length) throw new Error(`no oracle key for ${coin} in ${KEY_DIR}`);
   if (!dry) {
     // retrying is safe: if a lost response actually landed, the contract rejects the replay
-    await retry(() => call(relayer, coin, "attest", { payload, signature: Buffer.from(signature).toString("base64") }, { gasTgas: 300 }))
-      .catch((e) => { if (!/replay|stale|not newer/i.test(String(e.message || e))) throw e; });
+    await retry(() => call(relayer, coin, "attest", { payload, signatures }, { gasTgas: 300 }))
+      .catch((e) => { if (!/stale attestation/i.test(String(e.message || e))) throw e; });
+    writeJson(path.join(here, "data", `score-${coin}.json`), report);
   }
   return report;
 }
