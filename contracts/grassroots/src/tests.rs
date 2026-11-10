@@ -84,8 +84,12 @@ impl T {
             pk_of(&oracle),
             vec![Link { label: "x".into(), url: "https://x.com/gdog".into() }],
         );
-        T { c, oracle, now_ms, ts: 0 }
+        let mut t = T { c, oracle, now_ms, ts: 0 };
+        let q = t.c.config.quorum_min;
+        t.attest(q, vec![]); // start the ritual
+        t
     }
+
     fn new() -> Self {
         Self::new_with(cfg())
     }
@@ -466,4 +470,41 @@ fn ledger_records_every_mint_burn_and_cancel() {
     // paging
     assert_eq!(t.c.get_ledger(2, 2).len(), 2);
     assert!(t.c.get_ledger(1_000, 5).is_empty());
+}
+
+#[test]
+fn idle_coin_is_not_drained_before_the_ritual_starts() {
+    let mut c = cfg();
+    c.quorum_min = 5;
+    c.season_days = 3;
+    let oracle = keypair(9);
+    set_ctx(1_000_000, &acc("deployer.near"), 0);
+    let contract = Contract::new("G".into(), "G".into(), None, c, acc("creator.near"), acc("launch.near"), pk_of(&oracle), vec![]);
+    let mut t = T { c: contract, oracle, now_ms: 1_000_000, ts: 0 };
+    let pool0 = t.c.pool_balance();
+    let reserve0 = t.c.reserve;
+    t.advance_days(500.0); // a long, quiet distribution period
+    t.c.settle();
+    assert_eq!(t.c.pool_balance(), pool0, "no burns before start");
+    assert_eq!(t.c.reserve, reserve0, "no lost seasons before start");
+    assert_eq!(t.c.current_day(), 0);
+    t.attest(4, vec![]); // below quorum_min: still not started
+    assert!(t.c.get_state().ritual_started_ms.is_none());
+    t.attest(5, vec![]);
+    assert!(t.c.get_state().ritual_started_ms.is_some());
+    t.give("alice.near", 1_000 * ONE);
+    t.check_in("alice.near");
+}
+
+#[test]
+#[should_panic(expected = "the ritual has not started yet")]
+fn no_check_in_before_start() {
+    let mut c = cfg();
+    c.quorum_min = 5;
+    let oracle = keypair(9);
+    set_ctx(1_000_000, &acc("deployer.near"), 0);
+    let contract = Contract::new("G".into(), "G".into(), None, c, acc("creator.near"), acc("launch.near"), pk_of(&oracle), vec![]);
+    let mut t = T { c: contract, oracle, now_ms: 1_000_000, ts: 0 };
+    t.give("alice.near", 1_000 * ONE);
+    t.check_in("alice.near");
 }

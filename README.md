@@ -45,6 +45,8 @@ A NEP-141 token contract with the community rules **inside the token**. After de
 - New holders ramp in over `age_full_days`, so pump-and-leave buyers earn little.
 - The creator's allocation (20% of each tranche) unlocks **only** through real holder growth.
 
+**No drain while launching:** the day clock starts only when the oracle first reports `quorum_min` independent holders. Before that there are no days, burns or seasons, so a coin that is still being distributed can't lose its pool or reserve (`idle_coin_is_not_drained_before_the_ritual_starts`).
+
 **Never a honeypot:** there is no transfer tax and no sell lock. Plain NEP-141 transfers always work, and pools on Rhea/Ref work normally.
 
 ## How NEAR is used
@@ -63,7 +65,7 @@ A NEP-141 token contract with the community rules **inside the token**. After de
 
 | Path | What |
 |---|---|
-| `contracts/grassroots/` | Rust contract (`src/lib.rs`) and 22 unit tests (`src/tests.rs`) |
+| `contracts/grassroots/` | Rust contract (`src/lib.rs`) and 25 unit tests (`src/tests.rs`) |
 | `sim/` | 60-day community simulation used to choose parameters, with results and charts |
 | `app/oracle.js` | Organic Score oracle v1: reads holders, clusters wallets, signs and submits attestations, writes evidence JSON |
 | `app/demo.js` | Testnet demo: deploys a coin and runs organic users, a 30-wallet sybil farm and creator-side insiders through it |

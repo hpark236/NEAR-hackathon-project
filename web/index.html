@@ -133,7 +133,9 @@ async function refresh() {
     $("name").firstChild.textContent = meta.name; $("sym").textContent = "$" + meta.symbol;
     const dayMs = Number(cfg.day_ms);
     $("streak").textContent = s.community_streak + (s.community_streak === 1 ? " day" : " days");
-    $("best").textContent = `best ever: ${s.best_streak} · day ${s.current_day} · 1 day = ${dayMs >= 86400000 ? "24 h" : dayMs / 1000 + " s (demo)"}`;
+    $("best").textContent = s.ritual_started_ms === null
+      ? `ritual starts when ${cfg.quorum_min} independent holders exist · 1 day = ${dayMs >= 86400000 ? "24 h" : dayMs / 1000 + " s (demo)"}`
+      : `best ever: ${s.best_streak} · day ${s.current_day} · 1 day = ${dayMs >= 86400000 ? "24 h" : dayMs / 1000 + " s (demo)"}`;
     const today = (await view("get_day", { day: s.current_day })) || { unique: 0, checkins: 0 };
     const quorum = Math.max(cfg.quorum_min, Math.floor((s.independent_holders * cfg.quorum_bps) / 10000));
     $("today").textContent = `${today.unique} / ${quorum}`;

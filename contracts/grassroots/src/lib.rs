@@ -206,6 +206,8 @@ pub struct State {
     pub season_start_holders: u32,
     pub seasons_won: u32,
     pub seasons_lost: u32,
+    /// When the daily ritual started (None while the coin is still being distributed).
+    pub ritual_started_ms: Option<U64>,
 }
 
 #[ext_contract(ext_verifier)]
@@ -223,7 +225,9 @@ pub struct Contract {
     launch_receiver: AccountId,
     oracle_pk: PublicKey,
     links: Vec<Link>,
-    genesis_ms: u64,
+    /// Set when the oracle first reports `quorum_min` independent holders. Days, seasons and
+    /// burns only run from then on, so a coin is not drained while it is still being distributed.
+    genesis_ms: Option<u64>,
 
     since: LookupMap<AccountId, u64>,
     holders: IterableSet<AccountId>,
@@ -316,7 +320,7 @@ impl Contract {
             launch_receiver: launch_receiver.clone(),
             oracle_pk,
             links,
-            genesis_ms: env::block_timestamp_ms(),
+            genesis_ms: None,
             since: LookupMap::new(Key::Since),
             holders: IterableSet::new(Key::Holders),
             members: LookupMap::new(Key::Members),
@@ -369,6 +373,7 @@ impl Contract {
         require!(self.ft.accounts.get(&who).is_some(), "register with storage_deposit first");
         let bal = self.ft.internal_unwrap_balance_of(&who);
         require!(bal >= self.config.min_balance_to_check_in.0, "balance below check-in minimum");
+        require!(self.genesis_ms.is_some(), "the ritual has not started yet");
         self.settle();
         let today = self.current_day();
         let mut m = self.members.get(&who).cloned().unwrap_or_default();
@@ -400,6 +405,9 @@ impl Contract {
 
     /// Settle finished days (anyone may call; also runs inside `check_in`).
     pub fn settle(&mut self) {
+        if self.genesis_ms.is_none() {
+            return;
+        }
         let today = self.current_day();
         let mut n = 0;
         while self.next_settle_day < today && n < MAX_SETTLE_PER_CALL {
@@ -457,6 +465,11 @@ impl Contract {
         }
         self.settle();
         self.independent_holders = a.independent_holders;
+        if self.genesis_ms.is_none() && a.independent_holders >= self.config.quorum_min {
+            self.genesis_ms = Some(env::block_timestamp_ms());
+            self.season_start_holders = a.independent_holders;
+            env::log_str(&format!("ritual started with {} independent holders", a.independent_holders));
+        }
         self.apply_growth();
     }
 
@@ -600,6 +613,7 @@ impl Contract {
             season_start_holders: self.season_start_holders,
             seasons_won: self.seasons_won,
             seasons_lost: self.seasons_lost,
+            ritual_started_ms: self.genesis_ms.map(U64),
         }
     }
 
@@ -674,7 +688,10 @@ impl Contract {
     }
 
     pub fn current_day(&self) -> u32 {
-        ((env::block_timestamp_ms() - self.genesis_ms) / self.config.day_ms.0) as u32
+        match self.genesis_ms {
+            Some(g) => ((env::block_timestamp_ms() - g) / self.config.day_ms.0) as u32,
+            None => 0,
+        }
     }
 }
 

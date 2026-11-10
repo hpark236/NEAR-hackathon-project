@@ -203,6 +203,15 @@ async function day(dayIdx) {
 async function run(days) {
   const cfg = await view(st.coin, "get_config");
   const dayMs = Number(cfg.day_ms);
+  // the contract's day clock starts once the oracle reports quorum_min independent holders
+  // (holders count once they have held for age_full_days), so attest until it does
+  while (!(await view(st.coin, "get_state")).ritual_started_ms) {
+    const r = await submit(st.coin, st.main);
+    log(`waiting for the ritual to start: ${r.independent_holders} independent holders (need ${cfg.quorum_min})`);
+    if ((await view(st.coin, "get_state")).ritual_started_ms) break;
+    await sleep(30_000);
+  }
+  log("ritual started");
   for (let d = 0; d < days; d++) {
     const r = await submit(st.coin, st.main);
     log(`oracle: ${r.independent_holders} independent of ${r.holders} holders; ${Object.keys(r.clusters).length} flagged`);
