@@ -104,6 +104,22 @@ node demo.js report                      # rewards by group: organic vs farm (ca
 ```
 Open `web/index.html?coin=<coin id printed by setup>` to watch the streak, tranches, burns and flags live.
 
+## Testnet results
+
+Live coin: [`gdog-1huvn.testnet`](https://testnet.nearblocks.io/address/gdog-1huvn.testnet). Its full-access keys are deleted, so the contract can no longer change. The run: 7 demo days of 4 minutes each, then a creator challenge. Raw output is in `app/data/demo-report.json`.
+
+| Group | Wallets | Tokens held | Share of rewards |
+|---|---|---|---|
+| Organic holders (show up ~80% of days) | 12 | ~702k | **70.0%** |
+| Wallet farm, caught (sub-accounts of one farmer) | 24 | 480k | **1.3%** |
+| Wallet farm, *not* caught (implicit accounts) | 6 | 120k | 28.6% |
+| Creator-side insiders | 4 | 1.6M | **0.09%** |
+
+- Streak 6 with no missed day, and 3 growth tranches minted as independent holders crossed 5, 10 and 15.
+- The supply ledger has 21 entries and reconciles with total supply.
+- The creator challenge ("Daily meme raid", 2,000 per completion) paid 2,000 to organic holders, 83 to caught farm wallets and 2 to insiders. A second claim the same day was refused.
+- **The honest gap:** the 6 uncaught farm wallets check in every single day, so per token held they earn about 2× what an organic holder does. Splitting gives them nothing extra, but perfect attendance does. Better clustering (funding-source analysis) is the fix; see Limits.
+
 ## Limits (stated plainly)
 
 - **Oracle trust.** Independent-holder counts and cluster flags come from a signed off-chain oracle. The contract trusts its key, but each flag's evidence is published (`app/data/score-*.json`), and a forged or replayed attestation is rejected.

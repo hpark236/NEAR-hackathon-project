@@ -1,8 +1,8 @@
 {
   "main": "grassroots-mw8tisuv.testnet",
   "farmer": "grfarm-mw8vpdjm.testnet",
-  "coin": "gdog-exi1u.testnet",
-  "launch": "launchexi1u.grassroots-mw8tisuv.testnet",
+  "coin": "gdog-1huvn.testnet",
+  "launch": "launch1huvn.grassroots-mw8tisuv.testnet",
   "organic": [
     "82420ad169f6d808e0f60bea848facc6879949f862316165f3e52d42e99c56d9",
     "c21354e56b64e7a6707335577657dd30e89f5195de832212b10791394186e1c1",
