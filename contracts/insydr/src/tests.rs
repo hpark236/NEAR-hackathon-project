@@ -54,7 +54,8 @@ fn cfg() -> Config {
         contraction_days: 7,
         contraction_cut_bps: 1_000,
         quorum_min: 2,
-        quorum_bps: 5_000,
+        quorum_bps: 7_500,
+        quorum_window_days: 7,
         daily_payout_bps: 50,
         miss_burn_bps: 25,
         age_full_days: 14,
@@ -916,4 +917,82 @@ fn fuzz_accounting_invariants_hold() {
         seen = (seen.0 + a, seen.1 + b, seen.2 + c, seen.3 + d);
     }
     assert!(seen.0 > 0 && seen.1 > 0 && seen.2 > 0 && seen.3 > 0, "the fuzz reached every branch: {seen:?}");
+}
+
+#[test]
+fn the_daily_target_follows_the_communitys_own_turnout() {
+    let mut t = T::new();
+    let names: Vec<String> = (0..10).map(|i| format!("m{i}.near")).collect();
+    for n in &names {
+        t.give(n, CAP); // full-weight stakes, so daily rewards do not change anyone's weight
+    }
+    t.advance_days(15.0);
+    t.c.settle();
+    // a week of full turnout sets the bar
+    for _ in 0..7 {
+        for n in &names {
+            t.check_in(n);
+        }
+        t.advance_days(1.0);
+    }
+    t.c.settle();
+    let s = t.c.get_state();
+    assert!(s.community_streak >= 6, "a steady community keeps its streak: {}", s.community_streak);
+    assert!(s.turnout_target.0 > 0);
+    // 8 of 10 show up: above 75% of the usual turnout, the streak lives
+    for n in &names[..8] {
+        t.check_in(n);
+    }
+    t.advance_days(1.0);
+    t.c.settle();
+    let d = t.c.get_day(t.c.next_settle_day - 1).unwrap();
+    assert!(d.hit, "turnout {} vs target {}", d.turnout.0, d.target.0);
+    // only 4 of 10 show up: well under the bar, the pool burns and the streak resets
+    for n in &names[..4] {
+        t.check_in(n);
+    }
+    t.advance_days(1.0);
+    t.c.settle();
+    let d = t.c.get_day(t.c.next_settle_day - 1).unwrap();
+    assert!(!d.hit && d.burned.0 > 0, "hit {} turnout {} target {} unique {} burned {}", d.hit, d.turnout.0, d.target.0, d.unique, d.burned.0);
+    assert_eq!(t.c.community_streak, 0);
+    // ...and if that is the new normal, the bar comes down to meet it within a couple of weeks
+    let mut days_to_recover = 0;
+    loop {
+        for n in &names[..4] {
+            t.check_in(n);
+        }
+        t.advance_days(1.0);
+        t.c.settle();
+        days_to_recover += 1;
+        if t.c.get_day(t.c.next_settle_day - 1).unwrap().hit {
+            break;
+        }
+        assert!(days_to_recover < 30);
+    }
+    assert!(days_to_recover <= 16, "retargeted after {days_to_recover} days");
+}
+
+#[test]
+fn dust_wallets_cannot_move_the_daily_target() {
+    // 500 dust wallets checking in add almost nothing to turnout, so they can neither carry a
+    // day nor inflate the target and then walk away to force burns
+    let mut t = T::new();
+    for i in 0..5 {
+        t.give(&format!("real{i}.near"), 100_000 * ONE);
+    }
+    for i in 0..60 {
+        t.give(&format!("dust{i}.near"), ONE);
+    }
+    t.advance_days(15.0);
+    t.c.settle();
+    for i in 0..5 {
+        t.check_in(&format!("real{i}.near"));
+    }
+    let real = t.c.get_day(15).unwrap().turnout.0;
+    for i in 0..60 {
+        t.check_in(&format!("dust{i}.near"));
+    }
+    let with_dust = t.c.get_day(15).unwrap().turnout.0;
+    assert!(with_dust - real <= real / 1_000, "60 dust wallets moved turnout by {} of {}", with_dust - real, real);
 }

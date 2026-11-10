@@ -1,0 +1,5 @@
+Person's attendance,Attendance alone,Streak resets on a miss,"Decay, penalty 3","Decay, penalty 2","Decay, penalty 1"
+90%,1.11x,1.47x,1.13x,1.13x,1.13x
+80%,1.25x,1.74x,1.29x,1.26x,1.26x
+60%,1.67x,2.40x,2.37x,2.28x,1.69x
+40%,2.50x,3.64x,3.64x,3.63x,3.56x

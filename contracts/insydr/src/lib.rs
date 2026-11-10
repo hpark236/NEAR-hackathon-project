@@ -9,9 +9,12 @@
 //!   (configurable) goes to the community pool and the rest to the creator earn-out. If holders
 //!   stay below the last milestone for `contraction_days`, part of the unminted reserve is cancelled
 //!   forever.
-//! * **Daily ritual:** registered holders `check_in` once per day. If unique independent
-//!   check-ins reach the quorum, a slice of the pool is paid to that day's check-ins by weight;
-//!   if not, a slice of the pool burns and the community streak resets.
+//! * **Daily ritual:** registered holders `check_in` once per day. The day's *turnout* is the sum
+//!   of the anti-farm weights that checked in. If turnout reaches the target, a slice of the pool
+//!   is paid to that day's check-ins by weight; if not, a slice of the pool burns and the
+//!   community streak resets. The target retargets like a difficulty: it is `quorum_bps` of the
+//!   community's own trailing-average turnout, so the bar is "show up like you usually do", not
+//!   a guess made at launch. No oracle number is involved in the ritual.
 //! * **Anti-farm weight** for every payout (ritual and creator challenges):
 //!   `independence share x holding-age ramp x streak bonus x capped stake`. A detected cluster of
 //!   k wallets shares one weight, so splitting a stack across many accounts earns nothing extra.
@@ -108,8 +111,12 @@ pub struct Config {
     pub tranche_to_pool_bps: u32,
     pub contraction_days: u32,
     pub contraction_cut_bps: u32,
+    /// Floor: at least this many unique independent check-ins, whatever the turnout target is.
     pub quorum_min: u32,
+    /// The day's turnout must reach this share of the trailing-average turnout.
     pub quorum_bps: u32,
+    /// Averaging window of that trailing turnout, in days (an exponential moving average).
+    pub quorum_window_days: u32,
     pub daily_payout_bps: u32,
     pub miss_burn_bps: u32,
     pub age_full_days: u32,
@@ -185,6 +192,10 @@ pub struct Member {
 pub struct Day {
     pub unique: u32,
     pub checkins: u32,
+    /// Sum of anti-farm weights that checked in (no streak bonus): the day's turnout.
+    pub turnout: U128,
+    /// The turnout that was needed (fixed when the day settles).
+    pub target: U128,
     pub total_weight: U128,
     pub settled: bool,
     pub hit: bool,
@@ -259,6 +270,9 @@ pub struct State {
     pub holder_count: u32,
     pub community_streak: u32,
     pub best_streak: u32,
+    /// Trailing-average turnout, and the turnout today's check-ins must reach.
+    pub turnout_avg: U128,
+    pub turnout_target: U128,
     pub current_day: u32,
     pub next_settle_day: u32,
     pub season_start_holders: u32,
@@ -319,6 +333,7 @@ pub struct Contract {
     last_attest_ts: u64,
     community_streak: u32,
     best_streak: u32,
+    turnout_avg: u128,
     next_settle_day: u32,
     season_start_holders: u32,
     seasons_won: u32,
@@ -376,7 +391,7 @@ impl Contract {
         );
         require!(c.tranche_to_pool_bps <= BPS as u32 && c.quorum_bps <= BPS as u32, "bad bps");
         require!(c.day_ms.0 >= 1_000 && c.streak_cap > 0 && c.age_full_days > 0, "bad timing");
-        require!(c.season_days > 0, "season_days must be > 0");
+        require!(c.season_days > 0 && c.quorum_window_days > 0, "season_days and quorum_window_days must be > 0");
         require!(c.challenge_account_cap_bps > 0 && c.challenge_account_cap_bps <= BPS as u32, "bad challenge account cap");
         require!(
             oracle_threshold >= 1 && oracle_threshold as usize <= oracle_pks.len() && oracle_pks.len() <= 16,
@@ -434,6 +449,7 @@ impl Contract {
             last_attest_ts: 0,
             community_streak: 0,
             best_streak: 0,
+            turnout_avg: 0,
             next_settle_day: 0,
             season_start_holders: 0,
             seasons_won: 0,
@@ -470,9 +486,11 @@ impl Contract {
         m.streak = self.next_streak(&m, today);
         m.last_day = Some(today);
 
-        let w = self.weight_of(&who, bal, m.streak);
+        let base = self.base_weight(&who, bal);
+        let w = self.with_streak(base, m.streak);
         let mut day = self.days.get(&today).cloned().unwrap_or_default();
         day.checkins += 1;
+        day.turnout = U128(day.turnout.0 + base);
         let unique = match self.clusters.get(&who) {
             Some(c) if c.size > 1 => self.day_clusters.insert(format!("{today}:{}", c.id)),
             _ => true,
@@ -724,6 +742,8 @@ impl Contract {
             holder_count: self.holders.len(),
             community_streak: self.community_streak,
             best_streak: self.best_streak,
+            turnout_avg: U128(self.turnout_avg),
+            turnout_target: U128(bps(self.turnout_avg, self.config.quorum_bps)),
             current_day: self.current_day(),
             next_settle_day: self.next_settle_day,
             season_start_holders: self.season_start_holders,
@@ -948,22 +968,32 @@ impl Contract {
         }
     }
 
-    fn weight_of(&self, who: &AccountId, bal: u128, streak: u32) -> u128 {
+    fn with_streak(&self, base: u128, streak: u32) -> u128 {
         let c = &self.config;
         let s = streak.min(c.streak_cap) as u128;
         let streak_f = SCALE + SCALE * c.streak_max_bonus_bps as u128 / BPS * s / c.streak_cap as u128;
-        self.base_weight(who, bal) * streak_f / SCALE
+        base * streak_f / SCALE
+    }
+
+    fn weight_of(&self, who: &AccountId, bal: u128, streak: u32) -> u128 {
+        self.with_streak(self.base_weight(who, bal), streak)
     }
 
     fn settle_day(&mut self, d: u32) {
         let mut day = self.days.get(&d).cloned().unwrap_or_default();
-        let quorum = self
-            .config
-            .quorum_min
-            .max((self.independent_holders as u128 * self.config.quorum_bps as u128 / BPS) as u32);
+        let quorum = self.config.quorum_min;
+        let target = bps(self.turnout_avg, self.config.quorum_bps);
         day.quorum = quorum;
+        day.target = U128(target);
         day.settled = true;
-        if day.unique >= quorum && day.total_weight.0 > 0 {
+        // retarget: exponential moving average of turnout over `quorum_window_days`
+        let n = self.config.quorum_window_days as u128;
+        self.turnout_avg = if self.turnout_avg == 0 {
+            day.turnout.0
+        } else {
+            (self.turnout_avg * (n - 1) + day.turnout.0) / n
+        };
+        if day.unique >= quorum && day.turnout.0 >= target && day.total_weight.0 > 0 {
             day.hit = true;
             let payout = bps(self.pool_free(), self.config.daily_payout_bps);
             day.payout = U128(payout);
