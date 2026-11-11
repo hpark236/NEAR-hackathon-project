@@ -597,7 +597,7 @@ async function nearApiLib() {
 async function guestAccount() {
   if (!guest) throw new Error("no guest account yet: run `join` first");
   const lib = await nearApiLib();
-  if (!api) { const ks = new lib.keyStores.InMemoryKeyStore(); await ks.setKey("testnet", guest.id, lib.KeyPair.fromString(guest.key)); api = await lib.connect({ networkId: "testnet", nodeUrl: rpcUrl(), keyStore: ks }); }
+  if (!api) { const ks = new lib.keyStores.InMemoryKeyStore(); await ks.setKey("testnet", guest.id, lib.KeyPair.fromString(guest.key)); api = await lib.connect({ networkId: "testnet", nodeUrl: RPCS[0], keyStore: ks }); }
   return api.account(guest.id);
 }
 async function send(contractId, methodName, args = {}, gasT = 100, deposit = "0") {
@@ -678,7 +678,9 @@ const CMDS = {
       guest = { id, key: kp.toString() }; localStorage.setItem(GKEY, JSON.stringify(guest)); api = null; await sleep(2500); }
     out(`you are ${guest.id}`, "hi");
     if (await view("served", { account_id: guest.id }, D.tap.id)) out("the tap already served this account");
-    else { out("asking the tap for coins…", "dim"); await send(D.tap.id, "drip", {}, 100); }
+    else { out("asking the tap for coins…", "dim");
+      // a public RPC can drop the reply after the transaction landed: check the chain before giving up
+      await send(D.tap.id, "drip", {}, 100).catch(async (e) => { await sleep(4000); if (!(await view("served", { account_id: guest.id }, D.tap.id))) throw e; }); }
     const bal = await view("ft_balance_of", { account_id: guest.id }); out(`balance ${tok(bal)} $${D.meta.symbol}`, "ok");
     out(`fresh coins weigh nothing: your weight ramps to full over ${D.cfg.age_full_days} day(s) of ${dayLen(D.dayMs)}. Tap accounts hold less than ${tok(D.cfg.holder_min_balance)}, so they never count toward supply.`, "dim");
     out("now try: checkin"); }],
