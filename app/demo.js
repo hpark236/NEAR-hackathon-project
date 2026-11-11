@@ -5,6 +5,10 @@
 //   node demo.js lock                                               delete the coin's access keys (irreversible)
 //   node demo.js new                                                forget the current coin and start a fresh one
 //
+// The live coin (12-hour days, locked from the first minute, kept alive by a scheduled job):
+//   node demo.js live --state live                                  deploy, distribute, lock
+//   node demo.js keep --state live                                  idempotent: today's attestation and check-ins, if not done yet
+//
 // State lives in app/data/demo.json (account ids and progress only; keys stay in app/.keys/).
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,7 +16,8 @@ import { createTestnetAccount, readJson, writeJson, NETWORK } from "./lib/near.j
 import { Scenario, SIZES, fmt } from "./scenario.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const STATE = path.join(here, "data", "demo.json");
+const arg0 = (name, dflt) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : dflt; };
+const STATE = path.join(here, "data", `${arg0("state", "demo")}.json`);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 const arg = (name, dflt) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : dflt; };
@@ -33,9 +38,13 @@ const net = {
   },
   passTime: (ms) => sleep(Math.min(ms, 30_000)), // callers poll, so short sleeps are enough
 };
+const LIVE = cmd === "live" || cmd === "keep";
+// the live coin: 12-hour days, and coins count after one day, so it starts within 12 hours
+const liveConfig = { holder_min_days: 1, age_full_days: 1 };
 const sc = new Scenario(net, st, {
   log, save: () => writeJson(STATE, st),
-  sizes: SIZES[st.size ?? arg("size", "full")], dayMs: st.dayMs ?? Number(arg("day-min", 4)) * 60_000,
+  sizes: SIZES[st.size ?? arg("size", "full")], dayMs: st.dayMs ?? (LIVE ? 12 * 3_600_000 : Number(arg("day-min", 4)) * 60_000),
+  config: LIVE ? liveConfig : {}, seed: (Date.now() / 3_600_000) | 0,
 });
 st.size ??= arg("size", "full");
 st.dayMs ??= sc.dayMs;
@@ -67,6 +76,29 @@ if (cmd === "run") {
     if (st.daysRun === 3 && !st.challenge) await sc.challenge();
   }
   await report();
+} else if (cmd === "live") {
+  await sc.setup();
+  if (!st.locked) await sc.lock();
+  log(`live coin ${st.coin}: locked. Run \`node demo.js keep --state live\` on a schedule.`);
+} else if (cmd === "keep") {
+  // Idempotent keeper. Safe to run as often as you like: it acts at most once per coin day.
+  if (!st.coin) throw new Error("no live coin: run `node demo.js live --state live` first");
+  const s = await sc.state();
+  if (!s.ritual_started_ms) {
+    const r = await sc.oracle();
+    log(`not started yet: ${r.independent_holders} independent holders with enough coin-age (needs ${(await sc.report()).config.quorum_min})`);
+  } else if (st.keptDay === s.current_day) {
+    log(`day ${s.current_day} already kept`);
+  } else {
+    const r = await sc.oracle();
+    const { organicToday, ok } = await sc.checkIns({ attendance: 0.9 });
+    st.keptDay = s.current_day;
+    writeJson(STATE, st);
+    log(`day ${s.current_day}: ${ok.filter(Boolean).length} check-ins (${organicToday.length}/${st.organic.length} real holders), ${r.independent_holders} independent holders, streak ${s.community_streak}`);
+    if (s.current_day >= 2 && !st.challenge) await sc.challenge();
+    // the community grows: one new holder buys in on most days
+    if (st.organic.length < 40 && Math.random() < 0.8) log(`newcomer ${(await sc.newcomer(300_000 + Math.floor(Math.random() * 6) * 60_000)).slice(0, 10)}… bought in`);
+  }
 } else if (cmd === "report") await report();
 else if (cmd === "lock") await sc.lock();
-else console.log("usage: node demo.js run [--days 9] [--size full|small] [--day-min 4] | report | lock | new");
+else console.log("usage: node demo.js run [--days 9] [--size full|small] [--day-min 4] | report | lock | new | live --state live | keep --state live");

@@ -596,6 +596,7 @@ impl Contract {
 
     /// Creator earn-out: mint what has vested so far and was not claimed yet.
     pub fn claim_creator(&mut self) -> U128 {
+        require!(env::predecessor_account_id() == self.creator, "only the creator");
         let amt = self.creator_vested().saturating_sub(self.creator_claimed);
         require!(amt > 0, "nothing vested");
         self.creator_claimed += amt;

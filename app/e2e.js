@@ -200,6 +200,11 @@ try {
     assert.ok(BigInt(s.creator_vested) > 0n && BigInt(s.creator_vested) < BigInt(s.creator_unlocked) / 2n, "about a quarter of 30 days has passed");
     assert.equal(s.creator_claimed, "0");
   });
+  await check("a stranger cannot trigger the creator's claim, register a challenge or call a mint", async () => {
+    await rejects(() => call(st.organic[0], coin, "claim_creator", {}), /only the creator/);
+    await rejects(() => call(st.organic[0], coin, "add_challenge", { name: "x", proof: { Contract: { verifier_id: st.organic[0] } }, reward: "1", cooldown_days: 0, daily_budget: "1" }), /only the creator/);
+    await assert.rejects(() => call(st.organic[0], coin, "mint", { account_id: st.organic[0], amount: "1" }), /MethodNotFound/);
+  });
   await check("the on-chain ledger reconciles with total supply", async () => {
     assert.ok(rep.ledger.reconciles);
     assert.equal(rep.ledger.burned, rep.state.burned);

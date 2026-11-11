@@ -742,6 +742,15 @@ fn creator_cut_vests_linearly() {
 }
 
 #[test]
+#[should_panic(expected = "only the creator")]
+fn a_stranger_cannot_trigger_the_creators_claim() {
+    let mut t = T::new();
+    t.attest(60, vec![]);
+    t.ctx(&acc("mallory.near"), 0);
+    t.c.claim_creator();
+}
+
+#[test]
 fn contraction_claws_back_the_unvested_creator_cut() {
     // attack: fake a milestone with rented holders, wait for the creator cut, let the holders leave
     let mut c = cfg();

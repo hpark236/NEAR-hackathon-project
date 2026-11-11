@@ -102,8 +102,8 @@ export class Scenario {
    * @param net   { name, createTopLevel(name, near) -> id, passTime(ms), concurrency }
    * @param st    plain object persisted by the caller (account ids and progress only; never keys)
    */
-  constructor(net, st, { log = console.log, save = () => {}, sizes = SIZES.small, dayMs = 60_000, seed = 7 } = {}) {
-    Object.assign(this, { net, st, log, save, sizes, dayMs });
+  constructor(net, st, { log = console.log, save = () => {}, sizes = SIZES.small, dayMs = 60_000, seed = 7, config = {} } = {}) {
+    Object.assign(this, { net, st, log, save, sizes, dayMs, config });
     this.rand = mulberry(seed);
   }
 
@@ -143,7 +143,7 @@ export class Scenario {
         name: "INSYDR Dog",
         symbol: "IDOG",
         icon: null,
-        config: demoConfig(this.dayMs),
+        config: { ...demoConfig(this.dayMs), ...this.config },
         creator: st.main,
         launch_receiver: st.launch,
         oracle_pks,
@@ -264,14 +264,36 @@ export class Scenario {
     }
   }
 
+  /** Today's check-ins: real holders show up most days, scripted wallets never miss. */
+  async checkIns({ attendance = 0.85 } = {}) {
+    const { st } = this;
+    const organicToday = st.organic.filter(() => this.rand() < attendance);
+    const bots = this.actors.filter((a) => a.group !== "organic").map((a) => a.id);
+    const ok = await pool([...organicToday, ...bots], this.net.concurrency ?? 4, (id) => this.checkIn(id));
+    return { organicToday, ok };
+  }
+
+  /** A new person buys in (used by the live keeper so the community grows over time). */
+  async newcomer(amount) {
+    const { st } = this;
+    const id = await this.implicit(st.exchange);
+    const deposit = (await view(st.coin, "storage_balance_bounds")).min;
+    await retry(() => call(st.launch, st.coin, "storage_deposit", { account_id: id, registration_only: true }, { deposit }));
+    await retry(async () => {
+      if (BigInt(await view(st.coin, "ft_balance_of", { account_id: id })) > 0n) return;
+      await call(st.launch, st.coin, "ft_transfer", { receiver_id: id, amount: tokens(amount).toString() }, { deposit: "1" });
+    });
+    st.organic.push(id);
+    this.save();
+    return id;
+  }
+
   /** One day: the oracle attests, people and bots check in, then the day ends. */
   async day({ attendance = 0.85 } = {}) {
     const { st, log } = this;
     const before = await this.state();
     const o = await this.oracle();
-    const organicToday = st.organic.filter(() => this.rand() < attendance);
-    const bots = this.actors.filter((a) => a.group !== "organic").map((a) => a.id);
-    const ok = await pool([...organicToday, ...bots], this.net.concurrency ?? 4, (id) => this.checkIn(id));
+    const { organicToday, ok } = await this.checkIns({ attendance });
     await this.nextDay(before.current_day);
     await retry(() => call(st.exchange, st.coin, "settle", {}, { gasTgas: 100 })); // anyone may settle
     const d = await view(st.coin, "get_day", { day: before.current_day });
