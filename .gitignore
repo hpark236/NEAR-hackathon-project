@@ -8,3 +8,6 @@ node_modules/
 .env
 app/data/run.log
 app/data/score-*.sandbox.json
+app/data/keeper.log
+app/data/demo.json
+app/data/demo-report.json

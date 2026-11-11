@@ -1,0 +1,68 @@
+{
+  "size": "full",
+  "dayMs": 43200000,
+  "done": [
+    "accounts",
+    "deploy",
+    "actors",
+    "distribute",
+    "tap"
+  ],
+  "main": "creator-bqddng.testnet",
+  "farmer": "farmer-bqdie0.testnet",
+  "exchange": "exchange-bqdmk1.testnet",
+  "launch": "launch.creator-bqddng.testnet",
+  "coin": "idog-bqdss4.testnet",
+  "organic": [
+    "40d117fa6b4fa82bd7f7d685bb1be1bf10c541ccc2ff66a67a1587d47d59f9f6",
+    "2ba6f116b66b335aaa706f0857f3a74bd6ecf9a529c0f2fad108c1e970336e6a",
+    "d735d83782f4cf378f4f73c589c73f6feeea019b5718b706d30ef9de6c985dd6",
+    "dcc1bccea13527e5014471a3120514d0ce4bc44bbf4eb100ed9fa4731bb626d8",
+    "04289565004130ec6090f2935db9717513b493a6d16fca59020bbcbbe8d10272",
+    "a0c4c48ba5c645966d36ae715e8349f478f7efd1822f9834cdb27c2077122611",
+    "e856450baf70ef4fac36ae31ec3d5b300499b25997b28cb919022fe4790c3d5f",
+    "f92cfb830e6bed4414882e31e134d03d8f0912b6d2e2cf5ec6a1fdd23c9ede01",
+    "38bd01ba9a707f35ef4f0f118f700014b5dc5869cffb842f0c87cd784cc79701",
+    "9b2e95537f02bce273880e68aacfec5640170e033bcb0eafbdc294e1fc3dfea8",
+    "c9005d1c1bdd240be9b35a022bc0626b16450599484926623a3897b084b3b176",
+    "991d3f58578bf971f96bd6e696de7aaa3d00221d2d5e8fb6b3e991e34f7159c2"
+  ],
+  "lazy": [
+    "f1.farmer-bqdie0.testnet",
+    "f2.farmer-bqdie0.testnet",
+    "f3.farmer-bqdie0.testnet",
+    "f4.farmer-bqdie0.testnet",
+    "f5.farmer-bqdie0.testnet",
+    "f6.farmer-bqdie0.testnet",
+    "f7.farmer-bqdie0.testnet",
+    "f8.farmer-bqdie0.testnet",
+    "f9.farmer-bqdie0.testnet",
+    "f10.farmer-bqdie0.testnet",
+    "f11.farmer-bqdie0.testnet",
+    "f12.farmer-bqdie0.testnet"
+  ],
+  "hidden": [
+    "7fc5d4840d812d25e30ee5569d20be7fd1ee5abf69034e099f53db1c103b04a2",
+    "5b6fc2b26dd94f273ea11487d7cd067208e6e55da42bd1d9dfa504e4c882dabe",
+    "3b87c014a0dcea77bfe741d5117561cf6bfb8c2b44807d903d6958e65f1d0037",
+    "ff45a410fa047fd2b9169c4fa5619372178d67c98dfee420ecd60b667a11f5a9",
+    "22dd49e51cd7110c5dc35f1829b4ff9795a25c48bc3664c7c3b69f9cae09f4a9",
+    "c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d"
+  ],
+  "patient": [
+    "933fc8034aea9a0cc8ee158c874c961ec247661b755805335bd4e4d6d8f33c28",
+    "491606e2fa59833a68395d0108d393bc193d1de85207b828e0bfc2f1a9d225a5",
+    "285cdd834398e1f91c0930390079213b0764c334ad3308305e6f059ad99a3022",
+    "402faf9255d432275595485694064174ad9a47c5a0112c3de9edd72961745b06"
+  ],
+  "insiders": [
+    "insider1.creator-bqddng.testnet",
+    "insider2.creator-bqddng.testnet"
+  ],
+  "stealth": [
+    "b8bcf8eea20b5ac1a093b391488bfb6fae130f9645b0bc512c8cdcb243cb10f0",
+    "7667c5416767cd9b116d0fbc7fb27f2ba5bba280a81ce8ed134f02509bedb0bc"
+  ],
+  "tap": "tap.creator-bqddng.testnet",
+  "locked": true
+}

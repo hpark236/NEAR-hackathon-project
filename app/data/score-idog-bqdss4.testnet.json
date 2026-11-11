@@ -1,0 +1,174 @@
+{
+  "ts": 1794378535103,
+  "holders": 42,
+  "independent_holders": 0,
+  "holder_min_balance": "100000000000000000000000",
+  "hold_requirement_ms": 43200000,
+  "clustered_supply_share": 97.49,
+  "farms": 1,
+  "largest_cluster": 19,
+  "clusters": {
+    "22dd49e51cd7110c5dc35f1829b4ff9795a25c48bc3664c7c3b69f9cae09f4a9": {
+      "account_id": "22dd49e51cd7110c5dc35f1829b4ff9795a25c48bc3664c7c3b69f9cae09f4a9",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "most of its coins came from farmer-bqdie0.testnet, like 17 other holder(s)"
+    },
+    "3b87c014a0dcea77bfe741d5117561cf6bfb8c2b44807d903d6958e65f1d0037": {
+      "account_id": "3b87c014a0dcea77bfe741d5117561cf6bfb8c2b44807d903d6958e65f1d0037",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "most of its coins came from farmer-bqdie0.testnet, like 17 other holder(s)"
+    },
+    "5b6fc2b26dd94f273ea11487d7cd067208e6e55da42bd1d9dfa504e4c882dabe": {
+      "account_id": "5b6fc2b26dd94f273ea11487d7cd067208e6e55da42bd1d9dfa504e4c882dabe",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "most of its coins came from farmer-bqdie0.testnet, like 17 other holder(s)"
+    },
+    "7667c5416767cd9b116d0fbc7fb27f2ba5bba280a81ce8ed134f02509bedb0bc": {
+      "account_id": "7667c5416767cd9b116d0fbc7fb27f2ba5bba280a81ce8ed134f02509bedb0bc",
+      "cluster_id": "deployer",
+      "size": 1000,
+      "reason": "most of its coins came from creator-bqddng.testnet, like 1 other holder(s)"
+    },
+    "7fc5d4840d812d25e30ee5569d20be7fd1ee5abf69034e099f53db1c103b04a2": {
+      "account_id": "7fc5d4840d812d25e30ee5569d20be7fd1ee5abf69034e099f53db1c103b04a2",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "most of its coins came from farmer-bqdie0.testnet, like 17 other holder(s)"
+    },
+    "b8bcf8eea20b5ac1a093b391488bfb6fae130f9645b0bc512c8cdcb243cb10f0": {
+      "account_id": "b8bcf8eea20b5ac1a093b391488bfb6fae130f9645b0bc512c8cdcb243cb10f0",
+      "cluster_id": "deployer",
+      "size": 1000,
+      "reason": "most of its coins came from creator-bqddng.testnet, like 1 other holder(s)"
+    },
+    "c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d": {
+      "account_id": "c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "most of its coins came from farmer-bqdie0.testnet, like 17 other holder(s)"
+    },
+    "creator-bqddng.testnet": {
+      "account_id": "creator-bqddng.testnet",
+      "cluster_id": "deployer",
+      "size": 1000,
+      "reason": "shares parent account creator-bqddng.testnet with 4 other holder(s)"
+    },
+    "f1.farmer-bqdie0.testnet": {
+      "account_id": "f1.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f10.farmer-bqdie0.testnet": {
+      "account_id": "f10.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f11.farmer-bqdie0.testnet": {
+      "account_id": "f11.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f12.farmer-bqdie0.testnet": {
+      "account_id": "f12.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f2.farmer-bqdie0.testnet": {
+      "account_id": "f2.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f3.farmer-bqdie0.testnet": {
+      "account_id": "f3.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f4.farmer-bqdie0.testnet": {
+      "account_id": "f4.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f5.farmer-bqdie0.testnet": {
+      "account_id": "f5.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f6.farmer-bqdie0.testnet": {
+      "account_id": "f6.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f7.farmer-bqdie0.testnet": {
+      "account_id": "f7.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f8.farmer-bqdie0.testnet": {
+      "account_id": "f8.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "f9.farmer-bqdie0.testnet": {
+      "account_id": "f9.farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "farmer-bqdie0.testnet": {
+      "account_id": "farmer-bqdie0.testnet",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "shares parent account farmer-bqdie0.testnet with 12 other holder(s)"
+    },
+    "ff45a410fa047fd2b9169c4fa5619372178d67c98dfee420ecd60b667a11f5a9": {
+      "account_id": "ff45a410fa047fd2b9169c4fa5619372178d67c98dfee420ecd60b667a11f5a9",
+      "cluster_id": "c:c01daec290a44e3fa700f2dea8943946a90ee94ac4a9b6df8502b1020e86651d",
+      "size": 19,
+      "reason": "most of its coins came from farmer-bqdie0.testnet, like 17 other holder(s)"
+    },
+    "insider1.creator-bqddng.testnet": {
+      "account_id": "insider1.creator-bqddng.testnet",
+      "cluster_id": "deployer",
+      "size": 1000,
+      "reason": "shares parent account creator-bqddng.testnet with 4 other holder(s)"
+    },
+    "insider2.creator-bqddng.testnet": {
+      "account_id": "insider2.creator-bqddng.testnet",
+      "cluster_id": "deployer",
+      "size": 1000,
+      "reason": "shares parent account creator-bqddng.testnet with 4 other holder(s)"
+    },
+    "launch.creator-bqddng.testnet": {
+      "account_id": "launch.creator-bqddng.testnet",
+      "cluster_id": "deployer",
+      "size": 1000,
+      "reason": "shares parent account creator-bqddng.testnet with 4 other holder(s)"
+    },
+    "tap.creator-bqddng.testnet": {
+      "account_id": "tap.creator-bqddng.testnet",
+      "cluster_id": "deployer",
+      "size": 1000,
+      "reason": "shares parent account creator-bqddng.testnet with 4 other holder(s)"
+    }
+  },
+  "rules": [
+    "shared parent account",
+    "majority token source",
+    "creator / launch side"
+  ],
+  "coin": "idog-bqdss4.testnet"
+}

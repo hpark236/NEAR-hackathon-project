@@ -86,7 +86,7 @@ if (cmd === "run") {
   const s = await sc.state();
   if (!s.ritual_started_ms) {
     const r = await sc.oracle();
-    log(`not started yet: ${r.independent_holders} independent holders with enough coin-age (needs ${(await sc.report()).config.quorum_min})`);
+    log(`not started yet: ${r.independent_holders} independent holders with enough coin-age so far`);
   } else if (st.keptDay === s.current_day) {
     log(`day ${s.current_day} already kept`);
   } else {

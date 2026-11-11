@@ -1,65 +1,53 @@
-# INSYDR 60-day simulation
+# INSYDR simulation and strength test
 
-`insydr_sim.py` models 60 days of a coin's life under four scenarios. It compares a **naive streak coin** (every check-in weighs the same, every account counts as a holder) with **INSYDR** rules. Its purpose is to choose the contract parameters before writing the contract.
+Two scripts, standard library only (matplotlib is optional and only draws the charts):
 
 ```sh
-uv venv .venv && uv pip install --python .venv/bin/python matplotlib   # charts only
-.venv/bin/python sim/insydr_sim.py                                  # writes sim/results/
+python3 sim/insydr_sim.py       # 60 days, four communities, naive coin vs INSYDR -> sim/results/
+python3 sim/strength_test.py    # seven attack experiments -> sim/results/strength/ and docs/STRENGTH-TEST.md
 ```
 
-## Scenarios
-| Scenario | Actors |
+Both are deterministic (fixed seeds). CI re-runs them and fails if the committed results differ.
+
+## What the 60-day simulation models
+
+One tick is one day. The rules mirror `contracts/insydr/src/lib.rs`: growth tranches with a cooldown, the creator's vesting cut and its clawback, the retargeting daily turnout target, weights (`independence x coin-age x capped linear stake x streak`), streak decay, seasons.
+
+| Scenario | Who is in it |
 |---|---|
-| organic | 900 real people arriving on an S-curve, each with their own check-in habit, small daily churn |
-| insider_pump | 600 organic + **30 deployer-linked insider wallets** (front-run launch, dump day 12) + **250-person Telegram pump group** (arrive days 4–8, leave days 14–18) |
-| sybil_farm | 600 organic + **one farmer running 300 accounts** (80% caught by clustering, 20% look independent), checking in every day |
-| dead | 120 people arrive in the first 20 days, then nobody |
+| `organic` | 900 real people arriving on an S-curve. A quarter are regulars (check in 70-95% of days), the rest casual (5-40%). |
+| `insider_pump` | 600 real people, 30 creator-side wallets holding 25x bags that dump on day 12, and a 250-person pump group that arrives days 4-8 and leaves days 14-18. |
+| `sybil_farm` | 600 real people and one farmer running 300 wallets (13% of the coins) that never miss a day. 80% of the farm wallets are detected. |
+| `dead` | 120 people arrive in the first 20 days, then drift away. |
 
-## Results (seed 7)
+The **naive** baseline is the track prompt's coin built the obvious way: every check-in weighs 1, the target is a fixed share of all accounts, a miss resets the streak.
 
-**Share of all rewards captured by bad actors**
+## Results (`results/summary.csv`)
 
-| Actor | Naive coin | INSYDR |
+| | Naive coin | INSYDR |
 |---|---|---|
-| Sybil farm (300 accounts) | **54.3%** | **13.8%** |
-| Insiders (30 wallets) | 1.3% | 0.7% |
-| Telegram pump group (250 humans) | 4.3% | 4.8% |
+| Farm's share of all rewards (300 wallets, 13% of coins) | 63.8% | 21.5% |
+| Same farm, 3,000 wallets | 94.6% | 24.9% (0.0% if all detected) |
+| Insiders' reward per coin held | 0.0063 | 0.0041 |
+| Pump group leaving | no effect | 7 missed days, 0.15% of supply burned |
+| Community that fades | supply ends at 45.4% | supply ends at 45.2%, 19% of supply cancelled, creator vested 0.23% (naive: 1.0%) |
 
-**Reward per token held (does splitting into many accounts pay?)**
+`supply_vs_community.png` shows supply against independent holders for the four communities; `farmer_capture.png` shows who captures the rewards.
 
-| | Naive | INSYDR |
+## Parameters chosen (production scale)
+
+| Parameter | Value | Why |
 |---|---|---|
-| Sybil farm | **0.78** | 0.17 |
-| Organic holders, same scenario | 0.10 | 0.15 |
+| Launch / pool seed / reserve | 35% / 5% / 60% | Most supply has to be earned by growth |
+| Milestones | 50, 100, 200, 400, 800, 1600, 3200 independent holders | Doubling steps |
+| Tranches | 5, 7, 9, 11, 12, 13, 13% of max supply, 80% to the pool | Later growth is worth more |
+| `tranche_cooldown_days` | 7 | A stolen oracle cannot mint faster than this (E5) |
+| `creator_vest_days` | 90 (30 in the simulation) | Faking a milestone only pays if the fake holders stay (E4) |
+| `holder_min_days` / `age_full_days` | 14 / 14 | Pump groups that leave within two weeks never unlock supply |
+| Daily target | 75% of the trailing 7-day turnout, at least 10 independent check-ins | A fixed "50% of holders" target was missed on all 60 days at every attendance level (E2) |
+| Payout / burn | 0.5% of the pool per hit, 0.25% per miss | A 75% exodus costs about 4% of the pool (E3) |
+| Streak | up to +50% at 30 days, a miss costs 1 day | Reset-on-miss paid scripts up to 1.47x more than a person at 90% attendance (E1) |
+| Whale cap | 0.05% of max supply per wallet | Below it splitting earns nothing; above it splitting is what cluster detection is for (E6) |
+| Challenges | 0.1% of the pool per day in total, 5% of that per account | Worst case is a fifth of the ritual's payout (E7) |
 
-Under INSYDR, the farm earns about the same per token as an honest holder. **Running 300 accounts earns nothing extra over holding the same coins in one account.** In the naive coin, the farm earns 8× per token.
-
-**Supply follows the real community** (`results/supply_vs_community.png`): supply unlocks in steps as independent holders who've held ≥14 days pass milestones. The dead community stalls at 54% of max supply with its season bonus cancelled; the organic one reaches 74% by day 60.
-
-## What the simulation changed
-
-1. **Flat per-account rewards are farmable.** Version 1 weighted every check-in equally, and the 20% of sybils that clustering missed still captured 32% of rewards. **Fix: reward weight grows with balance up to a cap** (0.05% of max supply). Below the cap, splitting a stack across accounts earns nothing extra, and clustering handles whales who split above it.
-2. **Bots never miss a day.** The streak multiplier was 2× at 30 days, which mostly rewarded scripts. **Fix: cap the streak bonus at 1.5×.**
-3. **A 7-day hold let a pump group trigger supply.** The Telegram group (real, separate humans, so clustering can't catch them) held 7+ days and triggered two growth tranches before leaving. **Fix: milestones count only holders who've held ≥14 days.** The insider+pump supply curve now tracks the organic one.
-
-## Chosen parameters (input to the contract)
-
-| Parameter | Value |
-|---|---|
-| Max supply | 1,000,000,000 |
-| At launch | 35% sold / LP, 5% community-pool seed, 60% unminted growth reserve |
-| Milestones (independent holders ≥14 days) | 50, 100, 200, 400, 800, 1600, 3200 |
-| Tranche sizes (% of max supply) | 5, 7, 9, 11, 12, 13, 13 |
-| Tranche split | 80% community pool / 20% creator earn-out |
-| Contraction | below last milestone 7 days in a row → cancel 10% of remaining reserve |
-| Daily quorum | max(10, 50% of independent holders) |
-| Daily payout / miss burn | 0.5% of pool / 0.25% of pool |
-| Reward weight | independence share × min(1, days held/14) × (1 + 0.5·min(streak,30)/30) × min(balance, cap)/cap |
-| Balance cap | 0.05% of max supply |
-| Season | 30 days, goal +50% independent holders, bonus 2% of max supply (cancelled if missed) |
-
-## Honest limits
-- **Pump groups made of real humans aren't stopped from earning rewards** while they hold, only from triggering supply. They are real participants for those days, and the 14-day age ramp keeps their share small (4.8%).
-- **The daily quorum was never missed** in any scenario (best streak 60/60). With these check-in habits the 50% quorum is comfortable. The "miss → burn" path is tested in contract tests, not exercised by this model. Raise it if the ritual should carry more tension.
-- **Detection rates are assumptions** (80% sybil, 90% insider). Real rates depend on the Organic Score heuristics.
-- This is one seed and a stylized model, not a forecast.
+The live testnet coin uses smaller, faster values (`demoConfig` in `app/scenario.js`) so that a scripted community of 38 wallets exercises every rule in days instead of months.

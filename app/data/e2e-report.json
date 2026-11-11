@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-10T22:16:19.561Z",
+  "at": "2026-11-11T06:20:20.428Z",
   "checks": [
     {
       "ok": true,
@@ -79,6 +79,10 @@
     },
     {
       "ok": true,
+      "name": "a stranger cannot trigger the creator's claim, register a challenge or call a mint"
+    },
+    {
+      "ok": true,
       "name": "the on-chain ledger reconciles with total supply"
     },
     {
@@ -101,7 +105,7 @@
       "wallets": 8,
       "flagged": 0,
       "held": "4080000000000000000000000",
-      "rewards": "2741834809436844287418116",
+      "rewards": "2741833575145580368844534",
       "share_pct": 73.683,
       "per_1000_tokens": 672.018
     },
@@ -111,7 +115,7 @@
       "wallets": 6,
       "flagged": 6,
       "held": "1800000000000000000000000",
-      "rewards": "114458747511525138015595",
+      "rewards": "114458704754274259454925",
       "share_pct": 3.075,
       "per_1000_tokens": 63.588
     },
@@ -121,7 +125,7 @@
       "wallets": 4,
       "flagged": 4,
       "held": "1200000000000000000000000",
-      "rewards": "76401773764536623473509",
+      "rewards": "76401745257767699512163",
       "share_pct": 2.053,
       "per_1000_tokens": 63.668
     },
@@ -131,7 +135,7 @@
       "wallets": 3,
       "flagged": 0,
       "held": "900000000000000000000000",
-      "rewards": "782899945367607526957053",
+      "rewards": "782899576215938025315598",
       "share_pct": 21.039,
       "per_1000_tokens": 869.888
     },
@@ -141,7 +145,7 @@
       "wallets": 2,
       "flagged": 2,
       "held": "4000000000000000000000000",
-      "rewards": "2749509585752541359512",
+      "rewards": "2749508590607153468498",
       "share_pct": 0.073,
       "per_1000_tokens": 0.687
     },
@@ -151,7 +155,7 @@
       "wallets": 2,
       "flagged": 2,
       "held": "4000000000000000000000000",
-      "rewards": "2749509585752541359512",
+      "rewards": "2749508590607153468498",
       "share_pct": 0.073,
       "per_1000_tokens": 0.687
     }
@@ -164,21 +168,21 @@
     "burned": "5622878386966482797890396",
     "cancelled": "20000000000000000000000000",
     "creator_unlocked": "24000000000000000000000000",
-    "creator_vested": "9994621111111111111111110",
+    "creator_vested": "10099021111111111111111111",
     "creator_claimed": "0",
     "milestone_idx": 2,
     "independent_holders": 12,
     "holder_count": 30,
     "community_streak": 0,
     "best_streak": 5,
-    "turnout_avg": "582784",
+    "turnout_avg": "582785",
     "turnout_target": "437088",
     "current_day": 13,
     "next_settle_day": 13,
     "season_start_holders": 12,
     "seasons_won": 0,
     "seasons_lost": 1,
-    "ritual_started_ms": "1794349042022"
+    "ritual_started_ms": "1794378073622"
   },
   "ledger": {
     "entries": 24,
@@ -191,7 +195,7 @@
     {
       "group": "organic",
       "label": "Real holders",
-      "account": "d3980f5711405c1e2a11c6c6666e3cfb33c4f9e32b2fa7f9348ff75603d23b4c",
+      "account": "d9199c3ad895f3976f93ef2ceeca5d02779da8089ae4efda1fbc59b2475ae59e",
       "paid": "3417850000000000000000",
       "note": ""
     },
@@ -205,14 +209,14 @@
     {
       "group": "hidden",
       "label": "Farm, random-looking wallets fed from one stack",
-      "account": "07a3663342126311bc4f562537036d5f33ba4400f7e9aff2bfdab346c2583e77",
+      "account": "0a2a9699f2e3d205b139c63a372f1d8c2e53a9213d3a0e439af3feb29d018396",
       "paid": "276150000000000000000",
       "note": ""
     },
     {
       "group": "patient",
       "label": "Farm, each wallet bought on its own",
-      "account": "fad1a6878b1ae705f53f2732b9802cc4f3f4178fd943e08f69d3f4f3d6e491c3",
+      "account": "eca04e547e82b9c98e5e803344d5a2a7e0fd47b32384f9b56b0eb23dd6a61d19",
       "paid": "3417850000000000000000",
       "note": ""
     },
@@ -226,7 +230,7 @@
     {
       "group": "stealth",
       "label": "Creator's unnamed wallets",
-      "account": "01fbbefb8e2a44a4a4669753c42f20b98a60b5ad3d2f5c52a7d623b47f2d74cb",
+      "account": "5ca6d84d6469491caf3cd902c7cf254a8a6312ac617aeabc503bf13396aa7bb0",
       "paid": "20000000000000000000",
       "note": ""
     }
@@ -327,7 +331,7 @@
       "hit": true,
       "checkins": 25,
       "unique": 13,
-      "turnout": "1401054",
+      "turnout": "1401062",
       "target": "804414",
       "payout": "423788582510471534250952",
       "burned": "0"

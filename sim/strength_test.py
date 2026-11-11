@@ -272,6 +272,7 @@ changed in the contract because of it, and what is still weak. Every number belo
 | 6 | **Clustering evidence lived off-chain.** The oracle's flags could only be checked against a JSON file we publish. | Medium: "trust us". | The contract records each holder's **majority token source** (the account most of its coins came from). Anyone can read it with `get_holders` and re-derive the clusters. | `majority_source_shows_where_a_wallets_coins_came_from` |
 | 7 | **Two burn paths were missing from the ledger** (closing an account with a balance, refund to a closed account). | Low: the "ledger reconciles with supply" claim could have gone false. | Both are recorded. A randomized test runs 6,000 operations and checks five accounting invariants after each one. | `closing_an_account_with_a_balance_is_a_recorded_burn`, `fuzz_accounting_invariants_hold` |
 | 8 | **Idle coins drained themselves.** A coin deployed before its community arrived burned its pool and lost every season (this happened to our first two testnet coins). | Medium. | The day clock starts at the first attestation that reports `quorum_min` independent holders. | `idle_coin_is_not_drained_before_the_ritual_starts`, `no_check_in_before_start` |
+| 9 | **Anyone could trigger the creator's claim.** The coins still went to the creator, but the timing was not theirs. Found by the coin page's own `attack` command. | Low. | `claim_creator` is creator-only. | `a_stranger_cannot_trigger_the_creators_claim` |
 
 ## The experiments
 

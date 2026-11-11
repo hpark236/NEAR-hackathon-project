@@ -313,7 +313,7 @@
 "use strict";
 // ============================================================ config and RPC
 const q = new URLSearchParams(location.search);
-const DEFAULT_COIN = ""; // set to the live demo coin when the page is hosted
+const DEFAULT_COIN = "idog-bqdss4.testnet"; // the live demo coin; override with ?coin=<contract id>
 const COIN = q.get("coin") || DEFAULT_COIN;
 const MAINNET = COIN.endsWith(".near");
 const RPCS = q.get("rpc") ? [q.get("rpc")] : MAINNET
