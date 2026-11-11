@@ -16,7 +16,7 @@ Everything needed to submit, short of the things only the team lead can provide 
 
 Project name (suggested: `INSYDR`), team lead's name, contact email, team size, payout NEAR account, the demo post link, and consent to the contact notice.
 
-## "What did you build?" (20 to 2,000 characters; this draft is about 1,500)
+## "What did you build?" (20 to 2,000 characters; this draft is about 1,700)
 
 > Memecoins are farmed: insiders buy first, one person runs fifty wallets for every giveaway, and the creator can change the rules. The track's own example, a daily check-in streak coin, pays per wallet, so it pays whoever makes the most wallets. In our 60-day simulation a farmer with 13% of the coins takes 64% of the rewards with 300 wallets and 95% with 3,000.
 >
