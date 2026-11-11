@@ -15,7 +15,11 @@ import { Sandbox, DEFAULT_ACCOUNT_ID, DEFAULT_PRIVATE_KEY } from "near-sandbox";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const keyDir = fs.mkdtempSync(path.join(os.tmpdir(), "insydr-e2e-keys-"));
-const sandbox = await Sandbox.start({});
+const sandbox = await Sandbox.start({}).catch((e) => {
+  console.error("Could not start the local NEAR sandbox:", e.message);
+  if (process.platform === "darwin") console.error("On macOS the sandbox binary needs the xz library:  brew install xz");
+  process.exit(2);
+});
 process.env.NEAR_RPC = sandbox.rpcUrl;
 process.env.NEAR_NETWORK = "sandbox";
 process.env.INSYDR_KEY_DIR = keyDir;
