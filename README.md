@@ -9,7 +9,7 @@ Built at NEAR HACKATHON (November 2026). Tracks: **Memecoins With Mechanics** (p
 | | |
 |---|---|
 | **Live coin (testnet)** | [`idog-bqdss4.testnet`](https://testnet.nearblocks.io/address/idog-bqdss4.testnet): 12-hour days, 2-of-3 oracle, **0 access keys since deployment** |
-| **Coin page** | `web/index.html` (static; reads the contract live; has a test terminal) |
+| **Coin page** | **https://hpark236.github.io/NEAR-hackathon-project/** (static; reads the contract live; has a test terminal). Source: `web/index.html` |
 | **Run everything without a wallet** | `npm run e2e`: the real wasm on a local NEAR sandbox, 24 checks, about 2 minutes |
 | **Tests** | 44 contract unit tests (one is a 6,000-operation accounting fuzz), 13 oracle tests, 24 end-to-end checks |
 | **Evidence** | [60-day simulation](sim/README.md) and a [strength test](docs/STRENGTH-TEST.md): what broke when we attacked our own design, what we changed, what is still weak |
@@ -80,10 +80,7 @@ curl -s https://test.rpc.fastnear.com -H 'content-type: application/json' -d '{"
 
 ### 3. The page and its test terminal
 
-```sh
-cd web && python3 -m http.server 8080
-# open http://localhost:8080/index.html?coin=idog-bqdss4.testnet
-```
+Open **https://hpark236.github.io/NEAR-hackathon-project/** (or serve it yourself: `cd web && python3 -m http.server 8080`, then `http://localhost:8080/?coin=idog-bqdss4.testnet`).
 
 The page reads everything from the contract over public RPC. The terminal in the middle of it runs live calls:
 

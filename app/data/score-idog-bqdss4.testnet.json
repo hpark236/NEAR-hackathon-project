@@ -1,7 +1,7 @@
 {
-  "ts": 1794378535103,
+  "ts": 1794467093705,
   "holders": 42,
-  "independent_holders": 0,
+  "independent_holders": 17,
   "holder_min_balance": "100000000000000000000000",
   "hold_requirement_ms": 43200000,
   "clustered_supply_share": 97.49,

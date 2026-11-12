@@ -4,7 +4,7 @@ Everything needed to submit, short of the things only the team lead can provide 
 
 ## Checklist (from the hackathon's `SUBMITTING.md`)
 
-- [ ] Repository is public (`gh repo edit hpark236/NEAR-hackathon-project --visibility public`), and GitHub Pages serves `web/` so the coin page has a link
+- [x] Repository is public, and GitHub Pages serves `web/` at https://hpark236.github.io/NEAR-hackathon-project/
 - [ ] CI is pushed and green (needs `gh auth refresh -h github.com -s workflow`, then commit `.github/workflows/ci.yml`)
 - [ ] Demo post is live on X: says it was built at NEAR HACKATHON, tags @NEARProtocol and #NEARHackathon, has the video attached
 - [ ] A mainnet NEAR account for the payout exists (the team's own; never invented)
@@ -32,8 +32,8 @@ Project name (suggested: `INSYDR`), team lead's name, contact email, team size, 
 >
 > INSYDR is a streak coin where 300 wallets earn what 1 does, the creator's own wallets earn 0.07%, and nobody can change a rule: the contract has zero keys.
 >
-> Try to break it in your browser, no wallet: [page link]
-> Code: [repo link]
+> Try to break it in your browser, no wallet: https://hpark236.github.io/NEAR-hackathon-project/
+> Code: https://github.com/hpark236/NEAR-hackathon-project
 >
 > Built at NEAR HACKATHON @NEARProtocol #NEARHackathon
 >
