@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>INSYDR</title>
 <meta name="description" content="INSYDR: a memecoin that pays the people who show up and nobody else. Live from the contract on NEAR.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hpark236.github.io/NEAR-hackathon-project/">
+<meta property="og:title" content="INSYDR: everyone's an insider, except the insiders">
+<meta property="og:description" content="A streak memecoin on NEAR where 300 wallets earn what 1 does and the contract has zero keys. Verify it or try to break it in your browser, no wallet.">
+<meta property="og:image" content="https://hpark236.github.io/NEAR-hackathon-project/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="INSYDR: everyone's an insider, except the insiders">
+<meta name="twitter:description" content="A streak memecoin on NEAR where 300 wallets earn what 1 does and the contract has zero keys. Try to break it, no wallet.">
+<meta name="twitter:image" content="https://hpark236.github.io/NEAR-hackathon-project/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Martian+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -109,6 +120,8 @@
   .tagline s { text-decoration: none; color: var(--lime); }
   .facts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
   .facts .tag { border-color: rgba(255,255,255,0.28); color: rgba(255,255,255,0.92); background: rgba(10, 4, 40, 0.28); }
+  .visitors { margin: 12px 0 0; font: 500 11px/1.4 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.85); }
+  .screen a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
   .meter { background: rgba(10, 4, 40, 0.42); border: 1px solid rgba(255,255,255,0.2); border-radius: 2px; padding: 18px; backdrop-filter: blur(6px); }
   .meter .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .meter .big { font: 600 30px/1 var(--mono); letter-spacing: -0.03em; color: #fff; font-variant-numeric: tabular-nums; }
@@ -212,8 +225,8 @@
   <header class="bar">
     <div class="word">INSY<i>D</i>R</div>
     <div class="kv"><span class="live" aria-hidden="true"></span><span id="netTag">TESTNET</span></div>
-    <div class="kv">BLOCK <b id="block">–</b></div>
-    <div class="kv">CONTRACT <b id="coinId">–</b></div>
+    <div class="kv">BLOCK <b id="block">…</b></div>
+    <div class="kv">CONTRACT <b id="coinId">…</b></div>
     <div class="sp"></div>
     <a class="btn" href="https://github.com/hpark236/NEAR-hackathon-project" target="_blank" rel="noopener">Source</a>
     <button class="btn" id="reload">Refresh</button>
@@ -226,27 +239,28 @@
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <div class="hero-grid">
         <div>
-          <div class="coin"><span id="coinName">LOADING</span><span class="tag" id="sym">$—</span><span class="tag" id="lockTag">…</span></div>
-          <div class="streak"><b id="streak">–</b><span>day<br>community<br>streak</span></div>
+          <div class="coin"><span id="coinName">LOADING</span><span class="tag" id="sym">$…</span><span class="tag" id="lockTag">…</span></div>
+          <div class="streak"><b id="streak">…</b><span>day<br>community<br>streak</span></div>
           <p class="tagline">Everyone's an insider.<br><s>Except the insiders.</s></p>
           <div class="facts" id="facts"></div>
+          <p class="visitors" id="visitors" hidden></p>
         </div>
         <div class="meter" id="meter">
           <div class="row"><span class="lbl">Today's turnout</span><span class="tag" id="turnTag">…</span></div>
-          <div class="row" style="margin-top:12px"><div class="big"><span id="turnout">–</span><small id="turnOf"></small></div></div>
+          <div class="row" style="margin-top:12px"><div class="big"><span id="turnout">…</span><small id="turnOf"></small></div></div>
           <div class="track" role="img" id="trackImg" aria-label="Turnout against target"><i id="trackFill" style="width:0"></i><u id="trackMark" style="left:0"></u></div>
           <div class="sub" id="turnSub">Turnout is the sum of anti-farm weights that checked in today.</div>
-          <div class="foot"><span>CHECK-INS <b id="ciN">–</b></span><span>INDEPENDENT <b id="ciU">–</b></span><span>DAY ENDS IN <b id="eta">–</b></span></div>
+          <div class="foot"><span>CHECK-INS <b id="ciN">…</b></span><span>INDEPENDENT <b id="ciU">…</b></span><span>DAY ENDS IN <b id="eta">…</b></span></div>
         </div>
       </div>
     </div>
   </section>
 
   <div class="stats">
-    <div class="panel stat"><div class="lbl">Independent holders</div><div class="v" id="indep">–</div><div class="thin"><i id="msBar" style="width:0"></i></div><div class="s" id="ms"></div></div>
-    <div class="panel stat"><div class="lbl">Supply</div><div class="v" id="supply">–</div><div class="thin"><i id="supplyBar" style="width:0"></i></div><div class="s" id="supplySub"></div></div>
-    <div class="panel stat"><div class="lbl">Community pool</div><div class="v" id="pool">–</div><div class="thin"><i id="poolBar" style="width:0"></i></div><div class="s" id="poolSub"></div></div>
-    <div class="panel stat"><div class="lbl">Burned / cancelled forever</div><div class="v" id="burned">–</div><div class="thin"><i id="burnBar" style="width:0;background:var(--orange)"></i></div><div class="s" id="burnSub"></div></div>
+    <div class="panel stat"><div class="lbl">Independent holders</div><div class="v" id="indep">…</div><div class="thin"><i id="msBar" style="width:0"></i></div><div class="s" id="ms"></div></div>
+    <div class="panel stat"><div class="lbl">Supply</div><div class="v" id="supply">…</div><div class="thin"><i id="supplyBar" style="width:0"></i></div><div class="s" id="supplySub"></div></div>
+    <div class="panel stat"><div class="lbl">Community pool</div><div class="v" id="pool">…</div><div class="thin"><i id="poolBar" style="width:0"></i></div><div class="s" id="poolSub"></div></div>
+    <div class="panel stat"><div class="lbl">Burned / cancelled forever</div><div class="v" id="burned">…</div><div class="thin"><i id="burnBar" style="width:0;background:var(--orange)"></i></div><div class="s" id="burnSub"></div></div>
   </div>
 
   <section class="panel term" aria-labelledby="termH">
@@ -267,7 +281,7 @@
       <p class="note" style="margin:16px 0 0" id="payNote"></p>
     </section>
     <section class="panel" aria-labelledby="calH">
-      <div class="ph"><h2 id="calH">Streak calendar</h2><span class="tag" id="seasonTag">season –</span></div>
+      <div class="ph"><h2 id="calH">Streak calendar</h2><span class="tag" id="seasonTag">season …</span></div>
       <div class="days" id="days"></div>
       <div class="legend"><span><i style="background:var(--lime)"></i>Hit: pool paid</span><span><i style="background:rgba(229,96,44,0.3);outline:1px solid var(--orange)"></i>Missed: slice burned</span><span><i style="outline:1px dashed var(--line-2)"></i>Open / unsettled</span></div>
       <p class="note" id="calNote" style="margin:10px 0 0"></p>
@@ -318,32 +332,37 @@ const COIN = q.get("coin") || DEFAULT_COIN;
 const MAINNET = COIN.endsWith(".near");
 const RPCS = q.get("rpc") ? [q.get("rpc")] : MAINNET
   ? ["https://free.rpc.fastnear.com", "https://near.drpc.org"]
-  : ["https://test.rpc.fastnear.com", "https://near-testnet.drpc.org", "https://rpc.testnet.near.org"];
+  : ["https://test.rpc.fastnear.com", "https://near-testnet.drpc.org", "https://near-testnet.gateway.tatum.io"];
 let rpcIdx = 0;
 const rpcUrl = () => RPCS[rpcIdx % RPCS.length];
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// at most 4 requests in flight; on a rate limit or network error rotate to the next public RPC
-let inflight = 0; const waiters = [];
-const acquire = () => inflight < 4 ? (inflight++, Promise.resolve()) : new Promise((r) => waiters.push(r));
-const release = () => { const w = waiters.shift(); if (w) w(); else inflight--; };
+// Two request lanes: background refreshes get 3 slots and whatever the visitor just asked for
+// (a terminal command) gets its own 3, so a click never waits behind the page's own loading.
+// Every request times out after 8 s; on a timeout, rate limit or network error the next public
+// RPC is tried.
+const lane = (n) => ({ n, inflight: 0, waiters: [] });
+const BG = lane(3), FG = lane(3);
+const acquire = (l) => l.inflight < l.n ? (l.inflight++, Promise.resolve()) : new Promise((r) => l.waiters.push(r));
+const release = (l) => { const w = l.waiters.shift(); if (w) w(); else l.inflight--; };
 async function rpc(method, params) {
-  await acquire();
+  const l = running ? FG : BG;
+  await acquire(l);
   try {
     for (let i = 0; ; i++) {
       let r;
       try {
-        r = await fetch(rpcUrl(), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
-      } catch (e) { if (i < 6) { rpcIdx++; await sleep(400 * 2 ** i); continue; } throw e; }
-      if ((r.status === 429 || r.status >= 500) && i < 6) { rpcIdx++; await sleep(400 * 2 ** i); continue; }
+        r = await fetch(rpcUrl(), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(8000) });
+      } catch (e) { if (i < 6) { rpcIdx++; await sleep(300 * 2 ** i); continue; } throw new Error(e?.name === "TimeoutError" ? "the public RPC endpoints are not answering; try again in a minute" : e.message); }
+      if ((r.status === 429 || r.status >= 500) && i < 6) { rpcIdx++; await sleep(300 * 2 ** i); continue; }
       const j = await r.json();
       if (j.error) throw new Error(j.error.data || j.error.message || JSON.stringify(j.error));
       if (j.result?.error) throw new Error(j.result.error);
       return j.result;
     }
-  } finally { release(); }
+  } finally { release(l); }
 }
 async function view(method, args = {}, contract = COIN) {
   const res = await rpc("query", { request_type: "call_function", finality: "optimistic", account_id: contract, method_name: method, args_base64: btoa(JSON.stringify(args)) });
@@ -405,6 +424,8 @@ document.addEventListener("click", (e) => { if (REDUCED || !e.target.closest?.("
 
 // ============================================================ data
 const D = { heavyAt: 0, ledger: [], holders: [], flags: new Map(), members: new Map() };
+let running = false; // the terminal command in progress, if any (its RPC calls use the FG lane)
+const queued = []; // commands typed or clicked while another one runs, in order
 const MISSING = /MethodNotFound|method.*not found|CodeDoesNotExist/i;
 
 async function loadLight() {
@@ -431,6 +452,8 @@ async function loadHeavy() {
   D.holders = holders.map((h, i) => ({ ...h, flag: flags[i], member: members[i], earned: BigInt(members[i]?.rewards_total ?? 0) + BigInt(claimable[i]) }));
   Object.assign(D, { launch, creator, links, pks, threshold, vests, keys, heavyAt: Date.now() });
   D.tap = await view("info", {}, `tap.${creator}`).then((i) => ({ id: `tap.${creator}`, amount: i[1], served: i[2] })).catch(() => null);
+  const guests = D.holders.filter((h) => h.account_id.startsWith("insydr-guest-"));
+  D.visitors = D.tap ? { joined: D.tap.served, checked: guests.filter((h) => h.member && h.member.last_day !== null && h.member.last_day !== undefined).length } : null;
 }
 
 // ============================================================ render
@@ -482,7 +505,7 @@ function renderLight() {
   // turnout meter
   const turnout = Number(today.turnout ?? 0), target = Number(s.turnout_target), need = today.unique < cfg.quorum_min;
   const scale = Math.max(target * 1.6, turnout * 1.15, 1), onTrack = started && turnout >= target && !need;
-  countUp($("turnout"), turnout / 1e6, (v) => v.toFixed(2)); $("turnOf").textContent = `of ${wt(target)} needed`;
+  countUp($("turnout"), turnout / 1e6, (v) => v.toFixed(2)); $("turnOf").textContent = target > 0 ? `of ${wt(target)} needed` : `first day: needs ${cfg.quorum_min} independent check-ins`;
   $("trackFill").style.width = pct(turnout, scale) + "%"; $("trackFill").className = onTrack ? "" : "low"; $("trackMark").style.left = Math.min(96, Math.max(4, pct(target, scale))) + "%"; $("trackMark").hidden = !(target > 0);
   $("turnTag").textContent = !started ? "not started" : onTrack ? "target met" : need ? `needs ${cfg.quorum_min - today.unique} more people` : "below target";
   $("turnTag").className = "tag" + (onTrack ? " lime" : "");
@@ -493,7 +516,7 @@ function renderLight() {
   // stats
   const next = cfg.milestones[s.milestone_idx], max = BigInt(cfg.max_supply), supPct = Number((BigInt(s.total_supply) * 1000n) / max) / 10;
   countUp($("indep"), s.independent_holders); $("msBar").style.width = next ? pct(s.independent_holders, next) + "%" : "100%";
-  $("ms").textContent = next ? `next tranche at ${next} · milestone ${s.milestone_idx + 1}/${cfg.milestones.length} · ${s.holder_count} wallets hold it` : "all milestones reached";
+  $("ms").textContent = next ? `${s.milestone_idx}/${cfg.milestones.length} milestones reached · next at ${next}${s.independent_holders >= next ? ` (qualifies; one tranche per ${dayLen(cfg.tranche_cooldown_days * dayMs)})` : ""} · ${s.holder_count} wallets hold it` : "all milestones reached";
   countUp($("supply"), tokN(s.total_supply), short); $("supplyBar").style.width = supPct + "%"; $("supplySub").textContent = `${supPct}% of ${tok(cfg.max_supply)} max · ${tok(s.reserve)} locked in reserve`;
   countUp($("pool"), tokN(s.pool_free), short); $("poolBar").style.width = pct(tokN(s.pool_free), tokN(s.total_supply)) + "%"; $("poolSub").textContent = `${cfg.daily_payout_bps / 100}% paid per hit day · ${tok(s.pool_committed)} owed to check-ins`;
   const gone = BigInt(s.burned) + BigInt(s.cancelled); countUp($("burned"), tokN(gone), short); $("burnBar").style.width = pct(tokN(gone), tokN(cfg.max_supply)) * 4 + "%";
@@ -560,6 +583,9 @@ function renderHeavy() {
   ].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   $("lockTag").textContent = D.keys === 0 ? "locked: 0 keys" : D.keys === null ? "…" : "not locked yet"; $("lockTag").className = "tag" + (D.keys === 0 ? " lime" : "");
   $("rulesTag").textContent = D.keys === 0 ? "no setters, no keys" : "no setters";
+  if (D.visitors) { $("visitors").hidden = false; $("visitors").textContent = D.visitors.joined > 0
+    ? `${D.visitors.joined} visitor${D.visitors.joined === 1 ? "" : "s"} joined from this page · ${D.visitors.checked} checked in`
+    : "no visitors yet: press Join as guest below to be the first, no wallet needed"; }
   $("links").innerHTML = D.links.map((l) => `${esc(l.label)}: <span class="mono" style="color:var(--ink-2)">${esc(l.url)}</span>`).join("<br>");
 }
 
@@ -597,7 +623,8 @@ async function nearApiLib() {
 async function guestAccount() {
   if (!guest) throw new Error("no guest account yet: run `join` first");
   const lib = await nearApiLib();
-  if (!api) { const ks = new lib.keyStores.InMemoryKeyStore(); await ks.setKey("testnet", guest.id, lib.KeyPair.fromString(guest.key)); api = await lib.connect({ networkId: "testnet", nodeUrl: RPCS[0], keyStore: ks }); }
+  if (!api) { const ks = new lib.keyStores.InMemoryKeyStore(); await ks.setKey("testnet", guest.id, lib.KeyPair.fromString(guest.key)); const P = lib.providers, provider = P?.FailoverRpcProvider ? new P.FailoverRpcProvider(RPCS.map((url) => new P.JsonRpcProvider({ url }))) : undefined;
+    api = await lib.connect({ networkId: "testnet", nodeUrl: rpcUrl(), keyStore: ks, ...(provider ? { provider } : {}) }); }
   return api.account(guest.id);
 }
 async function send(contractId, methodName, args = {}, gasT = 100, deposit = "0") {
@@ -610,7 +637,7 @@ const need = () => { if (MAINNET) throw new Error("guest mode is testnet only");
 const CMDS = {
   help: ["this list", async () => {
     out("READ (no account needed)", "hi");
-    for (const k of ["status", "verify", "farms", "split", "whois", "ledger", "day", "oracle", "rules"]) out(`  ${pad(k + (USAGE[k] ? " " + USAGE[k] : ""), 26)} ${CMDS[k][0]}`);
+    for (const k of ["status", "verify", "farms", "split", "visitors", "whois", "ledger", "day", "oracle", "rules"]) out(`  ${pad(k + (USAGE[k] ? " " + USAGE[k] : ""), 26)} ${CMDS[k][0]}`);
     out("ACT (creates a throwaway testnet account in this browser)", "hi");
     for (const k of ["join", "checkin", "claim", "me", "attack", "leave"]) out(`  ${pad(k + (USAGE[k] ? " " + USAGE[k] : ""), 26)} ${CMDS[k][0]}`);
     out("  clear                      wipe the screen");
@@ -618,12 +645,14 @@ const CMDS = {
   status: ["the coin right now", async () => { await loadLight(); renderLight(); const { s, cfg, today } = D;
     out(`${D.meta.name} ($${D.meta.symbol})  ${COIN}`, "hi");
     out(`streak ${s.community_streak} (best ${s.best_streak})   day ${s.current_day}   1 day = ${dayLen(D.dayMs)}`);
-    out(`today: turnout ${wt(today.turnout ?? 0)} of ${wt(s.turnout_target)} needed, ${today.checkins} check-ins, ${today.unique} independent`);
+    out(`today: turnout ${wt(today.turnout ?? 0)} ${Number(s.turnout_target) > 0 ? `of ${wt(s.turnout_target)} needed` : `(first day: needs ${cfg.quorum_min} independent check-ins)`}, ${today.checkins} check-ins, ${today.unique} independent`);
     out(`supply ${tok(s.total_supply)} of ${tok(cfg.max_supply)}   reserve ${tok(s.reserve)}   pool ${tok(s.pool_free)}   burned ${tok(s.burned)}   cancelled ${tok(s.cancelled)}`);
-    out(`independent holders ${s.independent_holders} of ${s.holder_count} wallets   milestone ${s.milestone_idx}/${cfg.milestones.length}`); }],
+    out(`independent holders ${s.independent_holders} of ${s.holder_count} wallets   ${s.milestone_idx}/${cfg.milestones.length} milestones reached`);
+    if (D.visitors) out(`visitors who tried it from this page: ${D.visitors.joined} joined, ${D.visitors.checked} checked in`); }],
   verify: ["check the claims this page makes against the chain", async () => {
     const line = (ok, text) => out(`${ok ? "PASS" : "FAIL"}  ${text}`, ok ? "ok" : "bad");
-    await loadLight(); D.heavyAt = 0; await loadHeavy(); renderLight(); renderHeavy(); const { s, cfg } = D;
+    out("reading the coin and every holder from the chain…", "dim");
+    await loadLight(); await loadHeavy(); renderLight(); renderHeavy(); const { s, cfg } = D;
     line(D.keys === 0, D.keys === 0 ? "the contract account has 0 access keys: nobody can change or redeploy it" : `the contract account still has ${D.keys} access key(s): not locked`);
     const acc = await rpc("query", { request_type: "view_account", finality: "final", account_id: COIN });
     out(`      code hash ${acc.code_hash}`, "dim");
@@ -656,6 +685,13 @@ const CMDS = {
     out(`  1 wallet      weight ${one.toFixed(4)}`); out(`  ${pad(k + " wallets", 13)} weight ${many.toFixed(4)}  (${short(c / k)} each)`);
     if (Math.abs(one - many) < 1e-9) out("same weight: splitting earns nothing.", "ok");
     else { out(`splitting gets around the whale cap (${(many / one).toFixed(1)}x). That is the only thing it buys.`, "bad"); out(`if the wallets are fed from one stack, the contract records it and the oracle clusters them: weight ${(many / k).toFixed(4)} in total.`); } }],
+  visitors: ["the guest accounts behind the visitor count, read from the chain", async () => { await loadHeavy();
+    if (!D.visitors) return out("this coin has no demo tap, so there are no guest visitors to count");
+    const guests = D.holders.filter((h) => h.account_id.startsWith("insydr-guest-"));
+    out(`the demo tap has served ${D.visitors.joined} account(s); ${D.visitors.checked} of them checked in at least once`, "hi");
+    for (const h of guests.slice(0, 40)) out(`  ${pad(h.account_id, 34)} ${h.member && h.member.last_day !== null && h.member.last_day !== undefined ? `checked in, streak ${h.member.streak}, last day ${h.member.last_day}` : "joined, not checked in yet"}`);
+    if (guests.length > 40) out(`  … and ${guests.length - 40} more`, "dim");
+    if (!guests.length) out("nobody yet: press Join as guest, then Check in", "dim"); }],
   whois: ["everything the contract knows about an account", async (id) => { if (!id) throw new Error("usage: whois <account>");
     const [bal, m, cl, src, w, claim] = await Promise.all([view("ft_balance_of", { account_id: id }), view("get_member", { account_id: id }), view("get_cluster", { account_id: id }), view("get_source", { account_id: id }), view("preview_weight", { account_id: id }).catch(() => "0"), view("get_claimable", { account_id: id })]);
     out(id, "hi"); out(`  balance ${tok(bal)}   weight if checking in now ${(Number(w) / 1e6).toFixed(4)}   claimable ${tok(claim)}`);
@@ -686,7 +722,10 @@ const CMDS = {
     out("now try: checkin"); }],
   checkin: ["check in for today as your guest account", async () => { need(); const before = await view("preview_weight", { account_id: (guest ?? {}).id ?? "x" }).catch(() => "0");
     out("signing check_in…", "dim"); const paid = await send(COIN, "check_in", {}, 80);
-    out(`checked in. weight ${(Number(before) / 1e6).toFixed(4)}, paid ${tok(paid ?? "0")} from earlier days`, "ok"); await refresh(); }],
+    out(`checked in. weight ${(Number(before) / 1e6).toFixed(4)}, paid ${tok(paid ?? "0")} from earlier days`, "ok");
+    const msg = `I just checked in to $${D.meta.symbol}, a memecoin where 300 wallets earn what 1 does and the contract has zero keys. Try to farm it: ${location.origin}${location.pathname}\n\nBuilt at NEAR HACKATHON @NEARProtocol #NEARHackathon`;
+    const a = document.createElement("a"); a.href = "https://x.com/intent/post?text=" + encodeURIComponent(msg); a.target = "_blank"; a.rel = "noopener"; a.textContent = "share your check-in on X";
+    const d = out("", "dim"); d.append("come back tomorrow to keep the streak going, or ", a); await refresh(true); }],
   claim: ["claim settled rewards", async () => { need(); out("signing claim…", "dim"); const paid = await send(COIN, "claim", {}, 80); out(`claimed ${tok(paid ?? "0")}`, "ok"); }],
   me: ["your guest account", async () => { if (!guest) throw new Error("no guest account yet: run `join` first"); await CMDS.whois[1](guest.id); }],
   leave: ["forget the guest account in this browser", async () => { localStorage.removeItem(GKEY); guest = null; api = null; out("guest account forgotten"); }],
@@ -719,13 +758,15 @@ function wasmExports(b) {
   return [];
 }
 
-let running = false;
 async function run(lineText) {
-  const text = lineText.trim(); if (!text || running) return; running = true; hist.push(text); hi = hist.length; out(text, "cmd");
+  const text = lineText.trim(); if (!text) return;
+  if (running) { out(`still working on "${running}"; "${text}" is queued`, "dim"); if (queued.length < 5) queued.push(text); return; }
+  running = text; hist.push(text); hi = hist.length; out(text, "cmd");
   const [name, ...args] = text.split(/\s+/); const cmd = CMDS[name.toLowerCase()];
   try { if (!cmd) throw new Error(`unknown command "${name}". Type help.`); if (!D.s) await refresh(); await cmd[1](...args); }
   catch (e) { out(panic(e), "bad"); }
   running = false;
+  if (queued.length) run(queued.shift());
 }
 cli.addEventListener("keydown", (e) => { if (e.key === "Enter") { const v = cli.value; cli.value = ""; run(v); } else if (e.key === "ArrowUp") { if (hi > 0) cli.value = hist[--hi]; e.preventDefault(); } else if (e.key === "ArrowDown") { cli.value = hi < hist.length - 1 ? hist[++hi] : ((hi = hist.length), ""); } });
 $("quick").addEventListener("click", (e) => { const b = e.target.closest("[data-cmd]"); if (b) run(b.dataset.cmd); });
