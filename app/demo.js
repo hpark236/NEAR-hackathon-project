@@ -12,7 +12,7 @@
 // State lives in app/data/demo.json (account ids and progress only; keys stay in app/.keys/).
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createTestnetAccount, readJson, writeJson, NETWORK } from "./lib/near.js";
+import { createTestnetAccount, readJson, writeJson, NETWORK, view } from "./lib/near.js";
 import { Scenario, SIZES, fmt } from "./scenario.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -87,7 +87,9 @@ if (cmd === "run") {
   if (!s.ritual_started_ms) {
     const r = await sc.oracle();
     log(`not started yet: ${r.independent_holders} independent holders with enough coin-age so far`);
-  } else if (st.keptDay === s.current_day) {
+  } else if (st.keptDay === s.current_day || (await view(st.coin, "get_member", { account_id: st.lazy[0] }))?.last_day === s.current_day) {
+    // the chain itself says today is done (works without local state, e.g. on a CI runner)
+    st.keptDay = s.current_day;
     log(`day ${s.current_day} already kept`);
   } else {
     const r = await sc.oracle();
@@ -97,7 +99,8 @@ if (cmd === "run") {
     log(`day ${s.current_day}: ${ok.filter(Boolean).length} check-ins (${organicToday.length}/${st.organic.length} real holders), ${r.independent_holders} independent holders, streak ${s.community_streak}`);
     if (s.current_day >= 2 && !st.challenge) await sc.challenge();
     // the community grows: one new holder buys in on most days
-    if (st.organic.length < 40 && Math.random() < 0.8) log(`newcomer ${(await sc.newcomer(300_000 + Math.floor(Math.random() * 6) * 60_000)).slice(0, 10)}… bought in`);
+    // newcomers need fresh keys kept on disk, so only a machine with persistent state adds them
+    if (!process.env.CI && st.organic.length < 40 && Math.random() < 0.8) log(`newcomer ${(await sc.newcomer(300_000 + Math.floor(Math.random() * 6) * 60_000)).slice(0, 10)}… bought in`);
   }
 } else if (cmd === "report") await report();
 else if (cmd === "lock") await sc.lock();
