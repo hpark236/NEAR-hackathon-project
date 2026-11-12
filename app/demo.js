@@ -97,7 +97,7 @@ if (cmd === "run") {
     st.keptDay = s.current_day;
     writeJson(STATE, st);
     log(`day ${s.current_day}: ${ok.filter(Boolean).length} check-ins (${organicToday.length}/${st.organic.length} real holders), ${r.independent_holders} independent holders, streak ${s.community_streak}`);
-    if (s.current_day >= 2 && !st.challenge) await sc.challenge();
+    if (!process.env.CI && s.current_day >= 2 && !st.challenge) await sc.challenge();
     // the community grows: one new holder buys in on most days
     // newcomers need fresh keys kept on disk, so only a machine with persistent state adds them
     if (!process.env.CI && st.organic.length < 40 && Math.random() < 0.8) log(`newcomer ${(await sc.newcomer(300_000 + Math.floor(Math.random() * 6) * 60_000)).slice(0, 10)}… bought in`);
