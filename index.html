@@ -648,7 +648,7 @@ const CMDS = {
     for (const [id, ms] of by) { const held = ms.reduce((t, h) => t + BigInt(h.balance), 0n), earned = ms.reduce((t, h) => t + h.earned, 0n);
       out(`${id === "deployer" ? "CREATOR SIDE" : "FARM " + acct(id.slice(2))}  ${ms.length} wallets, hold ${tok(held)}, earned ${tok(earned)}`, "hi");
       for (const h of ms.slice(0, 8)) { const parent = h.account_id.split(".").length > 2 ? h.account_id.slice(h.account_id.indexOf(".") + 1) : null;
-        out(`  ${pad(acct(h.account_id), 26)} ${pad(tok(h.balance), 9)} ${h.source && h.source !== D.launch ? "coins from " + acct(h.source) : parent ? "sub-account of " + acct(parent) : "named creator account"}`); }
+        out(`  ${pad(acct(h.account_id), 26)} ${pad(tok(h.balance), 9)} ${h.source && h.source !== D.launch ? "coins from " + acct(h.source) : parent ? "sub-account of " + acct(parent) : (id === "deployer" ? "named creator account" : "the account that fed the others")}`); }
       if (ms.length > 8) out(`  … and ${ms.length - 8} more`, "dim"); } }],
   split: ["does splitting a stack across wallets earn more?", async (coins = "3000000", n = "30") => { const c = Number(coins), k = Math.max(1, Number(n)), cap = tokN(BigInt(D.cfg.max_supply) * BigInt(D.cfg.balance_cap_bps) / 10000n);
     const one = Math.min(c, cap) / cap, many = k * Math.min(c / k, cap) / cap;
