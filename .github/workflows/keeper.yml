@@ -1,0 +1,44 @@
+# Keeps the live testnet coin's scripted community checking in, without any one machine staying
+# awake. `demo.js keep` is idempotent and acts at most once per 12-hour coin day (it asks the chain
+# whether today is already done), so running it every hour is safe.
+#
+# Needs the INSYDR_KEYS repository secret: the live coin's testnet-only demo keys, uploaded once
+# with scripts/keeper-secret.sh from the machine that holds app/.keys. Without it, this job only
+# logs that it has nothing to do.
+name: keeper
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: keeper
+  cancel-in-progress: false
+
+jobs:
+  keep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: restore the demo keys
+        id: keys
+        env:
+          INSYDR_KEYS: ${{ secrets.INSYDR_KEYS }}
+        run: |
+          if [ -z "$INSYDR_KEYS" ]; then echo "INSYDR_KEYS is not set: nothing to keep"; echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          printf '%s' "$INSYDR_KEYS" | base64 -d | tar xz -C app
+          echo "restored $(ls app/.keys/testnet | wc -l) testnet keys"
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+      - if: steps.keys.outputs.ok == 'true'
+        run: npm ci
+        working-directory: app
+      - name: keep today
+        if: steps.keys.outputs.ok == 'true'
+        run: node demo.js keep --state live
+        working-directory: app

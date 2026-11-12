@@ -5,7 +5,9 @@ Everything needed to submit, short of the things only the team lead can provide 
 ## Checklist (from the hackathon's `SUBMITTING.md`)
 
 - [x] Repository is public, and GitHub Pages serves `web/` at https://hpark236.github.io/NEAR-hackathon-project/
-- [ ] CI is pushed and green (needs `gh auth refresh -h github.com -s workflow`, then commit `.github/workflows/ci.yml`)
+- [ ] CI is green: `.github/workflows/ci.yml` runs the unit tests, the sandbox end-to-end run and a check that the simulation and strength test regenerate the published numbers
+- [ ] The live coin keeps itself alive: on the machine that holds `app/.keys`, commit `app/data/live.json` if it changed, run `scripts/keeper-secret.sh` once, then `gh workflow run keeper.yml` and check that the run logs a day kept. Every hour after that, `.github/workflows/keeper.yml` keeps the coin's scripted community checking in, so judges see days of history (hits, a miss if one happens, rewards by group) instead of day 0
+- [ ] Real visitors: ask 15 to 30 people to open the page, press **Join as guest**, then **Check in**. The page counts them from the chain (accounts the tap served, and how many checked in), so the number is verifiable and can go in the post
 - [ ] Demo post is live on X: says it was built at NEAR HACKATHON, tags @NEARProtocol and #NEARHackathon, has the video attached
 - [ ] A mainnet NEAR account for the payout exists (the team's own; never invented)
 - [ ] Every fitting track selected: `memecoins`, `social`, `security`

@@ -1,0 +1,51 @@
+name: ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  contract:
+    name: contract unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts/insydr
+      - run: cargo test
+        working-directory: contracts/insydr
+
+  app:
+    name: oracle tests and sandbox end-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+        working-directory: app
+      - run: npm test
+        working-directory: app
+      - name: npm run e2e (the committed wasm on a local NEAR sandbox, 24 checks)
+        run: npm run e2e
+        working-directory: app
+
+  evidence:
+    name: simulation and strength test reproduce the published numbers
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: python3 sim/insydr_sim.py && python3 sim/strength_test.py
+      - name: the regenerated summary and strength test match what is committed
+        run: git diff --exit-code sim/results/summary.csv docs/STRENGTH-TEST.md

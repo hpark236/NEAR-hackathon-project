@@ -1,5 +1,7 @@
 # INSYDR
 
+[![ci](https://github.com/hpark236/NEAR-hackathon-project/actions/workflows/ci.yml/badge.svg)](https://github.com/hpark236/NEAR-hackathon-project/actions/workflows/ci.yml)
+
 > **Everyone's an insider. Except the insiders.**
 
 **INSYDR is a NEP-141 memecoin contract that pays the people who show up and nobody else.** Holders check in once a day. If the community's turnout holds, the pool pays that day's check-ins; if it drops, part of the pool burns and the streak resets. New supply mints only when the number of *independent* holders grows. Wallet farms, split stacks and the creator's own wallets earn close to nothing, and after launch nobody can change a rule.
@@ -10,7 +12,7 @@ Built at NEAR HACKATHON (November 2026). Tracks: **Memecoins With Mechanics** (p
 |---|---|
 | **Live coin (testnet)** | [`idog-bqdss4.testnet`](https://testnet.nearblocks.io/address/idog-bqdss4.testnet): 12-hour days, 2-of-3 oracle, **0 access keys since deployment** |
 | **Coin page** | **https://hpark236.github.io/NEAR-hackathon-project/** (static; reads the contract live; has a test terminal). Source: `web/index.html` |
-| **Run everything without a wallet** | `npm run e2e`: the real wasm on a local NEAR sandbox, 24 checks, about 2 minutes |
+| **Run everything without a wallet** | `npm run e2e`: the real wasm on a local NEAR sandbox, 24 checks, about 3 minutes |
 | **Tests** | 44 contract unit tests (one is a 6,000-operation accounting fuzz), 13 oracle tests, 24 end-to-end checks |
 | **Evidence** | [60-day simulation](sim/README.md) and a [strength test](docs/STRENGTH-TEST.md): what broke when we attacked our own design, what we changed, what is still weak |
 | **Tested binary** | [`contracts/insydr/res/insydr.wasm`](contracts/insydr/res/insydr.wasm), the exact code deployed (hash check below) |
@@ -28,10 +30,10 @@ The track's example prompt is a daily check-in streak coin. Built naively, that 
 ```sh
 git clone https://github.com/hpark236/NEAR-hackathon-project && cd NEAR-hackathon-project
 
-# the rules: 44 unit tests, about 2 minutes (Rust stable)
+# the rules: 44 unit tests, about 2 minutes on a first build (Rust stable)
 cd contracts/insydr && cargo test && cd ../..
 
-# the whole product on a local NEAR chain: about 2 minutes (Node 22)
+# the whole product on a local NEAR chain: about 3 minutes (Node 22)
 cd app && npm install && npm test && npm run e2e && cd ..
 
 # the evidence: 60-day simulation and seven attack experiments (Python 3.10+, no packages needed)
@@ -165,10 +167,10 @@ The full list, seven experiments with numbers (bots against people, realistic at
 | Claim | Status |
 |---|---|
 | The contract is deployed on NEAR testnet and locked | **Real.** `idog-bqdss4.testnet`, 0 access keys, code hash matches the committed wasm. Commands above. |
-| The whole scenario runs against the real wasm | **Real**, on a local NEAR sandbox (`npm run e2e`). The sandbox fast-forwards its clock, so ten days take two minutes. |
-| The live coin has a community | **Simulated community, real transactions.** 38 scripted testnet accounts (12 "real holders", three kinds of farm, the creator's wallets) check in through a keeper script (`node demo.js keep`), about once per 12-hour coin day. Misses happen when the machine running the keeper is asleep; they are real burns. |
+| The whole scenario runs against the real wasm | **Real**, on a local NEAR sandbox (`npm run e2e`). The sandbox fast-forwards its clock, so ten days take about three minutes. CI runs it on every push, along with the unit tests and a check that the simulation and strength test regenerate the published numbers. |
+| The live coin has a community | **Simulated community, real transactions.** 38 scripted testnet accounts (12 "real holders", three kinds of farm, the creator's wallets) check in through a keeper script (`node demo.js keep`), about once per 12-hour coin day. It runs hourly as a GitHub Actions job ([`keeper.yml`](.github/workflows/keeper.yml)) and acts at most once per coin day. Any miss is a real burn. |
 | The oracle is 2-of-3 | **Enforced by the contract.** In this demo one process holds all three keys. In production each signer would run `app/oracle.js` separately; the scoring is a pure function of on-chain state, so they compute the same payload. |
-| A visitor can check in from the page without a wallet | **Real on testnet**, exercised in Chrome: guest account from the public faucet, coins from the tap contract, a signed `check_in`, and the attack transactions. |
+| A visitor can check in from the page without a wallet | **Real on testnet**, exercised in Chrome: guest account from the public faucet, coins from the tap contract, a signed `check_in`, and the attack transactions. The page counts real visitors from the chain: how many accounts the tap has served and how many of them checked in. |
 | The page works with a NEAR wallet (MyNearWallet, Meteor) | **Not built.** The page signs only with its own throwaway guest key. |
 | Farm and insider results | **Measured** in the sandbox run and on the live coin (the page's "Who gets paid" chart computes them from the contract). The 60-day figures are **simulated**. |
 | meme.cooking integration | **Not built.** A coin launched there has a fixed supply in a factory contract; INSYDR's rules need its own contract. Bridging the two (a wrapper a meme.cooking coin migrates into) is future work. |
@@ -206,6 +208,7 @@ The full list, seven experiments with numbers (bots against people, realistic at
 - **Checking in is scriptable.** INSYDR does not prove a human is present. It makes automation worth what attendance is worth, and wallet count worth nothing.
 - **The oracle is trusted for two things**: when supply tranches mint and which wallets are flagged. It is bounded and its evidence is on-chain, but the signers are a committee. A wrong flag lowers a wallet's rewards; it can never freeze or take coins.
 - **Rewards are redistribution, not yield.** People who show up are paid by diluting people who do not. When growth stops the pool decays and rewards shrink.
+- **Each coin needs its own oracle keys.** An attestation does not name the coin it is for, so if two coins trusted the same signers, one coin's report could be replayed on the other. The damage is bounded (a report can never claim more holders than the coin has on-chain, and at most one tranche mints per cooldown), and the live coin's signers serve only this coin. The next version binds the coin's account id into the signed payload.
 - **A locked contract cannot be patched.**
 - **Demo parameters are demo-scale**, and the live community is scripted.
 - Testnet only. Not audited.

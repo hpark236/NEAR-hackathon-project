@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>INSYDR card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Martian+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: #07060b; }
+  .card { position: absolute; left: 0; top: 0; width: 1200px; height: 630px; box-sizing: border-box; padding: 64px 72px; overflow: hidden;
+          color: #f2f0f8; font-family: "Instrument Sans", Helvetica, Arial, sans-serif;
+          background: linear-gradient(118deg, #2a0aa8 0%, #4f1df0 34%, #6d28ff 62%, #8b3df2 100%); }
+  .card::before { content: ""; position: absolute; inset: 0; opacity: 0.18;
+                  background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+                  background-size: 48px 48px; }
+  .in { position: relative; height: 100%; display: flex; flex-direction: column; }
+  .top { display: flex; align-items: center; justify-content: space-between; font: 700 22px/1 "Martian Mono", monospace; letter-spacing: 0.32em; }
+  .tag { font: 600 15px/1 "Martian Mono", monospace; letter-spacing: 0.14em; padding: 9px 12px; border: 1.5px solid rgba(255,255,255,0.55); border-radius: 2px; }
+  h1 { margin: 64px 0 0; font: 700 74px/1.04 "Instrument Sans", sans-serif; letter-spacing: -0.02em; max-width: 980px; }
+  h1 em { font-style: normal; color: #d7f25c; }
+  .sub { margin-top: 22px; font: 500 27px/1.35 "Instrument Sans", sans-serif; color: rgba(255,255,255,0.88); max-width: 940px; }
+  .facts { margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+  .facts span { font: 600 14px/1 "Martian Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; padding: 11px 12px; border-radius: 2px;
+                background: rgba(10, 4, 40, 0.34); border: 1.5px solid rgba(255,255,255,0.3); }
+  .facts span.lime { background: #d7f25c; color: #120a2e; border-color: #d7f25c; }
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="in">
+    <div class="top"><span>INSYDR</span><span class="tag">NEAR TESTNET · LIVE</span></div>
+    <h1>Everyone's an insider.<br><em>Except the insiders.</em></h1>
+    <div class="sub">A streak memecoin where 300 wallets earn what 1 does, the creator's wallets earn almost nothing, and nobody can change a rule.</div>
+    <div class="facts"><span class="lime">0 access keys</span><span>44 contract tests</span><span>24 end-to-end checks</span><span>try to break it, no wallet</span></div>
+  </div>
+</div>
+</body>
+</html>
