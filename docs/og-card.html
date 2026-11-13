@@ -3,37 +3,61 @@
 <head>
 <meta charset="utf-8">
 <title>INSYDR card</title>
+<!-- Source of web/og.png (1200x630). Render with:
+     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars --window-size=1200,630 --virtual-time-budget=4000 --screenshot=web/og.png docs/og-card.html -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Martian+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kode+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=technor@300,600&display=swap" rel="stylesheet">
 <style>
-  html, body { margin: 0; background: #07060b; }
-  .card { position: absolute; left: 0; top: 0; width: 1200px; height: 630px; box-sizing: border-box; padding: 64px 72px; overflow: hidden;
-          color: #f2f0f8; font-family: "Instrument Sans", Helvetica, Arial, sans-serif;
-          background: linear-gradient(118deg, #2a0aa8 0%, #4f1df0 34%, #6d28ff 62%, #8b3df2 100%); }
-  .card::before { content: ""; position: absolute; inset: 0; opacity: 0.18;
-                  background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
-                  background-size: 48px 48px; }
-  .in { position: relative; height: 100%; display: flex; flex-direction: column; }
-  .top { display: flex; align-items: center; justify-content: space-between; font: 700 22px/1 "Martian Mono", monospace; letter-spacing: 0.32em; }
-  .tag { font: 600 15px/1 "Martian Mono", monospace; letter-spacing: 0.14em; padding: 9px 12px; border: 1.5px solid rgba(255,255,255,0.55); border-radius: 2px; }
-  h1 { margin: 64px 0 0; font: 700 74px/1.04 "Instrument Sans", sans-serif; letter-spacing: -0.02em; max-width: 980px; }
-  h1 em { font-style: normal; color: #d7f25c; }
-  .sub { margin-top: 22px; font: 500 27px/1.35 "Instrument Sans", sans-serif; color: rgba(255,255,255,0.88); max-width: 940px; }
-  .facts { margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap; }
-  .facts span { font: 600 14px/1 "Martian Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; padding: 11px 12px; border-radius: 2px;
-                background: rgba(10, 4, 40, 0.34); border: 1.5px solid rgba(255,255,255,0.3); }
-  .facts span.lime { background: #d7f25c; color: #120a2e; border-color: #d7f25c; }
+  html, body { margin: 0; background: #0c0628; overflow: hidden; }
+  .card { position: absolute; left: 0; top: 0; width: 1200px; height: 630px; overflow: hidden; color: #ededea; font-family: "Technor", Helvetica, Arial, sans-serif; background: radial-gradient(90% 120% at 78% 115%, #3a17b8 0%, #1d0b66 42%, #0c0628 78%); }
+  canvas { position: absolute; inset: 0; width: 1200px; height: 630px; image-rendering: pixelated; }
+  .in { position: relative; height: 100%; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; }
+  .top { display: flex; align-items: center; justify-content: space-between; font: 700 22px/1 "Kode Mono", monospace; letter-spacing: 0.3em; }
+  .top i { font-style: normal; color: #d7f25c; }
+  .mark { display: flex; align-items: center; gap: 16px; }
+  .tag { font: 600 14px/1 "Kode Mono", monospace; letter-spacing: 0.14em; color: #fff; padding: 10px 12px; border: 1.5px solid rgba(255,255,255,0.5); background: rgba(10,4,34,0.5); }
+  h1 { margin: 70px 0 0; font: 300 92px/0.98 "Technor", sans-serif; letter-spacing: -0.02em; max-width: 1000px; }
+  h1 s { text-decoration: none; color: #d7f25c; font-weight: 600; }
+  .facts { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .facts span { font: 600 14px/1 "Kode Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; padding: 11px 12px; color: #fff; border: 1.5px solid rgba(255,255,255,0.3); background: rgba(10,4,34,0.6); }
+  .facts span.on { color: #120a2e; border-color: #d7f25c; background: #d7f25c; }
 </style>
 </head>
 <body>
-<div class="card" id="card">
+<div class="card">
+  <canvas id="c" width="1200" height="630"></canvas>
   <div class="in">
-    <div class="top"><span>INSYDR</span><span class="tag">NEAR TESTNET · LIVE</span></div>
-    <h1>Everyone's an insider.<br><em>Except the insiders.</em></h1>
-    <div class="sub">A streak memecoin where 300 wallets earn what 1 does, the creator's wallets earn almost nothing, and nobody can change a rule.</div>
-    <div class="facts"><span class="lime">0 access keys</span><span>44 contract tests</span><span>24 end-to-end checks</span><span>try to break it, no wallet</span></div>
+    <div class="top"><span>INSY<i>D</i>R</span><span class="tag">NEAR TESTNET</span></div>
+    <h1>Everyone's an insider.<br><s>Except the insiders.</s></h1>
+    <div class="facts"><span class="on">0 access keys</span><span>44 contract tests</span><span>24 end-to-end checks</span><span>try to break it, no wallet</span></div>
   </div>
 </div>
+<script>
+// the same dithered horizon as the live page, one static frame
+const c = document.getElementById("c"), gl = c.getContext("webgl", { preserveDrawingBuffer: true, premultipliedAlpha: false });
+if (gl) {
+  const fs = `precision mediump float;uniform vec2 R;
+float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
+float b2(vec2 a){a=floor(a);return fract(dot(a,vec2(.5,a.y*.75)));}
+float b4(vec2 a){return b2(.5*a)*.25+b2(a);}
+float b8(vec2 a){return b4(.5*a)*.25+b2(a);}
+void main(){float C=2.;vec2 cell=floor(gl_FragCoord.xy/C)*C;vec2 p=(cell-.5*R)/R.y;float asp=R.x/R.y;
+vec2 ctr=vec2(.34*asp,-1.45);float r=1.2;float d=length(p-ctr)-r;float inside=step(d,0.);vec2 q=(p-ctr)/r;
+float lit=clamp(dot(normalize(q+vec2(0.,.0001)),normalize(vec2(.55,1.))),0.,1.);float tex=fbm(q*3.2);
+float surf=inside*(.05+.42*tex*tex)*(.25+.75*lit)*smoothstep(-.55,0.,d);float rim=exp(-abs(d)*26.)*(.35+.65*lit);
+float atmo=(1.-inside)*exp(-d*10.)*(.10+.60*lit);float stars=(1.-inside)*step(.9965,h(floor(cell/3.)))*.55*smoothstep(.05,.5,d);
+float v=max(surf+rim*.9+atmo+stars-.035,0.);float th=b8(cell/C);
+vec3 ink=mix(vec3(.70,.62,1.),vec3(.84,.95,.36),clamp((rim-.35)*2.2*lit,0.,1.));gl_FragColor=v>th+.008?vec4(ink,1.):vec4(0.);}`;
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; };
+  const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}")); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr); gl.useProgram(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const l = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, 2, gl.FLOAT, false, 0, 0);
+  gl.uniform2f(gl.getUniformLocation(pr, "R"), 1200, 630); gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+</script>
 </body>
 </html>
