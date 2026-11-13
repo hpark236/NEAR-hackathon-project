@@ -12,7 +12,7 @@ Built at NEAR HACKATHON (November 2026). Tracks: **Memecoins With Mechanics** (p
 |---|---|
 | **Live coin (testnet)** | [`idog-bqdss4.testnet`](https://testnet.nearblocks.io/address/idog-bqdss4.testnet): 12-hour days, 2-of-3 oracle, **0 access keys since deployment** |
 | **Coin page** | **https://hpark236.github.io/NEAR-hackathon-project/** (static; reads the contract live; has a test terminal). Source: `web/index.html` |
-| **Run everything without a wallet** | `npm run e2e`: the real wasm on a local NEAR sandbox, 24 checks, about 3 minutes |
+| **Run everything without a wallet** | `npm run e2e`: the real wasm on a local NEAR sandbox, 24 checks, 3 to 4 minutes |
 | **Tests** | 44 contract unit tests (one is a 6,000-operation accounting fuzz), 13 oracle tests, 24 end-to-end checks |
 | **Evidence** | [60-day simulation](sim/README.md) and a [strength test](docs/STRENGTH-TEST.md): what broke when we attacked our own design, what we changed, what is still weak |
 | **Tested binary** | [`contracts/insydr/res/insydr.wasm`](contracts/insydr/res/insydr.wasm), the exact code deployed (hash check below) |
@@ -33,8 +33,8 @@ git clone https://github.com/hpark236/NEAR-hackathon-project && cd NEAR-hackatho
 # the rules: 44 unit tests, about 2 minutes on a first build (Rust stable)
 cd contracts/insydr && cargo test && cd ../..
 
-# the whole product on a local NEAR chain: about 3 minutes (Node 22)
-cd app && npm install && npm test && npm run e2e && cd ..
+# the whole product on a local NEAR chain: 3 to 4 minutes (Node 22)
+cd app && npm ci && npm test && npm run e2e && cd ..
 
 # the evidence: 60-day simulation and seven attack experiments (Python 3.10+, no packages needed)
 python3 sim/insydr_sim.py && python3 sim/strength_test.py
@@ -96,6 +96,9 @@ The page reads everything from the contract over public RPC. The terminal in the
 | `attack all` | Seven real transactions that try to break the coin as your guest account: call a mint, change the config, upgrade the code, forge an oracle attestation, register a challenge, claim the creator's earn-out, check in twice. Each is refused by the contract and the refusal message is printed. |
 
 ## For judges
+
+**Start with [JUDGE.md](JUDGE.md)**: every claim, the live check and the offline test for it, and what you should see. Or open the page with [`?run=all`](https://hpark236.github.io/NEAR-hackathon-project/?run=all): its "Check every claim yourself" panel runs seven live checks against the contract (about 2 minutes, a throwaway testnet guest, no wallet) and publishes the results on `window.INSYDR_CHECKS`. A NEAR testnet wallet can be connected instead of the guest through NEAR Connect (Meteor, Intear, HOT, Ledger and others).
+
 
 Previous NEAR hackathons scored technical implementation, design, impact, originality and sustainability. Where each is answered, with the weak spot stated.
 
@@ -211,12 +214,14 @@ The full list, seven experiments with numbers (bots against people, realistic at
 - **Each coin needs its own oracle keys.** An attestation does not name the coin it is for, so if two coins trusted the same signers, one coin's report could be replayed on the other. The damage is bounded (a report can never claim more holders than the coin has on-chain, and at most one tranche mints per cooldown), and the live coin's signers serve only this coin. The next version binds the coin's account id into the signed payload.
 - **A locked contract cannot be patched.**
 - **Demo parameters are demo-scale**, and the live community is scripted.
+- **The demo tap keeps an access key.** `tap.creator-bqddng.testnet` is a faucet for the wallet-free trial and has no power over the coin.
+- **Wallet connection was tested up to the wallet picker.** NEAR Connect opens on testnet with Meteor, Intear, HOT, Ledger and others, and signing is wired through it, but the end-to-end path that was exercised is guest mode.
 - Testnet only. Not audited.
 
 ## Built with
 
 - `near-sdk` 5 and `near-contract-standards` (NEP-141, NEP-145); `near-api-js`; `near-sandbox` for the local chain; `matplotlib` for simulation charts only.
-- The page is plain HTML, CSS and JavaScript. Fonts: Martian Mono and Instrument Sans. Its pointer spotlight, dot grid, text scramble and count-up effects are plain-JS takes on ideas from reactbits.dev.
+- The page is plain HTML, CSS and JavaScript with no build step. Fonts: Technor (Fontshare) and Kode Mono. Its dithered horizon, target cursor, pointer spotlight, text scramble and count-up are plain-JS ports of reactbits.dev components (Target Cursor by David Haz, MIT + Commons Clause). Wallets through NEAR Connect (`@hot-labs/near-connect`).
 - AI coding assistance: Claude Code wrote most of the code and documentation under the author's direction.
 - No code predates the hackathon window.
 

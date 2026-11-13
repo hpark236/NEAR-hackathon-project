@@ -48,4 +48,4 @@ jobs:
           python-version: "3.10"
       - run: python3 sim/insydr_sim.py && python3 sim/strength_test.py
       - name: the regenerated summary and strength test match what is committed
-        run: git diff --exit-code sim/results/summary.csv docs/STRENGTH-TEST.md
+        run: git diff --exit-code sim/results/ docs/STRENGTH-TEST.md

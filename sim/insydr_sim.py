@@ -361,7 +361,8 @@ def main():
             with open(os.path.join(res, f"{sc}_{mode}.csv"), "w", newline="") as f:
                 wr = csv.DictWriter(f, fieldnames=sorted({k for r in rows for k in r}, key=lambda k: (k != "day", k)))
                 wr.writeheader()
-                wr.writerows(rows)
+                # two decimals: identical output on every Python version (float noise differs between releases)
+                wr.writerows([{k: (round(v, 2) if isinstance(v, float) else v) for k, v in r.items()} for r in rows])
             for kind, s in summarize(w).items():
                 summary_rows.append(dict(
                     scenario=sc, mode=mode, actor=kind, accounts=s["n"],
