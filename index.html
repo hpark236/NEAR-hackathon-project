@@ -392,8 +392,12 @@ async function rpc(method, params) {
         r = await fetch(rpcUrl(), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(8000) });
       } catch (e) { if (i < 6) { rpcIdx++; await sleep(300 * 2 ** i); continue; } throw new Error(e?.name === "TimeoutError" ? "the public RPC endpoints are not answering; try again in a minute" : e.message); }
       if ((r.status === 429 || r.status >= 500) && i < 6) { rpcIdx++; await sleep(300 * 2 ** i); continue; }
-      const j = await r.json();
-      if (j.error) throw new Error(j.error.data || j.error.message || JSON.stringify(j.error));
+      // an overloaded public endpoint can answer with a non-JSON body or "No healthy upstream": transient, try the next one
+      const text = await r.text(); let j;
+      try { j = JSON.parse(text); } catch { if (i < 6) { rpcIdx++; await sleep(300 * 2 ** i); continue; } throw new Error("the public RPC endpoints are not answering; try again in a minute"); }
+      const em = j.error ? String(j.error.data || j.error.message || JSON.stringify(j.error)) : "";
+      if (/healthy upstream|temporar|unavailable|timeout|overload/i.test(em) && i < 6) { rpcIdx++; await sleep(300 * 2 ** i); continue; }
+      if (j.error) throw new Error(em);
       if (j.result?.error) throw new Error(j.result.error);
       return j.result;
     }
