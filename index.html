@@ -231,6 +231,16 @@
   .tcur i { position: absolute; top: 0; left: 0; box-sizing: border-box; border: 0 solid var(--tc, var(--lime)); transform-origin: 0 0; will-change: transform; }
   .tcur b { position: absolute; top: 0; left: 0; width: 4px; height: 4px; background: var(--tc, var(--lime)); will-change: transform; }
   .tcur span { position: absolute; top: 0; left: 0; font: 500 10px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--lime); background: #09080f; padding: 4px 6px; border: 1px solid rgba(215,242,92,0.4); white-space: nowrap; opacity: 0; will-change: transform, opacity; }
+  /* claim checklist */
+  .checks { list-style: none; margin: 0; padding: 0; }
+  .checks li { display: grid; grid-template-columns: 1fr auto 74px; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .checks .c { font-size: 13.5px; color: var(--ink); }
+  .checks .c small { display: block; margin-top: 3px; font: 400 10.5px/1.5 var(--mono); color: var(--muted); }
+  .checks .btn { height: 28px; padding: 0 10px; font-size: 10px; }
+  .checks .st { font: 600 10.5px/1 var(--mono); letter-spacing: 0.12em; text-align: right; color: var(--muted); }
+  .checks li[data-state="pass"] .st { color: var(--lime); } .checks li[data-state="fail"] .st { color: var(--orange); } .checks li[data-state="running"] .st { color: var(--ink); }
+  .judge-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  @media (max-width: 700px) { .checks li { grid-template-columns: 1fr 64px; } .checks .btn { grid-column: 1; justify-self: start; } .checks .st { grid-row: 1; grid-column: 2; } }
   @media (max-width: 700px) { .bar { gap: 12px; } .bar .kv.ct { display: none; } .bar .btn { height: 30px; padding: 0 10px; font-size: 10px; } .word { font-size: 16px; } }
   @media (prefers-reduced-motion: reduce) { .ticker .run { animation: none; } * { transition: none !important; } }
 </style>
@@ -280,13 +290,20 @@
     <div class="panel stat"><div class="lbl">Burned / cancelled forever</div><div class="v" id="burned">…</div><div class="thin"><i id="burnBar" style="width:0;background:var(--orange)"></i></div><div class="s" id="burnSub"></div></div>
   </div>
 
+  <section class="panel" style="margin-top:12px" aria-labelledby="chkH" id="judge">
+    <div class="ph"><h2 id="chkH">Check every claim yourself<em>each button runs a live check in the terminal</em></h2><span class="tag" id="chkTag">0 of 7 checked</span></div>
+    <ul class="checks" id="checks"></ul>
+    <div class="judge-foot"><span class="note">Results are also on <span class="mono">window.INSYDR_CHECKS</span>. Open the page with <span class="mono">?run=all</span> to run every check on load.</span>
+      <button class="btn solid" data-cmd="verify;farms;split 3000000 30;join;checkin;attack all" data-cursor-label="about 3 minutes, signs testnet txs">Run every check</button></div>
+  </section>
+
   <section class="panel term" aria-labelledby="termH">
     <div class="ph"><h2 id="termH">Test terminal<em>live</em></h2>
       <div class="boot" id="boot" aria-hidden="true">insydr console · reads go straight to the contract<br>signing only with a throwaway guest key kept in this browser</div>
       <div class="quick" id="quick">
         <button class="btn solid" data-cmd="verify" data-cursor-label="read-only · 8 checks">Verify</button><button class="btn" data-cmd="farms" data-cursor-label="read-only">Farms</button>
         <button class="btn" data-cmd="split 3000000 30" data-cursor-label="read-only · math">Split test</button><button class="btn" data-cmd="join" data-cursor-label="makes a testnet guest">Join as guest</button>
-        <button class="btn" data-cmd="checkin" data-cursor-label="signs with your guest key">Check in</button><button class="btn" data-cmd="attack all" data-cursor-label="signs 7 attacks">Attack it</button><button class="btn" data-cmd="help" data-cursor-label="all commands">Help</button>
+        <button class="btn" data-cmd="checkin" data-cursor-label="signs with your guest key">Check in</button><button class="btn" data-cmd="attack all" data-cursor-label="signs 7 attacks">Attack it</button><button class="btn" data-cmd="help" data-cursor-label="all commands">Help</button><button class="btn" data-cmd="connect" id="walletBtn" data-cursor-label="NEAR Connect · testnet">Connect wallet</button>
       </div></div>
     <div class="screen" id="screen" tabindex="0" aria-live="polite"></div>
     <label class="prompt"><span>insydr&gt;</span><input id="cli" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type a command, or press a button above" aria-label="Terminal command"></label>
@@ -537,6 +554,30 @@ document.addEventListener("click", (e) => { if (REDUCED || !e.target.closest?.("
   document.documentElement.addEventListener("pointerleave", leave); addEventListener("blur", leave);
 })();
 
+// ============================================================ claim checklist (for judges, human or AI)
+const CHECKS = [
+  ["locked", "The contract has 0 access keys and runs this repo's committed wasm", "verify", "nobody can change it; the deployed code hash equals sha256 of contracts/insydr/res/insydr.wasm"],
+  ["accounting", "Every coin is accounted for and the ledger reconciles with supply", "verify", "supply + burned + reserve + cancelled + creator's unclaimed = max supply"],
+  ["split", "Splitting one stack across 30 wallets earns nothing extra", "split 3000000 30", "weight is linear in stake up to the whale cap"],
+  ["farms", "Farm wallets are flagged, with evidence read from the chain", "farms", "each wallet's majority token source is recorded by the contract"],
+  ["ratio", "A farm wallet earns a fraction of what an independent wallet earns per coin", "status", "read from every holder's on-chain rewards"],
+  ["checkin", "Anyone can join and check in without a wallet", "join;checkin", "a throwaway testnet account, coins from the demo tap, a signed check_in"],
+  ["attacks", "Admin mint, rule changes, upgrades and a forged oracle report all fail on-chain", "join;attack all", "7 real transactions from your guest account, each refused by the contract"],
+];
+const JUDGE = {}; window.INSYDR_CHECKS = JUDGE;
+function renderChecks(active) {
+  let done = 0;
+  $("checks").innerHTML = CHECKS.map(([k, claim, cmd, how]) => { const v = JUDGE[k]; if (v !== undefined) done++;
+    const busy = active && cmd.split(";").includes(active) && v === undefined;
+    const st = v === true ? "pass" : v === false ? "fail" : busy ? "running" : "idle";
+    return `<li data-check="${k}" data-state="${st}"><div class="c">${esc(claim)}<small>${esc(how)}</small></div><button class="btn" data-cmd="${esc(cmd)}">${esc(cmd.split(";").pop().split(" ")[0])}</button><span class="st">${st === "pass" ? "PASS" : st === "fail" ? "FAIL" : st === "running" ? "RUNNING" : "NOT RUN"}</span></li>`; }).join("");
+  $("chkTag").textContent = `${done} of ${CHECKS.length} checked`;
+  $("chkTag").className = "tag" + (done === CHECKS.length && CHECKS.every(([k]) => JUDGE[k]) ? " lime" : "");
+}
+const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function base58(bytes) { let n = 0n; for (const b of bytes) n = n * 256n + BigInt(b); let s = ""; while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; } for (const b of bytes) { if (b) break; s = "1" + s; } return s; }
+const REPO_WASM = "https://raw.githubusercontent.com/hpark236/NEAR-hackathon-project/main/contracts/insydr/res/insydr.wasm";
+
 // ============================================================ data
 const D = { heavyAt: 0, ledger: [], holders: [], flags: new Map(), members: new Map() };
 let running = false; // the terminal command in progress, if any (its RPC calls use the FG lane)
@@ -684,7 +725,8 @@ function renderHeavy() {
   const top = Math.max(...rows.map(([k]) => rate(G[k])), 0.001);
   $("payBars").innerHTML = rows.map(([k, label, color]) => { const g = G[k], r = rate(g);
     return `<div class="barrow" title="${esc(label)}: ${r.toFixed(1)} per 1,000 coins"><div class="top"><span>${esc(label)}</span><b>${r.toFixed(1)}</b></div><div class="rail"><i style="width:${pct(r, top)}%;background:${color}"></i></div><div class="meta">${g.n} wallets · hold ${tok(g.held)} · earned ${tok(g.earned)}</div></div>`; }).join("");
-  const ri = rate(G.indep); $("payNote").textContent = ri > 0 ? `Same contract, same days. A flagged farm wallet earns ${(rate(G.cluster) / ri * 100).toFixed(1)}% and a creator-side wallet ${(rate(G.creator) / ri * 100).toFixed(2)}% of what an independent holder earns per coin.` : "No rewards paid yet.";
+  const ri = rate(G.indep); if (ri > 0) JUDGE.ratio = rate(G.cluster) / ri < 0.25 && rate(G.creator) / ri < 0.25; renderChecks();
+  $("payNote").textContent = ri > 0 ? `Same contract, same days. A flagged farm wallet earns ${(rate(G.cluster) / ri * 100).toFixed(1)}% and a creator-side wallet ${(rate(G.creator) / ri * 100).toFixed(2)}% of what an independent holder earns per coin.` : "No rewards paid yet.";
   $("holders").innerHTML = sorted.map((h) => { const g = groupOf(h), age = Number(h.since_ms) ? ((Date.now() - Number(h.since_ms)) / D.dayMs).toFixed(1) + " d" : "";
     const tag = h.account_id === D.launch ? `<span class="tag iris">launch account</span>` : h.account_id === D.tap?.id ? `<span class="tag iris">demo tap</span>` : g === "indep" ? `<span class="tag mint">independent</span>` : g === "creator" ? `<span class="tag iris">creator side</span>` : `<span class="tag orange">farm of ${h.flag.size}</span>`;
     const parent = h.account_id.split(".").length > 2 ? h.account_id.slice(h.account_id.indexOf(".") + 1) : null;
@@ -742,7 +784,23 @@ async function guestAccount() {
     api = await lib.connect({ networkId: "testnet", nodeUrl: rpcUrl(), keyStore: ks, ...(provider ? { provider } : {}) }); }
   return api.account(guest.id);
 }
+// A connected NEAR wallet (NEAR Connect: Meteor, HOT, Intear, MyNearWallet and others) signs instead of the guest key.
+let connector = null, wallet = null, walletId = null;
+const who = () => walletId || guest?.id;
+async function nearConnect() {
+  if (connector) return connector;
+  const { NearConnector } = await import("https://cdn.jsdelivr.net/npm/@hot-labs/near-connect@0.12.0/+esm");
+  connector = new NearConnector({ network: "testnet", providers: { testnet: RPCS }, autoConnect: true });
+  connector.on("wallet:signIn", async (t) => { wallet = await connector.wallet(); walletId = t.accounts[0].accountId; out(`connected ${walletId}. Commands that sign now go through your wallet.`, "ok"); $("walletBtn").textContent = "Disconnect"; $("walletBtn").dataset.cmd = "disconnect"; });
+  connector.on("wallet:signOut", () => { wallet = null; walletId = null; out("wallet disconnected; signing falls back to the guest key", "dim"); $("walletBtn").textContent = "Connect wallet"; $("walletBtn").dataset.cmd = "connect"; });
+  return connector;
+}
 async function send(contractId, methodName, args = {}, gasT = 100, deposit = "0") {
+  if (wallet) {
+    const r = await wallet.signAndSendTransaction({ receiverId: contractId, actions: [{ type: "FunctionCall", params: { methodName, args, gas: String(BigInt(gasT) * 10n ** 12n), deposit: String(deposit) } }] });
+    const st = r?.status ?? r?.transaction_outcome?.outcome?.status; if (st?.Failure) throw new Error(JSON.stringify(st.Failure));
+    const v = st?.SuccessValue; return v ? JSON.parse(atob(v) || "null") : null;
+  }
   const a = await guestAccount();
   const r = await a.functionCall({ contractId, methodName, args, gas: BigInt(gasT) * 10n ** 12n, attachedDeposit: BigInt(deposit) });
   const v = r.status?.SuccessValue; return v ? JSON.parse(atob(v) || "null") : null;
@@ -754,7 +812,7 @@ const CMDS = {
     out("READ (no account needed)", "hi");
     for (const k of ["status", "verify", "farms", "split", "visitors", "whois", "ledger", "day", "oracle", "rules"]) out(`  ${pad(k + (USAGE[k] ? " " + USAGE[k] : ""), 26)} ${CMDS[k][0]}`);
     out("ACT (creates a throwaway testnet account in this browser)", "hi");
-    for (const k of ["join", "checkin", "claim", "me", "attack", "leave"]) out(`  ${pad(k + (USAGE[k] ? " " + USAGE[k] : ""), 26)} ${CMDS[k][0]}`);
+    for (const k of ["join", "checkin", "claim", "me", "attack", "connect", "disconnect", "leave"]) out(`  ${pad(k + (USAGE[k] ? " " + USAGE[k] : ""), 26)} ${CMDS[k][0]}`);
     out("  clear                      wipe the screen");
   }],
   status: ["the coin right now", async () => { await loadLight(); renderLight(); const { s, cfg, today } = D;
@@ -765,17 +823,22 @@ const CMDS = {
     out(`independent holders ${s.independent_holders} of ${s.holder_count} wallets   ${s.milestone_idx}/${cfg.milestones.length} milestones reached`);
     if (D.visitors) out(`visitors who tried it from this page: ${D.visitors.joined} joined, ${D.visitors.checked} checked in`); }],
   verify: ["check the claims this page makes against the chain", async () => {
-    const line = (ok, text) => out(`${ok ? "PASS" : "FAIL"}  ${text}`, ok ? "ok" : "bad");
+    const res = []; const line = (ok, text) => { res.push(ok); out(`${ok ? "PASS" : "FAIL"}  ${text}`, ok ? "ok" : "bad"); return ok; };
     out("reading the coin and every holder from the chain…", "dim");
     await loadLight(); await loadHeavy(); renderLight(); renderHeavy(); const { s, cfg } = D;
-    line(D.keys === 0, D.keys === 0 ? "the contract account has 0 access keys: nobody can change or redeploy it" : `the contract account still has ${D.keys} access key(s): not locked`);
+    const keysOk = line(D.keys === 0, D.keys === 0 ? "the contract account has 0 access keys: nobody can change or redeploy it" : `the contract account still has ${D.keys} access key(s): not locked`);
     const acc = await rpc("query", { request_type: "view_account", finality: "final", account_id: COIN });
-    out(`      code hash ${acc.code_hash}`, "dim");
+    let codeOk = false;
+    try { const wasm = new Uint8Array(await (await fetch(REPO_WASM, { signal: AbortSignal.timeout(15000) })).arrayBuffer());
+      const repoHash = base58(new Uint8Array(await crypto.subtle.digest("SHA-256", wasm)));
+      codeOk = line(repoHash === acc.code_hash, `the deployed code is this repo's committed wasm: sha256 of insydr.wasm (${(wasm.length / 1024).toFixed(0)} KB, fetched from GitHub) = code hash ${acc.code_hash}${repoHash === acc.code_hash ? "" : ` (repo: ${repoHash})`}`);
+    } catch (e) { out(`      could not fetch the committed wasm from GitHub to compare: ${e.message}. Deployed code hash ${acc.code_hash}`, "dim"); }
     let mint = 0n, burn = 0n, cancel = 0n; for (const e of D.ledger) { if (e.kind === "mint") mint += BigInt(e.amount); if (e.kind === "burn") burn += BigInt(e.amount); if (e.kind === "cancel") cancel += BigInt(e.amount); }
-    line(mint - burn === BigInt(s.total_supply), `ledger: ${D.ledger.length} entries, minted ${tok(mint)} - burned ${tok(burn)} = total supply ${tok(s.total_supply)}`);
+    const ledgerOk = line(mint - burn === BigInt(s.total_supply), `ledger: ${D.ledger.length} entries, minted ${tok(mint)} - burned ${tok(burn)} = total supply ${tok(s.total_supply)}`);
     line(burn === BigInt(s.burned) && cancel === BigInt(s.cancelled), `ledger burns and cancellations match the contract's counters`);
     const sum = BigInt(s.total_supply) + BigInt(s.burned) + BigInt(s.reserve) + BigInt(s.cancelled) + BigInt(s.creator_unlocked) - BigInt(s.creator_claimed);
-    line(sum === BigInt(cfg.max_supply), `every coin is accounted for: supply + burned + reserve + cancelled + creator's unclaimed = ${tok(cfg.max_supply)}`);
+    const sumOk = line(sum === BigInt(cfg.max_supply), `every coin is accounted for: supply + burned + reserve + cancelled + creator's unclaimed = ${tok(cfg.max_supply)}`);
+    JUDGE.locked = keysOk && codeOk; JUDGE.accounting = ledgerOk && sumOk;
     line(D.threshold >= 2 && D.pks.length > D.threshold - 1, `oracle needs ${D.threshold} of ${D.pks.length} signatures`);
     line(s.independent_holders <= s.holder_count, `independent holders (${s.independent_holders}) do not exceed on-chain holders (${s.holder_count})`);
     line(BigInt(s.creator_claimed) <= BigInt(s.creator_vested) && BigInt(s.creator_vested) <= BigInt(s.creator_unlocked), `creator earn-out: claimed ${tok(s.creator_claimed)} <= vested ${tok(s.creator_vested)} <= granted ${tok(s.creator_unlocked)}`);
@@ -784,11 +847,13 @@ const CMDS = {
     const names = wasmExports(Uint8Array.from(atob(code.code_base64), (c) => c.charCodeAt(0)));
     const bad = names.filter((n) => /^(mint|burn_from|set_|update_|upgrade|migrate|pause|unpause|blacklist|freeze|withdraw_all|change_|transfer_ownership|owner_)/.test(n));
     line(bad.length === 0, `${names.length} public methods, none of them an admin mint, setter, pause, blacklist or upgrade${bad.length ? ": " + bad.join(", ") : ""}`);
+    if (bad.length) JUDGE.locked = false;
+    out(`${res.filter(Boolean).length}/${res.length} checks passed`, res.every(Boolean) ? "ok" : "bad");
     out(`      ${names.filter((n) => !n.startsWith("ft_") && !n.startsWith("storage_") && !n.startsWith("get_")).join(" ")}`, "dim");
   }],
   farms: ["wallet clusters and the on-chain evidence for each", async () => { await loadHeavy(); const by = new Map();
     for (const h of D.holders) if (h.flag) { if (!by.has(h.flag.id)) by.set(h.flag.id, []); by.get(h.flag.id).push(h); }
-    if (!by.size) return out("no clusters flagged");
+    JUDGE.farms = by.size > 0; if (!by.size) return out("no clusters flagged");
     for (const [id, ms] of by) { const held = ms.reduce((t, h) => t + BigInt(h.balance), 0n), earned = ms.reduce((t, h) => t + h.earned, 0n);
       out(`${id === "deployer" ? "CREATOR SIDE" : "FARM " + acct(id.slice(2))}  ${ms.length} wallets, hold ${tok(held)}, earned ${tok(earned)}`, "hi");
       for (const h of ms.slice(0, 8)) { const parent = h.account_id.split(".").length > 2 ? h.account_id.slice(h.account_id.indexOf(".") + 1) : null;
@@ -798,6 +863,7 @@ const CMDS = {
     const one = Math.min(c, cap) / cap, many = k * Math.min(c / k, cap) / cap;
     out(`whale cap ${short(cap)} coins per wallet. Stack ${short(c)}, split across ${k} wallets.`);
     out(`  1 wallet      weight ${one.toFixed(4)}`); out(`  ${pad(k + " wallets", 13)} weight ${many.toFixed(4)}  (${short(c / k)} each)`);
+    if (k > 1) JUDGE.split = Math.abs(one - many) < 1e-9;
     if (Math.abs(one - many) < 1e-9) out("same weight: splitting earns nothing.", "ok");
     else { out(`splitting gets around the whale cap (${(many / one).toFixed(1)}x). That is the only thing it buys.`, "bad"); out(`if the wallets are fed from one stack, the contract records it and the oracle clusters them: weight ${(many / k).toFixed(4)} in total.`); } }],
   visitors: ["the guest accounts behind the visitor count, read from the chain", async () => { await loadHeavy();
@@ -821,6 +887,10 @@ const CMDS = {
   rules: ["the parameters, as stored in the contract", async () => { for (const [k, v] of Object.entries(D.cfg)) out(`  ${pad(k, 28)} ${Array.isArray(v) ? v.join(", ") : v}`); }],
   join: ["create a guest account and get demo coins from the tap", async () => { need();
     if (!D.tap) { await loadHeavy(); if (!D.tap) throw new Error("this coin has no demo tap"); }
+    if (wallet) { out(`you are ${walletId} (connected wallet)`, "hi");
+      if (await view("served", { account_id: walletId }, D.tap.id)) out("the tap already served this account");
+      else { out("asking the tap for coins (approve in your wallet)…", "dim"); await send(D.tap.id, "drip", {}, 100); }
+      out(`balance ${tok(await view("ft_balance_of", { account_id: walletId }))} $${D.meta.symbol}`, "ok"); JUDGE.join = true; return out("now try: checkin"); }
     const lib = await nearApiLib();
     if (!guest) { const kp = lib.KeyPair.fromRandom("ed25519"), id = `insydr-guest-${Math.random().toString(36).slice(2, 8)}.testnet`;
       out(`creating ${id} through the public testnet faucet…`, "dim");
@@ -834,32 +904,37 @@ const CMDS = {
       await send(D.tap.id, "drip", {}, 100).catch(async (e) => { await sleep(4000); if (!(await view("served", { account_id: guest.id }, D.tap.id))) throw e; }); }
     const bal = await view("ft_balance_of", { account_id: guest.id }); out(`balance ${tok(bal)} $${D.meta.symbol}`, "ok");
     out(`fresh coins weigh nothing: your weight ramps to full over ${D.cfg.age_full_days} day(s) of ${dayLen(D.dayMs)}. Tap accounts hold less than ${tok(D.cfg.holder_min_balance)}, so they never count toward supply.`, "dim");
-    out("now try: checkin"); }],
-  checkin: ["check in for today as your guest account", async () => { need(); const before = await view("preview_weight", { account_id: (guest ?? {}).id ?? "x" }).catch(() => "0");
+    JUDGE.join = true; out("now try: checkin"); }],
+  connect: ["connect a NEAR testnet wallet (signs instead of the guest key)", async () => { need(); out("opening NEAR Connect (testnet)…", "dim"); const c = await nearConnect(); await c.connect(); }],
+  disconnect: ["disconnect the wallet", async () => { if (connector) await connector.disconnect(); }],
+  checkin: ["check in for today as your guest account or connected wallet", async () => { need(); const before = await view("preview_weight", { account_id: who() ?? "x" }).catch(() => "0");
     out("signing check_in…", "dim"); const paid = await send(COIN, "check_in", {}, 80);
-    out(`checked in. weight ${(Number(before) / 1e6).toFixed(4)}, paid ${tok(paid ?? "0")} from earlier days`, "ok");
+    const today = await view("get_day", { day: D.s.current_day }).catch(() => null);
+    out(`checked in${today ? `: you are one of ${today.checkins} check-ins today` : ""}. Your weight is ${(Number(before) / 1e6).toFixed(4)}, paid ${tok(paid ?? "0")} from earlier days`, "ok"); JUDGE.checkin = true;
+    if (Number(before) < 1000) out(`a weight near 0 is the rule working: coin-age starts at zero, so freshly received coins add almost nothing to turnout until they have aged ${D.cfg.age_full_days} day(s). That is what stops pump-and-leave.`, "dim");
     const msg = `I just checked in to $${D.meta.symbol}, a memecoin where 300 wallets earn what 1 does and the contract has zero keys. Try to farm it: ${location.origin}${location.pathname}\n\nBuilt at NEAR HACKATHON @NEARProtocol #NEARHackathon`;
     const a = document.createElement("a"); a.href = "https://x.com/intent/post?text=" + encodeURIComponent(msg); a.target = "_blank"; a.rel = "noopener"; a.textContent = "share your check-in on X";
     const d = out("", "dim"); d.append("come back tomorrow to keep the streak going, or ", a); await refresh(true); }],
   claim: ["claim settled rewards", async () => { need(); out("signing claim…", "dim"); const paid = await send(COIN, "claim", {}, 80); out(`claimed ${tok(paid ?? "0")}`, "ok"); }],
-  me: ["your guest account", async () => { if (!guest) throw new Error("no guest account yet: run `join` first"); await CMDS.whois[1](guest.id); }],
+  me: ["your guest account or connected wallet", async () => { if (!who()) throw new Error("no account yet: run `join` or `connect` first"); await CMDS.whois[1](who()); }],
   leave: ["forget the guest account in this browser", async () => { localStorage.removeItem(GKEY); guest = null; api = null; out("guest account forgotten"); }],
-  attack: ["try to break it as your guest account", async (what = "all") => { need(); await guestAccount();
+  attack: ["try to break it as your guest account or connected wallet", async (what = "all") => { need(); if (!wallet) await guestAccount(); const me = who();
     const tries = {
-      mint: ["call an admin mint", () => send(COIN, "mint", { account_id: guest.id, amount: "1000000000000000000000000000" })],
+      mint: ["call an admin mint", () => send(COIN, "mint", { account_id: me, amount: "1000000000000000000000000000" })],
       config: ["change the rules", () => send(COIN, "set_config", { daily_payout_bps: 10000 })],
       upgrade: ["replace the code", () => send(COIN, "upgrade", {})],
       oracle: ["forge an oracle attestation claiming 1,000,000 holders", async () => { const lib = await nearApiLib(), kp = lib.KeyPair.fromRandom("ed25519");
         const payload = JSON.stringify({ ts: String(Date.now() + 9e9), independent_holders: 1000000, clusters: [] }); const sig = btoa(String.fromCharCode(...kp.sign(new TextEncoder().encode(payload)).signature));
         return send(COIN, "attest", { payload, signatures: [{ index: 0, signature: sig }, { index: 1, signature: sig }] }, 200); }],
-      challenge: ["register a challenge that pays me", () => send(COIN, "add_challenge", { name: "free money", proof: { Contract: { verifier_id: guest.id } }, reward: "1", cooldown_days: 0, daily_budget: "1" })],
+      challenge: ["register a challenge that pays me", () => send(COIN, "add_challenge", { name: "free money", proof: { Contract: { verifier_id: me } }, reward: "1", cooldown_days: 0, daily_budget: "1" })],
       creator: ["claim the creator's earn-out", () => send(COIN, "claim_creator", {})],
       twice: ["check in twice in one day", async () => { await send(COIN, "check_in", {}, 80).catch(() => {}); return send(COIN, "check_in", {}, 80); }],
     };
     const list = what === "all" ? Object.keys(tries) : [what]; let held = 0;
     for (const k of list) { if (!tries[k]) throw new Error(`unknown attack. Try: ${Object.keys(tries).join(", ")}, all`);
       out(`> ${tries[k][0]}`, "hi"); try { const r = await tries[k][1](); out(`  it went through: ${JSON.stringify(r)}`, "bad"); } catch (e) { held++; out(`  refused by the contract: ${panic(e)}`, "ok"); } }
-    out(`${held}/${list.length} attacks refused on-chain. Every refusal above is a real failed transaction from ${guest.id}.`, held === list.length ? "ok" : "bad"); }],
+    out(`${held}/${list.length} attacks refused on-chain. Every refusal above is a real failed transaction from ${me}.`, held === list.length ? "ok" : "bad");
+    if (what === "all") JUDGE.attacks = held === list.length; }],
   clear: ["", async () => { screen.replaceChildren(); }],
 };
 const USAGE = { split: "<coins> <wallets>", whois: "<account>", ledger: "[n]", day: "[n]", attack: "[mint|oracle|twice|all…]" };
@@ -875,16 +950,18 @@ function wasmExports(b) {
 
 async function run(lineText) {
   const text = lineText.trim(); if (!text) return;
-  if (running) { out(`still working on "${running}"; "${text}" is queued`, "dim"); if (queued.length < 5) queued.push(text); return; }
-  running = text; hist.push(text); hi = hist.length; out(text, "cmd");
+  if (running) { out(`still working on "${running}"; "${text}" is queued`, "dim"); if (queued.length < 8) queued.push(text); return; }
+  running = text; hist.push(text); hi = hist.length; out(text, "cmd"); renderChecks(text);
   const [name, ...args] = text.split(/\s+/); const cmd = CMDS[name.toLowerCase()];
   try { if (!cmd) throw new Error(`unknown command "${name}". Type help.`); if (!D.s) await refresh(); await cmd[1](...args); }
   catch (e) { out(panic(e), "bad"); }
-  running = false;
+  running = false; renderChecks();
   if (queued.length) run(queued.shift());
 }
 cli.addEventListener("keydown", (e) => { if (e.key === "Enter") { const v = cli.value; cli.value = ""; run(v); } else if (e.key === "ArrowUp") { if (hi > 0) cli.value = hist[--hi]; e.preventDefault(); } else if (e.key === "ArrowDown") { cli.value = hi < hist.length - 1 ? hist[++hi] : ((hi = hist.length), ""); } });
-$("quick").addEventListener("click", (e) => { const b = e.target.closest("[data-cmd]"); if (b) run(b.dataset.cmd); });
+// any [data-cmd] on the page runs in the terminal (a ";" list runs in order); on narrow screens the terminal scrolls into view
+document.addEventListener("click", (e) => { const b = e.target.closest?.("[data-cmd]"); if (!b) return; b.dataset.cmd.split(";").forEach((c) => run(c));
+  const t = document.querySelector(".term"); if (t && getComputedStyle(t).position !== "fixed" && !t.contains(b)) t.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" }); });
 screen.addEventListener("click", () => { if (!getSelection().toString()) cli.focus({ preventScroll: true }); });
 
 out("INSYDR test terminal. Everything here is a live call to the contract.", "hi");
@@ -892,7 +969,11 @@ out("`verify` checks this page's claims on-chain. `join` gives you a throwaway a
 if (guest) out(`welcome back, ${guest.id}`, "dim");
 
 out(`connecting to ${rpcUrl().replace("https://", "")}…`, "dim");
-refresh().then(() => { if (D.s) { out(`connected · block ${D.block.header.height.toLocaleString("en-US")} · reading ${COIN}`, "dim"); run("status"); } });
+renderChecks();
+const AUTO = q.get("run");
+refresh().then(() => { if (D.s) { out(`connected · block ${D.block.header.height.toLocaleString("en-US")} · reading ${COIN}`, "dim"); run("status");
+  if (AUTO) (AUTO === "all" ? "verify;farms;split 3000000 30;join;checkin;attack all" : AUTO).split(";").forEach((c) => run(c)); } });
+try { if (localStorage.getItem("hot-connector:selected-wallet") || Object.keys(localStorage).some((k) => k.includes("near-connect") || k.includes("hot-connector"))) nearConnect().catch(() => {}); } catch {}
 setInterval(refresh, 30000);
 </script>
 </body>
